@@ -124,6 +124,18 @@ jobs:
           curl -fsS -H "Cookie: wq_session=$jeton"             'http://127.0.0.1:8099/administration/etiquettes/planche?de=1&a=24'             -o /tmp/planche.html
           node outils/verifier-etiquettes.mjs /tmp/planche.html
 
+      - name: Aucun débordement horizontal sur téléphone
+        # La panne visuelle la plus fréquente et la plus invisible depuis un
+        # poste de bureau : une colonne de largeur fixe sans requête média.
+        env:
+          BASE: http://127.0.0.1:8099
+          EMAIL: ci@exemple.fr
+          MDP: 'Integration-Continue-2026!'
+        run: |
+          docker run --rm --network host -v "$PWD":/w -w /w \
+            mcr.microsoft.com/playwright:v1.56.0-noble \
+            sh -c 'npm i --no-save --silent playwright@1.56.0 && node outils/audit-mobile.mjs'
+
   securite:
     name: Audit des dépendances
     runs-on: ubuntu-latest

@@ -27,6 +27,13 @@ pub static CATALOGUE: &[(&str, &str)] = &[
 
     // ---------------------------------------------------------- navigation
     ("nav.tableau_de_bord", "Tableau de bord"),
+    // Libellés courts de la barre du bas : « Tableau de bord » passait sur
+    // deux lignes et débordait de la barre.
+    ("nav.court.tableau_de_bord", "Accueil"),
+    ("nav.court.scan", "Scanner"),
+    ("nav.court.parc", "Parc"),
+    ("nav.court.documents", "Docs"),
+    ("nav.court.clients", "Clients"),
     ("nav.parc", "Parc"),
     ("nav.scan", "Scanner"),
     ("nav.operation", "Opération par lot"),
@@ -237,6 +244,7 @@ pub static CATALOGUE: &[(&str, &str)] = &[
     ("parc.resultat", "1 fût"),
     ("parc.page", "Page {page} sur {total}"),
     ("parc.filtres_actifs", "Filtres actifs"),
+    ("parc.plus_de_filtres", "Plus de filtres"),
     ("parc.aucun_fut", "Aucun fût ne correspond à ces critères."),
     ("parc.parc_vide", "Le parc est vide. Commencez par générer des étiquettes."),
 
@@ -272,6 +280,7 @@ pub static CATALOGUE: &[(&str, &str)] = &[
     ("scan.aucun_scan", "Aucun scan pour l'instant."),
     ("scan.decodeur_natif", "Décodeur natif"),
     ("scan.decodeur_wasm", "Décodeur de secours"),
+    ("scan.saisie_seule", "Douchette et saisie manuelle"),
 
     // ---------------------------------------------------------- opération par lot
     ("op.titre", "Opération par lot"),

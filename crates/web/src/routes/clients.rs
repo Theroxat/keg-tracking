@@ -57,7 +57,7 @@ pub async fn liste(
             (c::vide(t!("app.aucun_resultat"), None))
         } @else {
             div class="tableau-cadre" {
-                table class="tableau" {
+                table class="tableau tableau--cartes" {
                     thead { tr {
                         th { (t!("champ.societe")) } th { (t!("champ.contact")) }
                         th { (t!("champ.telephone")) } th { (t!("client.adresses")) }
@@ -66,23 +66,23 @@ pub async fn liste(
                     tbody {
                         @for cl in &clients {
                             tr {
-                                td {
+                                td class="cel-titre" {
                                     a href=(format!("/clients/{}", cl.id)) style="font-weight:600" { (cl.societe) }
                                     @if cl.archive { " " (c::badge("neutre", "archivé")) }
                                 }
-                                td class="petit" {
+                                td class="petit" data-libelle=(t!("champ.contact")) {
                                     (format!("{} {}", cl.contact_prenom, cl.contact_nom).trim())
                                 }
-                                td class="petit mono" { (cl.telephone) }
-                                td class="num petit discret" { (cl.adresses) }
-                                td class="num" {
+                                td class="petit mono" data-libelle=(t!("champ.telephone")) { (cl.telephone) }
+                                td class="num petit discret" data-libelle=(t!("client.adresses")) { (cl.adresses) }
+                                td class="cel-marque num" {
                                     @if cl.futs_detenus > 0 {
                                         a href=(format!("/parc?client={}&statut=livre", cl.id)) {
                                             (c::badge("livre", &cl.futs_detenus.to_string()))
                                         }
                                     } @else { span class="discret" { "0" } }
                                 }
-                                td class="serre" {
+                                td class="cel-action serre" {
                                     a class="bouton bouton--petit" href=(format!("/clients/{}", cl.id)) {
                                         (t!("action.voir"))
                                     }
@@ -257,8 +257,8 @@ pub async fn fiche(
 
     let peut = s.role.peut_ecrire();
     let corps = html! {
-        div style="display:grid;gap:12px;grid-template-columns:minmax(0,1fr) 360px;align-items:start" {
-            div style="display:flex;flex-direction:column;gap:12px;min-width:0" {
+        div class="duo duo--large" {
+            div class="duo__col" {
                 section class="carte" {
                     div class="carte__tete" {
                         h2 { (t!("client.futs_detenus")) }
@@ -269,7 +269,7 @@ pub async fn fiche(
                             div class="vide" { (t!("client.aucun_fut")) }
                         } @else {
                             div class="tableau-cadre" style="border:0" {
-                                table class="tableau" {
+                                table class="tableau tableau--cartes" {
                                     thead { tr {
                                         th { (t!("champ.code_qr")) } th { (t!("champ.lot")) }
                                         th { (t!("champ.anciennete")) }
@@ -277,9 +277,9 @@ pub async fn fiche(
                                     tbody {
                                         @for f in &futs {
                                             tr {
-                                                td { a class="lien-ligne" href=(format!("/futs/{}", f.id)) { (f.code_qr) } }
-                                                td class="mono petit" { (c::texte_ou_tiret(f.lot.as_ref())) }
-                                                td class="serre num" {
+                                                td class="cel-titre" { a class="lien-ligne" href=(format!("/futs/{}", f.id)) { (f.code_qr) } }
+                                                td class="mono petit" data-libelle=(t!("champ.lot")) { (c::texte_ou_tiret(f.lot.as_ref())) }
+                                                td class="cel-marque serre num" {
                                                     @if f.jours > 30 { (c::badge("grave", &format!("{} j", f.jours))) }
                                                     @else { span class="petit" { (f.jours) " j" } }
                                                 }
@@ -336,7 +336,7 @@ pub async fn fiche(
                 }
             }
 
-            div style="display:flex;flex-direction:column;gap:12px" class="sans-impression" {
+            div class="duo__col sans-impression" {
                 section class="carte" {
                     div class="carte__tete" { h2 { (t!("client.fiche")) } }
                     div class="carte__corps" {

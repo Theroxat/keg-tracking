@@ -57,7 +57,7 @@ pub async fn afficher(
 
     let corps = html! {
         div class="avis" { (t!("etiq.conseil_materiel")) }
-        div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))" {
+        div class="colonnes" {
             section class="carte" {
                 div class="carte__tete" { h2 { (t!("etiq.generer")) } }
                 div class="carte__corps" {

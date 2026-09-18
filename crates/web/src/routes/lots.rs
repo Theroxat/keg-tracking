@@ -51,7 +51,7 @@ pub async fn liste(
             (c::vide(t!("lot.aucun"), None))
         } @else {
             div class="tableau-cadre" {
-                table class="tableau" {
+                table class="tableau tableau--cartes" {
                     thead { tr {
                         th { (t!("champ.numero")) } th { (t!("champ.biere")) } th { (t!("champ.cuve")) }
                         th { (t!("champ.date_brassage")) } th { (t!("champ.dluo")) }
@@ -60,13 +60,13 @@ pub async fn liste(
                     tbody {
                         @for l in &lots {
                             tr {
-                                td class="mono" style="font-weight:600" { (l.numero) }
-                                td { span style="display:inline-flex;align-items:center;gap:6px" {
+                                td class="cel-titre mono" style="font-weight:600" { (l.numero) }
+                                td data-libelle=(t!("champ.biere")) { span style="display:inline-flex;align-items:center;gap:6px" {
                                     span class="pastille" style=(format!("background:{}", l.couleur_biere)) {}
                                     (l.biere) } }
-                                td class="petit" { (l.cuve) }
-                                td class="num petit" { (c::jour(l.date_brassage)) }
-                                td class="num" {
+                                td class="petit" data-libelle=(t!("champ.cuve")) { (l.cuve) }
+                                td class="num petit" data-libelle=(t!("champ.date_brassage")) { (c::jour(l.date_brassage)) }
+                                td class="cel-marque num" {
                                     @match l.dluo {
                                         Some(d) => {
                                             @let reste = (d - aujourdhui).num_days();
@@ -78,12 +78,12 @@ pub async fn liste(
                                         None => span class="discret" { "—" },
                                     }
                                 }
-                                td class="num" {
+                                td class="num" data-libelle=(t!("lot.futs_rattaches")) {
                                     @if l.futs > 0 {
                                         a href=(format!("/parc?lot={}", l.id)) { (l.futs) }
                                     } @else { span class="discret" { "0" } }
                                 }
-                                td class="serre boutons" {
+                                td class="cel-action serre boutons" {
                                     a class="bouton bouton--petit" href=(format!("/lots/{}/rappel", l.id)) {
                                         (t!("rappel.titre"))
                                     }

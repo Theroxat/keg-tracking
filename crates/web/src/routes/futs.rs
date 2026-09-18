@@ -80,8 +80,11 @@ pub async fn fiche(
         .collect();
 
     let corps = html! {
-        div style="display:grid;gap:12px;grid-template-columns:minmax(0,1fr) 340px;align-items:start" {
-            div style="display:flex;flex-direction:column;gap:12px;min-width:0" {
+        // Trois blocs placés par zones : sur téléphone la grille bascule en
+        // une colonne et remonte les actions avant la chronologie, qui peut
+        // faire soixante entrées.
+        div class="fiche" {
+            div class="fiche__etat" {
                 // --------------------------------------------- état courant
                 section class="carte" {
                     div class="carte__tete" {
@@ -89,7 +92,7 @@ pub async fn fiche(
                         (c::badge_statut(f.statut))
                     }
                     div class="carte__corps" {
-                        dl style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0" {
+                        dl style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:12px;margin:0" {
                             (paire(t!("champ.contenance"), html! { (f.contenance_litres) " " (t!("unite.litres")) }))
                             (paire(t!("champ.depuis"), html! { (c::depuis(f.statut_depuis_le)) }))
                             (paire(t!("champ.biere"), html! {
@@ -144,6 +147,9 @@ pub async fn fiche(
                     }
                 }
 
+            }
+
+            div class="fiche__chrono" {
                 // --------------------------------------------- chronologie
                 section class="carte" {
                     div class="carte__tete" {
@@ -193,7 +199,7 @@ pub async fn fiche(
             }
 
             // --------------------------------------------- actions
-            div style="display:flex;flex-direction:column;gap:12px;min-width:0" class="sans-impression" {
+            div class="fiche__actions sans-impression" {
                 @if peut_ecrire {
                     section class="carte" {
                         div class="carte__tete" { h2 { (t!("fut.actions")) } }
@@ -244,11 +250,11 @@ pub async fn fiche(
                         div class="carte__tete" { h2 { (t!("fut.autres_futs_client")) } }
                         div class="carte__corps carte__corps--serre" {
                             div class="tableau-cadre" style="border:0" {
-                                table class="tableau" { tbody {
+                                table class="tableau tableau--cartes" { tbody {
                                     @for v in voisins.iter().filter(|v| v.id != f.id).take(12) {
                                         tr {
-                                            td { a class="lien-ligne" href=(format!("/futs/{}", v.id)) { (v.code_qr) } }
-                                            td class="serre petit discret num" { (v.jours) " " (t!("tdb.jours")) }
+                                            td class="cel-titre" { a class="lien-ligne" href=(format!("/futs/{}", v.id)) { (v.code_qr) } }
+                                            td class="cel-marque serre petit discret num" { (v.jours) " " (t!("tdb.jours")) }
                                         }
                                     }
                                 } }

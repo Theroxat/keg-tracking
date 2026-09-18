@@ -102,7 +102,7 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .sr { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
 
 /* ------------------------------------------------------------ ossature */
-.appli { min-height: 100dvh; display: grid; grid-template-columns: 216px 1fr; }
+.appli { min-height: 100dvh; display: grid; grid-template-columns: 216px minmax(0, 1fr); }
 .flanc {
   background: var(--surface); border-right: 1px solid var(--bordure);
   display: flex; flex-direction: column; position: sticky; top: 0; height: 100dvh;
@@ -135,21 +135,28 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .barre-mobile { display: none; }
 
 @media (max-width: 860px) {
-  .appli { grid-template-columns: 1fr; }
+  body { overflow-x: clip; }
+  .appli { grid-template-columns: minmax(0, 1fr); }
   .flanc { display: none; }
-  .contenu { padding: 14px 14px 88px; }
-  .entete { padding: 12px 14px; }
+  .contenu { padding: 14px 14px 104px; }
+  .entete { padding: 11px 14px; position: static; }
+  .entete__titre h1 { font-size: 20px; }
+  .entete__titre p { font-size: 12.5px; }
   .barre-mobile {
     display: grid; position: fixed; inset: auto 0 0 0; z-index: 40;
     background: var(--surface); border-top: 1px solid var(--bordure);
     padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
-    grid-auto-flow: column; grid-auto-columns: 1fr;
+    grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
   }
   .barre-mobile a {
-    display: flex; flex-direction: column; align-items: center; gap: 2px;
-    padding: 6px 2px; text-decoration: none; color: var(--encre-3);
-    font-size: 11px; font-weight: 600; min-height: 52px; justify-content: center;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 7px 2px; text-decoration: none; color: var(--encre-3);
+    font-size: 11px; font-weight: 600; min-height: 56px; justify-content: center;
+    /* Un libellé qui passe à la ligne déborde de la barre : on le coupe. */
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 100%;
   }
+  .barre-mobile a span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
   .barre-mobile a[aria-current="page"] { color: var(--accent); }
   .barre-mobile svg { width: 21px; height: 21px; }
 }
@@ -183,6 +190,7 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .champ > label, .champ__label { font-size: 13px; font-weight: 600; color: var(--encre-2); }
 .champ__aide { font-size: 12px; color: var(--encre-3); }
 .champ__erreur { font-size: 12.5px; color: var(--grave); font-weight: 550; }
+input[type=color] { min-height: 34px; padding: 2px; }
 input[type=text], input[type=email], input[type=password], input[type=number],
 input[type=date], input[type=search], input[type=tel], input[type=file],
 select, textarea {
@@ -197,27 +205,74 @@ select { appearance: none; padding-right: 30px;
   background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
 textarea { min-height: 76px; resize: vertical; }
 input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--grave); }
-.grille { display: grid; gap: 0 16px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
-.grille--2 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.grille { display: grid; gap: 0 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); }
+.grille--2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
 fieldset { border: 1px solid var(--bordure); border-radius: var(--r-2); padding: 14px 16px 2px; margin: 0 0 16px; }
 legend { font-size: 12px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; color: var(--encre-3); padding: 0 6px; }
 .coche { display: flex; align-items: center; gap: 8px; font-size: 14px; }
 .coche input { width: 18px; height: 18px; min-height: 0; }
 
+/* ------------------------------------------------- deux colonnes */
+/* Contenu principal + panneau latéral.
+   La requête média n'est pas un ornement : sans elle, la colonne de contenu
+   se réduit à quelques pixels derrière un panneau de largeur fixe, et la
+   page devient illisible sur téléphone. */
+.duo {
+  display: grid; gap: 12px; align-items: start;
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+.duo--large  { grid-template-columns: minmax(0, 1fr) 360px; }
+.duo--etroit { grid-template-columns: minmax(0, 1fr) 320px; }
+.duo__col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+/* Fiche à trois blocs : sur téléphone, les actions remontent avant la
+   chronologie — sinon elles se retrouvent sous soixante événements. */
+.fiche {
+  display: grid; gap: 12px; align-items: start;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-areas: "etat actions" "chrono actions";
+}
+.fiche__etat    { grid-area: etat; min-width: 0; }
+.fiche__actions { grid-area: actions; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.fiche__chrono  { grid-area: chrono; min-width: 0; }
+
+.colonnes { display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
+
+@media (max-width: 900px) {
+  .duo, .duo--large, .duo--etroit { grid-template-columns: minmax(0, 1fr); }
+  .fiche {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "etat" "actions" "chrono";
+  }
+}
+
 /* ------------------------------------------------------------ cartes */
 .carte { background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--r-2); }
 .carte__tete { padding: 12px 16px; border-bottom: 1px solid var(--bordure); display: flex; align-items: center; gap: 10px; }
 .carte__tete h2 { flex: 1; }
-.carte__corps { padding: 16px; }
+.carte__corps { padding: 16px; min-width: 0; }
 .carte__corps--serre { padding: 0; }
-.cartes { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.cartes { display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); }
 
 .tuile {
+  min-width: 0;
   background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--r-2);
   padding: 14px 16px; display: flex; flex-direction: column; gap: 3px; text-decoration: none; color: inherit;
 }
 a.tuile:hover { border-color: var(--bordure-2); box-shadow: var(--ombre-2); }
 .tuile__valeur { font-size: 30px; font-weight: 640; line-height: 1.05; font-variant-numeric: tabular-nums; }
+@media (max-width: 720px) {
+  /* Deux compteurs par ligne plutôt qu'un : le tableau de bord tient
+     alors sur un écran au lieu de trois. */
+  .cartes { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tuile { padding: 11px 12px; }
+  .tuile__valeur { font-size: 25px; }
+  .tuile__nom { font-size: 12.5px; }
+  .tuile__detail { font-size: 11.5px; }
+}
 .tuile__nom { font-size: 13px; color: var(--encre-2); font-weight: 550; }
 .tuile__detail { font-size: 12px; color: var(--encre-3); }
 .tuile--alerte { border-left: 3px solid var(--alerte); }
@@ -264,6 +319,39 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 14px; }
 .vide { padding: 40px 20px; text-align: center; color: var(--encre-3); }
 .vide p { margin-bottom: 14px; }
 
+/* Sur téléphone, une table de neuf colonnes ne se lit pas : on ne voit
+   jamais le statut, le client et l'ancienneté en même temps. Les lignes
+   deviennent donc des cartes, avec le libellé de chaque champ repris depuis
+   l'attribut `data-libelle` de la cellule. */
+@media (max-width: 720px) {
+  .tableau--cartes thead { display: none; }
+  .tableau--cartes, .tableau--cartes tbody, .tableau--cartes tr, .tableau--cartes td {
+    display: block; width: 100%;
+  }
+  .tableau--cartes tr {
+    /* `minmax(0, 1fr)` et non `1fr` : sinon un contenu insécable empêche la
+       colonne de rétrécir et pousse la page entière vers la droite. */
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center;
+    column-gap: 10px; row-gap: 3px; padding: 11px 12px;
+    border-bottom: 1px solid var(--bordure);
+  }
+  .tableau--cartes tr:hover { background: transparent; }
+  .tableau--cartes td { border: 0; padding: 0; min-width: 0; overflow-wrap: anywhere; }
+  .tableau--cartes .cel-titre { grid-column: 1; grid-row: 1; font-size: 15.5px; }
+  .tableau--cartes .cel-marque { grid-column: 2; grid-row: 1; justify-self: end; }
+  .tableau--cartes .cel-action { grid-column: 1 / -1; justify-self: start; margin-top: 6px; }
+  .tableau--cartes td[data-libelle] {
+    grid-column: 1 / -1; display: flex; gap: 8px; font-size: 13.5px; color: var(--encre-2);
+  }
+  .tableau--cartes td[data-libelle]::before {
+    content: attr(data-libelle); flex: none; min-width: 84px;
+    color: var(--encre-3); font-size: 11px; font-weight: 650;
+    letter-spacing: .06em; text-transform: uppercase; padding-top: 2px;
+  }
+  /* Un champ vide n'apporte rien sur un petit écran. */
+  .tableau--cartes td[data-libelle]:has(> .discret:only-child) { display: none; }
+}
+
 /* ------------------------------------------------------------ messages */
 .avis {
   display: flex; gap: 10px; align-items: flex-start; padding: 11px 14px;
@@ -284,6 +372,27 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 14px; }
 .filtres { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 14px; }
 .filtres .champ { margin-bottom: 0; min-width: 150px; }
 .filtres .champ--large { flex: 1 1 240px; }
+/* La case sert uniquement de bascule CSS ; elle n'est jamais visible et
+   n'a pas de `name`, donc elle n'est pas soumise avec le formulaire. */
+.bascule-filtres { position: absolute; opacity: 0; pointer-events: none; }
+.bascule-filtres__bouton { display: none; }
+.filtres__avances { display: contents; }
+
+@media (max-width: 720px) {
+  /* Deux filtres par ligne, et les filtres secondaires repliés. */
+  .filtres { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .filtres .champ { min-width: 0; margin-bottom: 0; }
+  .filtres .champ--large, .filtres .boutons { grid-column: 1 / -1; }
+  .filtres > label, .filtres .champ > label { font-size: 12px; }
+  .bascule-filtres__bouton { display: inline-flex; }
+  .filtres__avances { display: none; }
+  .bascule-filtres:checked ~ .filtres__avances {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; grid-column: 1 / -1;
+  }
+  .bascule-filtres:checked ~ .boutons .bascule-filtres__bouton {
+    border-color: var(--accent); color: var(--accent);
+  }
+}
 .jetons { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
 .jeton {
   display: inline-flex; align-items: center; gap: 6px; padding: 3px 6px 3px 10px;
@@ -297,7 +406,7 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 14px; }
 
 /* ------------------------------------------------------------ chronologie */
 .chrono { list-style: none; margin: 0; padding: 0; }
-.chrono li { display: grid; grid-template-columns: 22px 1fr; gap: 12px; padding-bottom: 16px; position: relative; }
+.chrono li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; padding-bottom: 16px; position: relative; }
 .chrono li::before {
   content: ""; position: absolute; left: 10px; top: 20px; bottom: 0; width: 1px; background: var(--bordure-2);
 }
@@ -307,11 +416,11 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 14px; }
   box-shadow: 0 0 0 1px var(--bordure-2); background: var(--surface-3); margin-top: 1px; z-index: 1; }
 .chrono__tete { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 .chrono__quand { font-size: 12px; color: var(--encre-3); font-variant-numeric: tabular-nums; }
-.chrono__detail { font-size: 13px; color: var(--encre-2); margin-top: 3px; }
+.chrono__detail { font-size: 13px; color: var(--encre-2); margin-top: 3px; overflow-wrap: anywhere; }
 .chrono__forcee { border-left: 2px solid var(--grave); padding-left: 9px; }
 
 /* ------------------------------------------------------------ scan */
-.scan { display: grid; gap: 14px; grid-template-columns: minmax(0,1fr) 300px; align-items: start; }
+.scan { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; }
 @media (max-width: 900px) { .scan { grid-template-columns: 1fr; } }
 .viseur {
   position: relative; background: #000; border-radius: var(--r-3); overflow: hidden;
@@ -393,6 +502,33 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 14px; }
 .bon__tete { display: flex; justify-content: space-between; gap: 20px; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 14px; }
 .bon__signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px; }
 .bon__signature { border: 1px solid #000; height: 28mm; padding: 4px 6px; font-size: 10pt; }
+
+/* Sur écran tactile, 38 px est trop petit — a fortiori avec des gants.
+   44 px est le minimum recommandé par Apple, 48 par Google. */
+@media (pointer: coarse), (max-width: 860px) {
+  .bouton, button.bouton, a.bouton { min-height: 44px; padding: 0 16px; }
+  .bouton--petit { min-height: 40px; padding: 0 12px; }
+  input[type=text], input[type=email], input[type=password], input[type=number],
+  input[type=date], input[type=search], input[type=tel], select, textarea {
+    min-height: 44px; font-size: 16px; /* 16 px empêche le zoom automatique iOS */
+  }
+  input[type=color] { min-height: 44px; }
+  .coche input { width: 22px; height: 22px; }
+  /* La case est petite : c'est tout le libellé qui doit être cliquable. */
+  .coche { padding: 6px 0; min-height: 40px; }
+  summary.bouton { min-height: 44px; }
+}
+
+/* Le champ douchette est invisible et hors flux : il ne doit pas hériter
+   de la hauteur minimale des champs. */
+#champ-douchette { min-height: 0 !important; height: 1px; }
+
+/* Sur téléphone, la ligne entière d'une liste doit être atteignable au
+   pouce, pas seulement les dix caractères du code. */
+@media (max-width: 720px) {
+  .tableau--cartes .cel-titre a { display: inline-block; padding: 6px 0; }
+  .tableau--cartes .cel-action .bouton { min-height: 40px; }
+}
 
 @media print {
   @page { margin: 8mm; }

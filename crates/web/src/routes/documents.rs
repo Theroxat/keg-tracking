@@ -46,7 +46,7 @@ pub async fn liste(
             })))
         } @else {
             div class="tableau-cadre" {
-                table class="tableau" {
+                table class="tableau tableau--cartes" {
                     thead { tr {
                         th { (t!("champ.numero")) } th { "Type" } th { (t!("champ.statut")) }
                         th { "Fûts" } th { (t!("champ.client")) } th { "Créé" } th {}
@@ -54,19 +54,19 @@ pub async fn liste(
                     tbody {
                         @for d in &docs {
                             tr {
-                                td class="mono" style="font-weight:600" { (d.reference) }
-                                td { (traduire(d.type_document.cle_i18n())) }
-                                td {
+                                td class="cel-titre mono" style="font-weight:600" { (d.reference) }
+                                td data-libelle="Type" { (traduire(d.type_document.cle_i18n())) }
+                                td class="cel-marque" {
                                     @match d.etat {
                                         EtatDocument::Brouillon => (c::badge("alerte", traduire(d.etat.cle_i18n()))),
                                         EtatDocument::Valide => (c::badge("ok", traduire(d.etat.cle_i18n()))),
                                         EtatDocument::Abandonne => (c::badge("neutre", traduire(d.etat.cle_i18n()))),
                                     }
                                 }
-                                td class="num" { (d.lignes) }
-                                td class="petit" { (c::texte_ou_tiret(d.client.as_ref())) }
-                                td class="petit discret num" { (c::date_heure(d.cree_le, &tz)) }
-                                td class="serre" {
+                                td class="num" data-libelle="Fûts" { (d.lignes) }
+                                td class="petit" data-libelle=(t!("champ.client")) { (c::texte_ou_tiret(d.client.as_ref())) }
+                                td class="petit discret num" data-libelle="Créé" { (c::date_heure(d.cree_le, &tz)) }
+                                td class="cel-action serre" {
                                     @if d.etat == EtatDocument::Brouillon {
                                         a class="bouton bouton--petit bouton--vif"
                                           href=(format!("/operations/{}", d.id)) { (t!("action.continuer")) }
@@ -409,7 +409,7 @@ fn tableau_captures(
             div class="vide" { (t!("op.aucune_capture")) }
         } @else {
             div class="tableau-cadre" style="border:0" {
-                table class="tableau" {
+                table class="tableau tableau--cartes" {
                     thead { tr {
                         th { "#" } th { (t!("champ.code_qr")) } th { (t!("op.etat_avant")) }
                         th { (t!("champ.biere")) } th { (t!("champ.client")) } th {}
@@ -418,11 +418,11 @@ fn tableau_captures(
                         @for l in lignes {
                             tr {
                                 td class="serre discret num petit" { (l.ordre) }
-                                td { a class="lien-ligne" href=(format!("/futs/{}", l.fut_id)) { (l.code_qr) } }
-                                td { (c::badge_statut(l.statut_avant_capture)) }
-                                td class="petit" { (c::texte_ou_tiret(l.biere.as_ref())) }
-                                td class="petit" { (c::texte_ou_tiret(l.client.as_ref())) }
-                                td class="serre" {
+                                td class="cel-titre" { a class="lien-ligne" href=(format!("/futs/{}", l.fut_id)) { (l.code_qr) } }
+                                td class="cel-marque" { (c::badge_statut(l.statut_avant_capture)) }
+                                td class="petit" data-libelle=(t!("champ.biere")) { (c::texte_ou_tiret(l.biere.as_ref())) }
+                                td class="petit" data-libelle=(t!("champ.client")) { (c::texte_ou_tiret(l.client.as_ref())) }
+                                td class="cel-action serre" {
                                     button class="bouton bouton--petit bouton--nu"
                                            hx-post=(format!("/operations/{}/lignes/{}/retirer", d.id, l.id))
                                            hx-target="#captures" hx-swap="innerHTML" {
@@ -747,7 +747,7 @@ pub async fn fiche(
     let tz = s.fuseau_horaire.clone();
 
     let corps = html! {
-        div style="display:grid;gap:12px;grid-template-columns:minmax(0,1fr) 320px;align-items:start" {
+        div class="duo duo--etroit" {
             section class="carte" {
                 div class="carte__tete" {
                     h2 { (lignes.len()) " fûts" }
@@ -761,7 +761,7 @@ pub async fn fiche(
                     (tableau_captures(&doc, &lignes, &s.jeton_csrf))
                 }
             }
-            div style="display:flex;flex-direction:column;gap:12px" {
+            div class="duo__col" {
                 (resume_configuration(&doc))
                 div class="carte" { div class="carte__corps" style="font-size:13.5px;display:flex;flex-direction:column;gap:5px" {
                     div { span class="minus" { "Créé" } " " (c::date_heure(doc.cree_le, &tz))

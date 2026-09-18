@@ -148,7 +148,7 @@ fn bureau(
             }
         }
 
-        div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));margin-top:12px" {
+        div class="colonnes" style="margin-top:12px" {
             section class="carte" {
                 div class="carte__tete" {
                     h2 { (t!("tdb.repartition")) }
