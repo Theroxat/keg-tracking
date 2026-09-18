@@ -1,0 +1,81 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select e.fut_id, f.code_qr,\n                  e.statut_apres as \"statut_apres: Statut\",\n                  e.type_evenement as \"type_evenement: TypeEvenement\",\n                  nullif(trim(coalesce(u.prenom,'') || ' ' || coalesce(u.nom,'')), '') as \"par?\",\n                  e.survenu_le\n             from evenement_fut e\n             join fut f on f.id = e.fut_id\n             left join utilisateur u on u.id = e.utilisateur_id\n            order by e.survenu_le desc limit $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "fut_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "code_qr",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "statut_apres: Statut",
+        "type_info": {
+          "Custom": {
+            "name": "statut_fut",
+            "kind": {
+              "Enum": [
+                "recu",
+                "sale",
+                "propre",
+                "rempli",
+                "livre",
+                "hors_service",
+                "perdu"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "type_evenement: TypeEvenement",
+        "type_info": {
+          "Custom": {
+            "name": "type_evenement",
+            "kind": {
+              "Enum": [
+                "mise_en_service",
+                "transition",
+                "transition_forcee",
+                "correction",
+                "modification_donnees",
+                "import"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "par?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "survenu_le",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      null,
+      false
+    ]
+  },
+  "hash": "09c8da65b5b7d2ac119eb537e27cb1dbb41d4b95be8a133b1c1069452fd537bb"
+}

@@ -1,0 +1,187 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select f.id, f.code_qr, f.contenance_litres, f.date_mise_en_service,\n                  f.commentaire, f.statut as \"statut: Statut\", f.emplacement_id,\n                  em.nom as \"emplacement?\", f.client_id, c.societe as \"client?\",\n                  f.adresse_client_id, f.type_biere_id, b.nom as \"biere?\",\n                  b.couleur as \"couleur_biere?\", f.lot_id, l.numero as \"lot?\", l.dluo,\n                  f.cuve_id, cv.nom as \"cuve?\", f.date_remplissage, f.statut_depuis_le,\n                  f.dernier_lavage_le,\n                  nullif(trim(coalesce(ul.prenom,'') || ' ' || coalesce(ul.nom,'')), '')\n                    as \"dernier_lavage_par?\",\n                  f.dernier_evenement_le, f.sequence_courante, f.cree_le\n             from fut f\n             left join emplacement em on em.id = f.emplacement_id\n             left join client c       on c.id  = f.client_id\n             left join type_biere b   on b.id  = f.type_biere_id\n             left join lot l          on l.id  = f.lot_id\n             left join cuve cv        on cv.id = f.cuve_id\n             left join utilisateur ul on ul.id = f.dernier_lavage_par\n            where upper(f.code_qr) = upper($1)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "code_qr",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "contenance_litres",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "date_mise_en_service",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 4,
+        "name": "commentaire",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "statut: Statut",
+        "type_info": {
+          "Custom": {
+            "name": "statut_fut",
+            "kind": {
+              "Enum": [
+                "recu",
+                "sale",
+                "propre",
+                "rempli",
+                "livre",
+                "hors_service",
+                "perdu"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "emplacement_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
+        "name": "emplacement?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "client_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 9,
+        "name": "client?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "adresse_client_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 11,
+        "name": "type_biere_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 12,
+        "name": "biere?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 13,
+        "name": "couleur_biere?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 14,
+        "name": "lot_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 15,
+        "name": "lot?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 16,
+        "name": "dluo",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 17,
+        "name": "cuve_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 18,
+        "name": "cuve?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 19,
+        "name": "date_remplissage",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 20,
+        "name": "statut_depuis_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 21,
+        "name": "dernier_lavage_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 22,
+        "name": "dernier_lavage_par?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 23,
+        "name": "dernier_evenement_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 24,
+        "name": "sequence_courante",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 25,
+        "name": "cree_le",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      true,
+      null,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "1ac1d0541f55e060ced99fec237712404231d917d833f4f5049e8671678c5eeb"
+}

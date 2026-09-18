@@ -1,0 +1,876 @@
+//! Opérations par lot : le cœur du gain de temps.
+//!
+//! Le brouillon vit côté serveur dès la première capture. Rafraîchissement,
+//! veille du téléphone, batterie à plat, changement d'appareil : on reprend
+//! là où on s'était arrêté. C'est la raison pour laquelle le produit n'a
+//! pas besoin d'une couche hors-ligne.
+
+use axum::extract::{Path, Query, State};
+use axum::response::{IntoResponse, Response};
+use axum::{Form, Json};
+use domaine::{EtatDocument, Statut, TypeDocument};
+use maud::{html, Markup};
+use serde::Deserialize;
+use uuid::Uuid;
+
+use crate::gabarits::composants as c;
+use crate::gabarits::csrf;
+use crate::gabarits::socle::{page, page_nue, Cadre};
+use crate::i18n::traduire;
+use crate::middleware::Session;
+use crate::routes::scan::{ilot, Demande, Reponse};
+use crate::routes::{page_avec_avis, rediriger, Contexte};
+use crate::{t, ErreurWeb, Etat};
+
+use persistance::document::{self, Configuration, ResultatCapture};
+
+// ------------------------------------------------------------------ liste
+pub async fn liste(
+    State(etat): State<Etat>,
+    ctx: Contexte,
+    Session(s): Session,
+) -> Result<Response, ErreurWeb> {
+    let avait = ctx.avis_present();
+    let mut tx = etat
+        .depot
+        .ouvrir(s.tenant_id, Some(s.utilisateur_id))
+        .await?;
+    let docs = document::lister(tx.conn(), None, 100).await?;
+    tx.valider().await?;
+    let tz = s.fuseau_horaire.clone();
+
+    let corps = html! {
+        @if docs.is_empty() {
+            (c::vide(t!("op.aucun_document"), Some(html! {
+                a class="bouton bouton--vif" href="/operations/nouvelle" { (t!("nav.operation")) }
+            })))
+        } @else {
+            div class="tableau-cadre" {
+                table class="tableau" {
+                    thead { tr {
+                        th { (t!("champ.numero")) } th { "Type" } th { (t!("champ.statut")) }
+                        th { "Fûts" } th { (t!("champ.client")) } th { "Créé" } th {}
+                    } }
+                    tbody {
+                        @for d in &docs {
+                            tr {
+                                td class="mono" style="font-weight:600" { (d.reference) }
+                                td { (traduire(d.type_document.cle_i18n())) }
+                                td {
+                                    @match d.etat {
+                                        EtatDocument::Brouillon => (c::badge("alerte", traduire(d.etat.cle_i18n()))),
+                                        EtatDocument::Valide => (c::badge("ok", traduire(d.etat.cle_i18n()))),
+                                        EtatDocument::Abandonne => (c::badge("neutre", traduire(d.etat.cle_i18n()))),
+                                    }
+                                }
+                                td class="num" { (d.lignes) }
+                                td class="petit" { (c::texte_ou_tiret(d.client.as_ref())) }
+                                td class="petit discret num" { (c::date_heure(d.cree_le, &tz)) }
+                                td class="serre" {
+                                    @if d.etat == EtatDocument::Brouillon {
+                                        a class="bouton bouton--petit bouton--vif"
+                                          href=(format!("/operations/{}", d.id)) { (t!("action.continuer")) }
+                                    } @else {
+                                        a class="bouton bouton--petit"
+                                          href=(format!("/documents/{}", d.id)) { (t!("action.voir")) }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
+    let actions = html! {
+        @if s.role.peut_ecrire() {
+            a class="bouton bouton--vif" href="/operations/nouvelle" { (t!("nav.operation")) }
+        }
+    };
+    let cadre = Cadre::new(&s, &ctx.chemin, t!("nav.documents"))
+        .actions(actions)
+        .avis(ctx.avis);
+    Ok(page_avec_avis(
+        page(cadre, corps),
+        avait,
+        etat.config.cookies_securises,
+    ))
+}
+
+// ------------------------------------------------- étape 1 : configuration
+fn etapes(courante: u8) -> Markup {
+    html! {
+        div class="etapes" {
+            @for (n, cle) in [(1u8, t!("op.etape_configuration")), (2, t!("op.etape_capture")), (3, t!("op.etape_validation"))] {
+                div class="etapes__item" aria-current=[(n == courante).then_some("step")] {
+                    b { (n) } span { (cle) }
+                }
+            }
+        }
+    }
+}
+
+pub async fn nouvelle(
+    State(etat): State<Etat>,
+    ctx: Contexte,
+    Session(s): Session,
+) -> Result<Response, ErreurWeb> {
+    if !s.role.peut_ecrire() {
+        return Err(ErreurWeb::Interdit);
+    }
+    let avait = ctx.avis_present();
+    let mut tx = etat
+        .depot
+        .ouvrir(s.tenant_id, Some(s.utilisateur_id))
+        .await?;
+
+    // Reprise automatique du brouillon en cours.
+    if let Some(d) = document::brouillon_en_cours(tx.conn(), s.utilisateur_id).await? {
+        tx.valider().await?;
+        return Ok(rediriger(
+            &format!("/operations/{}", d.id),
+            "ok",
+            &t!("op.brouillon_repris", reference = d.reference),
+            etat.config.cookies_securises,
+        ));
+    }
+
+    let bieres = persistance::referentiel::lister_bieres(tx.conn(), true).await?;
+    let cuves = persistance::referentiel::lister_cuves(tx.conn(), true).await?;
+    let emplacements = persistance::referentiel::lister_emplacements(tx.conn(), true).await?;
+    let clients = persistance::client::lister(tx.conn(), false, None).await?;
+    let lots = persistance::lot::lister(tx.conn(), None).await?;
+    tx.valider().await?;
+
+    let corps = html! {
+        (etapes(1))
+        form method="post" action="/operations" style="max-width:760px" {
+            (csrf(&s.jeton_csrf))
+            fieldset {
+                legend { (t!("op.type_operation")) }
+                div class="grille" {
+                    @for td in TypeDocument::TOUS {
+                        label class="coche" style="padding:10px;border:1px solid var(--bordure);border-radius:var(--r-2)" {
+                            input type="radio" name="type_document" value=(td.code())
+                                  checked[td == TypeDocument::OperationInterne] required;
+                            span { (traduire(td.cle_i18n())) }
+                        }
+                    }
+                }
+            }
+            fieldset {
+                legend { (t!("op.valeurs_a_appliquer")) }
+                p class="champ__aide" style="margin-bottom:12px" { (t!("op.champs_vides")) }
+                (c::selection("statut_cible", t!("champ.statut"),
+                    &Statut::TOUS.iter().map(|x| (x.code().to_string(), traduire(x.cle_i18n()).to_string())).collect::<Vec<_>>(),
+                    None, Some("—"), false))
+                div class="grille" {
+                    (c::selection("type_biere_id", t!("champ.type_biere"),
+                        &bieres.iter().map(|b| (b.id.to_string(), b.nom.clone())).collect::<Vec<_>>(),
+                        None, Some("—"), false))
+                    (c::selection("lot_id", t!("champ.lot"),
+                        &lots.iter().map(|l| (l.id.to_string(), format!("{} — {}", l.numero, l.biere))).collect::<Vec<_>>(),
+                        None, Some("—"), false))
+                    (c::selection("cuve_id", t!("champ.cuve"),
+                        &cuves.iter().map(|x| (x.id.to_string(), x.nom.clone())).collect::<Vec<_>>(),
+                        None, Some("—"), false))
+                    (c::selection("emplacement_id", t!("champ.emplacement"),
+                        &emplacements.iter().map(|x| (x.id.to_string(), x.nom.clone())).collect::<Vec<_>>(),
+                        None, Some("—"), false))
+                }
+                div class="grille" {
+                    div class="champ" {
+                        label for="champ-client_id" { (t!("champ.client")) }
+                        select id="champ-client_id" name="client_id"
+                               hx-get="/clients/adresses" hx-target="#choix-adresse"
+                               hx-trigger="change" hx-include="this" {
+                            option value="" { "—" }
+                            @for cl in &clients { option value=(cl.id) { (cl.societe) } }
+                        }
+                    }
+                    div id="choix-adresse" {
+                        (c::selection("adresse_client_id", t!("champ.adresse"), &[], None, Some("—"), false))
+                    }
+                }
+            }
+            fieldset {
+                legend { (t!("champ.commentaire")) }
+                p class="champ__aide" { (t!("op.commentaire_avant")) }
+                (c::zone_texte("commentaire", t!("champ.commentaire"), "", None))
+            }
+            button type="submit" class="bouton bouton--vif bouton--atelier bouton--large" {
+                (t!("op.lancer_capture"))
+            }
+        }
+    };
+    let cadre = Cadre::new(&s, &ctx.chemin, t!("op.titre"))
+        .sous_titre(t!("op.etape_configuration"))
+        .avis(ctx.avis);
+    Ok(page_avec_avis(
+        page(cadre, corps),
+        avait,
+        etat.config.cookies_securises,
+    ))
+}
+
+#[derive(Deserialize)]
+pub struct FormConfig {
+    type_document: Option<String>,
+    #[serde(default)]
+    statut_cible: Option<String>,
+    #[serde(default)]
+    type_biere_id: Option<String>,
+    #[serde(default)]
+    lot_id: Option<String>,
+    #[serde(default)]
+    cuve_id: Option<String>,
+    #[serde(default)]
+    emplacement_id: Option<String>,
+    #[serde(default)]
+    client_id: Option<String>,
+    #[serde(default)]
+    adresse_client_id: Option<String>,
+    #[serde(default)]
+    commentaire: String,
+}
+
+fn uuid_opt(v: &Option<String>) -> Option<Uuid> {
+    v.as_deref()
+        .filter(|s| !s.trim().is_empty())
+        .and_then(|s| Uuid::parse_str(s).ok())
+}
+
+impl FormConfig {
+    fn configuration(&self) -> Configuration {
+        Configuration {
+            statut_cible: self
+                .statut_cible
+                .as_deref()
+                .filter(|s| !s.is_empty())
+                .and_then(Statut::depuis_code),
+            type_biere_id: uuid_opt(&self.type_biere_id),
+            lot_id: uuid_opt(&self.lot_id),
+            cuve_id: uuid_opt(&self.cuve_id),
+            emplacement_id: uuid_opt(&self.emplacement_id),
+            client_id: uuid_opt(&self.client_id),
+            adresse_client_id: uuid_opt(&self.adresse_client_id),
+            commentaire: self.commentaire.clone(),
+        }
+    }
+}
+
+pub async fn creer(
+    State(etat): State<Etat>,
+    Session(s): Session,
+    Form(f): Form<FormConfig>,
+) -> Result<Response, ErreurWeb> {
+    if !s.role.peut_ecrire() {
+        return Err(ErreurWeb::Interdit);
+    }
+    let td = f
+        .type_document
+        .as_deref()
+        .and_then(TypeDocument::depuis_code)
+        .unwrap_or(TypeDocument::OperationInterne);
+    let cfg = f.configuration();
+
+    // Cohérence client / adresse vérifiée avant même la première capture.
+    let mut tx = etat
+        .depot
+        .ouvrir(s.tenant_id, Some(s.utilisateur_id))
+        .await?;
+    if let (Some(cid), Some(aid)) = (cfg.client_id, cfg.adresse_client_id) {
+        if !persistance::client::adresse_appartient(tx.conn(), cid, aid).await? {
+            return Err(ErreurWeb::Metier(
+                domaine::ErreurMetier::AdresseEtrangereAuClient,
+            ));
+        }
+    }
+    let id = document::creer(tx.conn(), td, &cfg, Some(s.utilisateur_id)).await?;
+    tx.valider().await?;
+    Ok(rediriger(
+        &format!("/operations/{id}"),
+        "ok",
+        t!("op.etape_capture"),
+        etat.config.cookies_securises,
+    ))
+}
+
+// ------------------------------------------------------- étape 2 : capture
+pub async fn capture(
+    State(etat): State<Etat>,
+    ctx: Contexte,
+    Session(s): Session,
+    Path(id): Path<Uuid>,
+) -> Result<Response, ErreurWeb> {
+    if !s.role.peut_ecrire() {
+        return Err(ErreurWeb::Interdit);
+    }
+    let avait = ctx.avis_present();
+    let mut tx = etat
+        .depot
+        .ouvrir(s.tenant_id, Some(s.utilisateur_id))
+        .await?;
+    let doc = document::lire(tx.conn(), id).await?;
+    if doc.etat != EtatDocument::Brouillon {
+        tx.valider().await?;
+        return Ok(rediriger(
+            &format!("/documents/{id}"),
+            "alerte",
+            t!("erreur.document_non_modifiable"),
+            etat.config.cookies_securises,
+        ));
+    }
+    let lignes = document::lignes(tx.conn(), id).await?;
+    tx.valider().await?;
+
+    let corps = html! {
+        (etapes(2))
+        div class="scan" {
+            div {
+                (ilot(&format!("/api/operations/{id}/lignes"),
+                      Some("#captures"), &s.jeton_csrf, true))
+            }
+            aside style="display:flex;flex-direction:column;gap:12px" {
+                div class="compteur-capture" {
+                    b id="scan-compteur" { (lignes.len()) }
+                    span { (t!("op.captures", n = "")) }
+                }
+                (resume_configuration(&doc))
+                div class="boutons" {
+                    a class="bouton bouton--vif bouton--atelier bouton--large"
+                      href=(format!("/operations/{id}/valider")) { (t!("action.valider")) }
+                }
+                form method="post" action=(format!("/operations/{id}/vider")) {
+                    (csrf(&s.jeton_csrf))
+                    button class="bouton bouton--petit bouton--nu"
+                           onclick=(format!("return confirm('{}')", t!("op.vider_confirmation", n = lignes.len()))) {
+                        (t!("action.vider"))
+                    }
+                }
+                form method="post" action=(format!("/operations/{id}/abandonner")) {
+                    (csrf(&s.jeton_csrf))
+                    button class="bouton bouton--petit bouton--nu"
+                           onclick=(format!("return confirm('{}')", t!("op.abandonner_confirmation"))) {
+                        (t!("action.annuler"))
+                    }
+                }
+            }
+        }
+        section class="carte" style="margin-top:12px" {
+            div class="carte__tete" { h2 { (t!("op.etape_capture")) } }
+            div class="carte__corps carte__corps--serre" id="captures" {
+                (tableau_captures(&doc, &lignes, &s.jeton_csrf))
+            }
+        }
+    };
+    let cadre = Cadre::new(&s, &ctx.chemin, t!("op.titre"))
+        .sous_titre(format!(
+            "{} — {}",
+            doc.reference,
+            traduire(doc.type_document.cle_i18n())
+        ))
+        .avis(ctx.avis);
+    Ok(page_avec_avis(
+        page(cadre, corps),
+        avait,
+        etat.config.cookies_securises,
+    ))
+}
+
+fn resume_configuration(d: &persistance::document::Document) -> Markup {
+    html! {
+        div class="carte" {
+            div class="carte__tete" { h2 { (t!("op.recapitulatif")) } }
+            div class="carte__corps" style="display:flex;flex-direction:column;gap:6px;font-size:13.5px" {
+                @if let Some(st) = d.statut_cible {
+                    div { span class="minus" { (t!("champ.statut")) } " " (c::badge_statut(st)) }
+                }
+                @if let Some(x) = &d.biere { div { span class="minus" { (t!("champ.biere")) } " " (x) } }
+                @if let Some(x) = &d.lot { div { span class="minus" { (t!("champ.lot")) } " " (x) } }
+                @if let Some(x) = &d.cuve { div { span class="minus" { (t!("champ.cuve")) } " " (x) } }
+                @if let Some(x) = &d.emplacement { div { span class="minus" { (t!("champ.emplacement")) } " " (x) } }
+                @if let Some(x) = &d.client { div { span class="minus" { (t!("champ.client")) } " " (x) } }
+                @if let Some(x) = &d.adresse { div class="discret petit" { (x) } }
+                @if !d.commentaire.is_empty() { div class="petit discret" { "« " (d.commentaire) " »" } }
+            }
+        }
+    }
+}
+
+/// Tableau des fûts capturés, avec leur **état actuel avant modification**.
+fn tableau_captures(
+    d: &persistance::document::Document,
+    lignes: &[persistance::document::LigneCapturee],
+    jeton: &str,
+) -> Markup {
+    html! {
+        @if lignes.is_empty() {
+            div class="vide" { (t!("op.aucune_capture")) }
+        } @else {
+            div class="tableau-cadre" style="border:0" {
+                table class="tableau" {
+                    thead { tr {
+                        th { "#" } th { (t!("champ.code_qr")) } th { (t!("op.etat_avant")) }
+                        th { (t!("champ.biere")) } th { (t!("champ.client")) } th {}
+                    } }
+                    tbody {
+                        @for l in lignes {
+                            tr {
+                                td class="serre discret num petit" { (l.ordre) }
+                                td { a class="lien-ligne" href=(format!("/futs/{}", l.fut_id)) { (l.code_qr) } }
+                                td { (c::badge_statut(l.statut_avant_capture)) }
+                                td class="petit" { (c::texte_ou_tiret(l.biere.as_ref())) }
+                                td class="petit" { (c::texte_ou_tiret(l.client.as_ref())) }
+                                td class="serre" {
+                                    button class="bouton bouton--petit bouton--nu"
+                                           hx-post=(format!("/operations/{}/lignes/{}/retirer", d.id, l.id))
+                                           hx-target="#captures" hx-swap="innerHTML" {
+                                        (t!("action.retirer"))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        @let _ = jeton;
+    }
+}
+
+pub async fn fragment_captures(
+    State(etat): State<Etat>,
+    Session(s): Session,
+    Path(id): Path<Uuid>,
+) -> Result<Response, ErreurWeb> {
+    let mut tx = etat
+        .depot
+        .ouvrir(s.tenant_id, Some(s.utilisateur_id))
+        .await?;
+    let doc = document::lire(tx.conn(), id).await?;
+    let lignes = document::lignes(tx.conn(), id).await?;
+    tx.valider().await?;
+    Ok(tableau_captures(&doc, &lignes, &s.jeton_csrf).into_response())
+}
+
+/// Capture en rafale : aucune validation manuelle entre deux fûts.
+pub async fn capturer(
+    State(etat): State<Etat>,
+    Session(s): Session,
+    Path(id): Path<Uuid>,
+    Json(d): Json<Demande>,
+) -> Response {
+    if !s.role.peut_ecrire() {
+        return (axum::http::StatusCode::FORBIDDEN, "interdit").into_response();
+    }
+    let mut tx = match etat.depot.ouvrir(s.tenant_id, Some(s.utilisateur_id)).await {
+        Ok(t) => t,
+        Err(e) => return echec(&d.code_qr, e.to_string()),
+    };
+
+    let doc = match document::lire(tx.conn(), id).await {
+        Ok(x) => x,
+        Err(e) => return echec(&d.code_qr, e.to_string()),
+    };
+    let resultat =
+        document::capturer(tx.conn(), &doc, &d.code_qr, s.role, Some(s.utilisateur_id)).await;
+    let compteur = document::lignes(tx.conn(), id)
+        .await
+        .map(|l| l.len() as i64)
+        .ok();
+    let _ = tx.valider().await;
+
+    let rafraichir = Some(format!("/operations/{id}/lignes"));
+    match resultat {
+        Ok(ResultatCapture::Ajoute(l)) => Json(Reponse {
+            resultat: "succes",
+            code: l.code_qr.clone(),
+            titre: l.code_qr.clone(),
+            detail: Some(t!("op.ajoute", code = &l.code_qr)),
+            rediriger: None,
+            rafraichir,
+            compteur,
+        })
+        .into_response(),
+        Ok(ResultatCapture::DejaPresent(l)) => Json(Reponse {
+            resultat: "avert",
+            code: l.code_qr.clone(),
+            titre: t!("erreur.fut_deja_capture").into(),
+            detail: Some(t!("op.deja_present", code = &l.code_qr)),
+            rediriger: None,
+            rafraichir: None,
+            compteur,
+        })
+        .into_response(),
+        // Refus anticipé : l'opérateur l'apprend pendant qu'il a le fût en
+        // main, pas dix minutes plus tard devant l'écran de validation.
+        Ok(ResultatCapture::Refuse {
+            code_qr, raison, ..
+        }) => Json(Reponse {
+            resultat: "echec",
+            code: code_qr.clone(),
+            titre: code_qr,
+            detail: Some(crate::i18n::message_erreur(&raison)),
+            rediriger: None,
+            rafraichir: None,
+            compteur,
+        })
+        .into_response(),
+        Err(persistance::Erreur::Metier(m)) => Json(Reponse {
+            resultat: "echec",
+            code: d.code_qr.clone(),
+            titre: t!("scan.echec").into(),
+            detail: Some(crate::i18n::message_erreur(&m)),
+            rediriger: None,
+            rafraichir: None,
+            compteur,
+        })
+        .into_response(),
+        Err(e) => echec(&d.code_qr, e.to_string()),
+    }
+}
+
+fn echec(code: &str, detail: String) -> Response {
+    tracing::warn!(erreur = %detail, "capture");
+    Json(Reponse {
+        resultat: "echec",
+        code: code.to_string(),
+        titre: t!("app.erreur_serveur").into(),
+        detail: None,
+        rediriger: None,
+        rafraichir: None,
+        compteur: None,
+    })
+    .into_response()
+}
+
+pub async fn retirer_ligne(
+    State(etat): State<Etat>,
+    Session(s): Session,
+    Path((id, ligne_id)): Path<(Uuid, Uuid)>,
+) -> Result<Response, ErreurWeb> {
+    if !s.role.peut_ecrire() {
+        return Err(ErreurWeb::Interdit);
+    }
+    let mut tx = etat
+        .depot
+        .ouvrir(s.tenant_id, Some(s.utilisateur_id))
+        .await?;
+    document::retirer_ligne(tx.conn(), id, ligne_id).await?;
+    let doc = document::lire(tx.conn(), id).await?;
+    let lignes = document::lignes(tx.conn(), id).await?;
+    tx.valider().await?;
+    Ok(tableau_captures(&doc, &lignes, &s.jeton_csrf).into_response())
+}
+
+pub async fn vider(
+    State(etat): State<Etat>,
+    Session(s): Session,
+    Path(id): Path<Uuid>,
+) -> Result<Response, ErreurWeb> {
+    if !s.role.peut_ecrire() {
+        return Err(ErreurWeb::Interdit);
+    }
+    let mut tx = etat
+        .depot
+        .ouvrir(s.tenant_id, Some(s.utilisateur_id))
+        .await?;
+    document::vider(tx.conn(), id).await?;
+    tx.valider().await?;
+    Ok(rediriger(
+        &format!("/operations/{id}"),
+        "ok",
+        t!("op.aucune_capture"),
+        etat.config.cookies_securises,
+    ))
+}
+
+pub async fn abandonner(
+    State(etat): State<Etat>,
+    Session(s): Session,
+    Path(id): Path<Uuid>,
+) -> Result<Response, ErreurWeb> {
+    if !s.role.peut_ecrire() {
+        return Err(ErreurWeb::Interdit);
+    }
+    let mut tx = etat
+        .depot
+        .ouvrir(s.tenant_id, Some(s.utilisateur_id))
+        .await?;
+    document::abandonner(tx.conn(), id).await?;
+    tx.valider().await?;
+    Ok(rediriger(
+        "/documents",
+        "ok",
+        t!("document.etat.abandonne"),
+        etat.config.cookies_securises,
+    ))
+}
+
+// ---------------------------------------------------- étape 3 : validation
+pub async fn recapitulatif(
+    State(etat): State<Etat>,
+    ctx: Contexte,
+    Session(s): Session,
+    Path(id): Path<Uuid>,
+) -> Result<Response, ErreurWeb> {
+    if !s.role.peut_ecrire() {
+        return Err(ErreurWeb::Interdit);
+    }
+    let avait = ctx.avis_present();
+    let mut tx = etat
+        .depot
+        .ouvrir(s.tenant_id, Some(s.utilisateur_id))
+        .await?;
+    let doc = document::lire(tx.conn(), id).await?;
+    let lignes = document::lignes(tx.conn(), id).await?;
+    tx.valider().await?;
+
+    let corps = html! {
+        (etapes(3))
+        div style="max-width:760px;display:flex;flex-direction:column;gap:12px" {
+            @if lignes.is_empty() {
+                div class="avis avis--alerte" { (t!("op.rien_a_valider")) }
+            } @else {
+                div class="avis" style="font-size:17px" {
+                    b {
+                        @if let Some(st) = doc.statut_cible {
+                            (t!("op.validation_resume", n = lignes.len(), statut = traduire(st.cle_i18n())))
+                        } @else {
+                            (t!("op.validation_resume_sans_statut", n = lignes.len()))
+                        }
+                    }
+                }
+            }
+            (resume_configuration(&doc))
+            section class="carte" {
+                div class="carte__corps carte__corps--serre" {
+                    (tableau_captures(&doc, &lignes, &s.jeton_csrf))
+                }
+            }
+            @if !lignes.is_empty() {
+                form method="post" action=(format!("/operations/{id}/valider")) {
+                    (csrf(&s.jeton_csrf))
+                    button class="bouton bouton--vif bouton--atelier bouton--large" {
+                        (t!("action.confirmer"))
+                    }
+                }
+            }
+            a class="bouton bouton--nu" href=(format!("/operations/{id}")) { (t!("app.retour")) }
+        }
+    };
+    let cadre = Cadre::new(&s, &ctx.chemin, t!("op.etape_validation"))
+        .sous_titre(doc.reference.clone())
+        .avis(ctx.avis);
+    Ok(page_avec_avis(
+        page(cadre, corps),
+        avait,
+        etat.config.cookies_securises,
+    ))
+}
+
+/// Application transactionnelle : tout ou rien.
+///
+/// Chaque transition est réévaluée — l'état a pu changer depuis la capture.
+/// Une seule ligne en erreur et **rien** n'est écrit : la transaction est
+/// abandonnée, le document reste un brouillon.
+pub async fn valider(
+    State(etat): State<Etat>,
+    Session(s): Session,
+    Path(id): Path<Uuid>,
+) -> Result<Response, ErreurWeb> {
+    if !s.role.peut_ecrire() {
+        return Err(ErreurWeb::Interdit);
+    }
+    let securise = etat.config.cookies_securises;
+    let mut tx = etat
+        .depot
+        .ouvrir(s.tenant_id, Some(s.utilisateur_id))
+        .await?;
+
+    match document::valider(&mut tx, s.role, id).await {
+        Ok(rapport) => {
+            persistance::audit::tracer(
+                tx.conn(),
+                Some(s.utilisateur_id),
+                "document.valide",
+                Some("document"),
+                Some(&id.to_string()),
+                serde_json::json!({ "reference": rapport.reference, "futs": rapport.futs }),
+                None,
+            )
+            .await?;
+            tx.valider().await?;
+            Ok(rediriger(
+                &format!("/documents/{id}"),
+                "ok",
+                &t!("op.valide", reference = rapport.reference, n = rapport.futs),
+                securise,
+            ))
+        }
+        Err(e) => {
+            // La transaction n'est jamais validée : aucune écriture ne subsiste.
+            drop(tx);
+            let message = match &e {
+                persistance::Erreur::Metier(m) => crate::i18n::message_erreur(m),
+                autre => {
+                    tracing::error!(erreur = %autre, "validation de document");
+                    t!("app.erreur_serveur").to_string()
+                }
+            };
+            Ok(rediriger(
+                &format!("/operations/{id}/valider"),
+                "grave",
+                &message,
+                securise,
+            ))
+        }
+    }
+}
+
+// ------------------------------------------------------------- consultation
+pub async fn fiche(
+    State(etat): State<Etat>,
+    ctx: Contexte,
+    Session(s): Session,
+    Path(id): Path<Uuid>,
+) -> Result<Response, ErreurWeb> {
+    let avait = ctx.avis_present();
+    let mut tx = etat
+        .depot
+        .ouvrir(s.tenant_id, Some(s.utilisateur_id))
+        .await?;
+    let doc = document::lire(tx.conn(), id).await?;
+    let lignes = document::lignes(tx.conn(), id).await?;
+    tx.valider().await?;
+    let tz = s.fuseau_horaire.clone();
+
+    let corps = html! {
+        div style="display:grid;gap:12px;grid-template-columns:minmax(0,1fr) 320px;align-items:start" {
+            section class="carte" {
+                div class="carte__tete" {
+                    h2 { (lignes.len()) " fûts" }
+                    @match doc.etat {
+                        EtatDocument::Valide => (c::badge("ok", traduire(doc.etat.cle_i18n()))),
+                        EtatDocument::Brouillon => (c::badge("alerte", traduire(doc.etat.cle_i18n()))),
+                        EtatDocument::Abandonne => (c::badge("neutre", traduire(doc.etat.cle_i18n()))),
+                    }
+                }
+                div class="carte__corps carte__corps--serre" {
+                    (tableau_captures(&doc, &lignes, &s.jeton_csrf))
+                }
+            }
+            div style="display:flex;flex-direction:column;gap:12px" {
+                (resume_configuration(&doc))
+                div class="carte" { div class="carte__corps" style="font-size:13.5px;display:flex;flex-direction:column;gap:5px" {
+                    div { span class="minus" { "Créé" } " " (c::date_heure(doc.cree_le, &tz))
+                          @if let Some(q) = &doc.cree_par_nom { span class="discret" { " — " (q) } } }
+                    @if let Some(v) = doc.valide_le {
+                        div { span class="minus" { "Validé" } " " (c::date_heure(v, &tz))
+                              @if let Some(q) = &doc.valide_par_nom { span class="discret" { " — " (q) } } }
+                    }
+                } }
+                @if doc.type_document == TypeDocument::Livraison && doc.etat == EtatDocument::Valide {
+                    a class="bouton bouton--vif bouton--large"
+                      href=(format!("/documents/{id}/bon-de-livraison")) target="_blank" {
+                        (t!("op.bon_de_livraison"))
+                    }
+                }
+            }
+        }
+    };
+    let cadre = Cadre::new(&s, &ctx.chemin, doc.reference.clone())
+        .sous_titre(traduire(doc.type_document.cle_i18n()))
+        .avis(ctx.avis);
+    Ok(page_avec_avis(
+        page(cadre, corps),
+        avait,
+        etat.config.cookies_securises,
+    ))
+}
+
+#[derive(Deserialize)]
+pub struct RequeteImpression {
+    #[serde(default)]
+    pub auto: Option<u8>,
+}
+
+/// Bon de livraison : une page HTML avec une feuille d'impression soignée.
+/// Aucune dépendance PDF en v1 — on le fait signer au client à la livraison.
+pub async fn bon_de_livraison(
+    State(etat): State<Etat>,
+    Session(s): Session,
+    Path(id): Path<Uuid>,
+    Query(_q): Query<RequeteImpression>,
+) -> Result<Response, ErreurWeb> {
+    let mut tx = etat
+        .depot
+        .ouvrir(s.tenant_id, Some(s.utilisateur_id))
+        .await?;
+    let doc = document::lire(tx.conn(), id).await?;
+    let lignes = document::lignes(tx.conn(), id).await?;
+    let loc = persistance::locataire::lire(tx.conn(), s.tenant_id).await?;
+    tx.valider().await?;
+    let tz = s.fuseau_horaire.clone();
+
+    let total_litres: i32 = lignes.iter().map(|l| l.contenance_litres).sum();
+    let corps = html! {
+        div class="bon" {
+            div class="bon__tete" {
+                div {
+                    h1 style="margin:0 0 4px" { (loc.nom) }
+                    p style="margin:0;font-size:11pt" { (t!("op.bon_de_livraison")) }
+                }
+                div style="text-align:right;font-size:11pt" {
+                    div { b { (doc.reference) } }
+                    @if let Some(v) = doc.valide_le { div { (c::date_heure(v, &tz)) } }
+                }
+            }
+            div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:14px;font-size:11pt" {
+                div {
+                    div class="minus" { (t!("champ.client")) }
+                    div { b { (doc.client.clone().unwrap_or_default()) } }
+                    div { (doc.adresse.clone().unwrap_or_default()) }
+                }
+                div {
+                    div class="minus" { "Contenu" }
+                    @if let Some(b) = &doc.biere { div { (b) } }
+                    @if let Some(l) = &doc.lot { div { (t!("champ.lot")) " " (l) } }
+                }
+            }
+            table class="tableau" style="width:100%;font-size:10.5pt" {
+                thead { tr {
+                    th { "#" } th { (t!("champ.code_qr")) } th { (t!("champ.contenance")) }
+                    th { (t!("champ.biere")) } th { (t!("champ.lot")) }
+                } }
+                tbody {
+                    @for (i, l) in lignes.iter().enumerate() {
+                        tr {
+                            td { (i + 1) }
+                            td class="mono" { (l.code_qr) }
+                            td { (l.contenance_litres) " L" }
+                            td { (l.biere.clone().unwrap_or_default()) }
+                            td { (l.lot.clone().unwrap_or_default()) }
+                        }
+                    }
+                }
+                tfoot { tr {
+                    td colspan="2" { b { (lignes.len()) " fûts" } }
+                    td colspan="3" { b { (total_litres) " L" } }
+                } }
+            }
+            @if !doc.commentaire.is_empty() {
+                p style="margin-top:12px;font-size:10.5pt" { (doc.commentaire) }
+            }
+            div class="bon__signatures" {
+                div class="bon__signature" { (t!("op.signature_livreur")) }
+                div class="bon__signature" { (t!("op.signature_client")) }
+            }
+            p class="sans-impression" style="margin-top:20px" {
+                button class="bouton bouton--vif" onclick="window.print()" { (t!("app.imprimer")) }
+            }
+        }
+    };
+    Ok(page_nue(&doc.reference, corps).into_response())
+}

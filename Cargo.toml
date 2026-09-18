@@ -1,0 +1,43 @@
+[workspace]
+resolver = "2"
+members = ["crates/domaine", "crates/persistance", "crates/web", "crates/app"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+publish = false
+
+[workspace.dependencies]
+domaine     = { path = "crates/domaine" }
+persistance = { path = "crates/persistance" }
+web         = { path = "crates/web" }
+
+axum        = { version = "0.8", features = ["macros", "multipart"] }
+axum-extra  = { version = "0.10", features = ["cookie"] }
+tokio       = { version = "1", features = ["rt-multi-thread", "macros", "signal", "time", "fs"] }
+tower       = "0.5"
+tower-http  = { version = "0.6", features = ["trace", "compression-gzip", "set-header", "request-id", "timeout"] }
+sqlx        = { version = "0.8", default-features = false, features = ["postgres", "uuid", "chrono", "macros", "migrate", "runtime-tokio", "tls-rustls", "json"] }
+maud        = { version = "0.27", features = ["axum"] }
+serde       = { version = "1", features = ["derive"] }
+serde_json  = "1"
+uuid        = { version = "1", features = ["v4", "v7", "serde"] }
+chrono      = { version = "0.4", features = ["serde"] }
+chrono-tz   = "0.10"
+argon2      = "0.5"
+password-hash = { version = "0.5", features = ["alloc", "rand_core"] }
+rand        = "0.8"
+sha2        = "0.10"
+base64      = "0.22"
+clap        = { version = "4", features = ["derive", "env"] }
+csv         = "1"
+rust_xlsxwriter = "0.89"
+calamine    = "0.26"
+qrcode      = { version = "0.14", default-features = false, features = ["svg"] }
+tracing     = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+thiserror   = "2"
+anyhow      = "1"
+unicode-normalization = "0.1"
+urlencoding = "2"

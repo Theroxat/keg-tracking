@@ -1,0 +1,36 @@
+{
+	admin off
+	# Le tunnel Cloudflare termine déjà le TLS : Caddy sert en clair sur le
+	# réseau local, derrière lui. Pour un déploiement avec nom de domaine
+	# pointé directement sur cette machine, remplacer le bloc ci-dessous par
+	# `{$DOMAINE_PUBLIC} { … }` et retirer `auto_https off` : Caddy obtient
+	# alors son certificat tout seul.
+	auto_https off
+	servers {
+		trusted_proxies static private_ranges
+		client_ip_headers Cf-Connecting-Ip X-Forwarded-For
+	}
+}
+
+:6666 {
+	encode zstd gzip
+
+	header {
+		-Server
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	}
+
+	# La sonde de disponibilité ne passe pas par l'application complète.
+	handle /sante {
+		respond "ok" 200
+	}
+
+	handle {
+		reverse_proxy app:8080 {
+			# Le navigateur parle en HTTPS au tunnel ; l'application doit le
+			# savoir pour poser des cookies `Secure` et générer de bonnes URL.
+			header_up X-Forwarded-Proto https
+			header_up X-Forwarded-Host {host}
+		}
+	}
+}

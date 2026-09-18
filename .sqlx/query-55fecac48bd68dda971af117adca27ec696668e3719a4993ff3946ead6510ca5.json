@@ -1,0 +1,127 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select s.id as session_id, s.tenant_id, s.utilisateur_id,\n                  u.email::text as \"email!\", u.nom, u.prenom, u.role as \"role: Role\",\n                  s.verrouillee, (u.pin_hash is not null) as \"a_un_pin!\",\n                  s.jeton_csrf, s.derniere_activite_le,\n                  l.nom as locataire_nom, l.etat as \"locataire_etat: EtatLocataire\",\n                  l.fuseau_horaire, s.usurpee_par\n             from session s\n             join utilisateur u on u.id = s.utilisateur_id\n             join locataire  l on l.id = s.tenant_id\n            where s.jeton_hash = $1\n              and s.revoquee_le is null\n              and s.expire_le > now()\n              and u.actif",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "session_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "tenant_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "utilisateur_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "email!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "nom",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "prenom",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "role: Role",
+        "type_info": {
+          "Custom": {
+            "name": "role_utilisateur",
+            "kind": {
+              "Enum": [
+                "lecture",
+                "production",
+                "administrateur"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "verrouillee",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 8,
+        "name": "a_un_pin!",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 9,
+        "name": "jeton_csrf",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "derniere_activite_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 11,
+        "name": "locataire_nom",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 12,
+        "name": "locataire_etat: EtatLocataire",
+        "type_info": {
+          "Custom": {
+            "name": "etat_locataire",
+            "kind": {
+              "Enum": [
+                "actif",
+                "suspendu"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "fuseau_horaire",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 14,
+        "name": "usurpee_par",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      null,
+      false,
+      false,
+      false,
+      false,
+      null,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "55fecac48bd68dda971af117adca27ec696668e3719a4993ff3946ead6510ca5"
+}

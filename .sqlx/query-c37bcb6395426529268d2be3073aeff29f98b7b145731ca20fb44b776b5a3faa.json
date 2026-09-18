@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into document_mouvement\n             (tenant_id, type_document, reference, statut_cible, type_biere_id,\n              lot_id, cuve_id, emplacement_id, client_id, adresse_client_id,\n              commentaire, cree_par)\n           values (locataire_courant(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)\n           returning id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "type_document",
+            "kind": {
+              "Enum": [
+                "livraison",
+                "retour",
+                "operation_interne"
+              ]
+            }
+          }
+        },
+        "Text",
+        {
+          "Custom": {
+            "name": "statut_fut",
+            "kind": {
+              "Enum": [
+                "recu",
+                "sale",
+                "propre",
+                "rempli",
+                "livre",
+                "hors_service",
+                "perdu"
+              ]
+            }
+          }
+        },
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c37bcb6395426529268d2be3073aeff29f98b7b145731ca20fb44b776b5a3faa"
+}

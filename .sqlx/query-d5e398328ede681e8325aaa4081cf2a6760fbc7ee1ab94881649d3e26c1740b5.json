@@ -1,0 +1,112 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select ld.id, ld.fut_id, f.code_qr, f.contenance_litres,\n                  ld.statut_avant_capture as \"statut_avant_capture: Statut\",\n                  f.statut as \"statut_actuel: Statut\",\n                  b.nom as \"biere?\", l.numero as \"lot?\", c.societe as \"client?\",\n                  ld.capture_le, ld.ordre\n             from ligne_document ld\n             join fut f on f.id = ld.fut_id\n             left join type_biere b on b.id = f.type_biere_id\n             left join lot l        on l.id = f.lot_id\n             left join client c     on c.id = f.client_id\n            where ld.document_id = $1\n            order by ld.ordre desc",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "fut_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "code_qr",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "contenance_litres",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "statut_avant_capture: Statut",
+        "type_info": {
+          "Custom": {
+            "name": "statut_fut",
+            "kind": {
+              "Enum": [
+                "recu",
+                "sale",
+                "propre",
+                "rempli",
+                "livre",
+                "hors_service",
+                "perdu"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "statut_actuel: Statut",
+        "type_info": {
+          "Custom": {
+            "name": "statut_fut",
+            "kind": {
+              "Enum": [
+                "recu",
+                "sale",
+                "propre",
+                "rempli",
+                "livre",
+                "hors_service",
+                "perdu"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "biere?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "lot?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "client?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "capture_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 10,
+        "name": "ordre",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "d5e398328ede681e8325aaa4081cf2a6760fbc7ee1ab94881649d3e26c1740b5"
+}

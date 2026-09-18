@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select archive from client where id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "archive",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a674b44329ec0aa5f6913339485ee783286d247d766593561bd59bd4ffb05735"
+}

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update utilisateur\n              set echecs_connexion = 0, verrouille_jusqu_a = null,\n                  derniere_connexion_le = now()\n            where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "78c9c60e897184f82eb2b286e55528d17382cacf21f1532148cd95f3cba1901c"
+}

@@ -1,0 +1,87 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select id, tenant_id, email::text as \"email!\", nom, prenom,\n                  role as \"role: Role\", actif, (pin_hash is not null) as \"a_un_pin!\",\n                  derniere_connexion_le, cree_le\n             from utilisateur where id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "tenant_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "email!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "nom",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "prenom",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "role: Role",
+        "type_info": {
+          "Custom": {
+            "name": "role_utilisateur",
+            "kind": {
+              "Enum": [
+                "lecture",
+                "production",
+                "administrateur"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "actif",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 7,
+        "name": "a_un_pin!",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 8,
+        "name": "derniere_connexion_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "cree_le",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      false,
+      false,
+      false,
+      false,
+      null,
+      true,
+      false
+    ]
+  },
+  "hash": "b0e70cdcc75774e102012de895748543b487caa2ea49fdb0d00455a2132446e9"
+}

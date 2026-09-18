@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select s.id as session_id, s.super_admin_id, a.nom,\n                  a.email::text as \"email!\", s.jeton_csrf, s.usurpe_locataire_id\n             from session_super_admin s join super_admin a on a.id = s.super_admin_id\n            where s.jeton_hash = $1 and s.revoquee_le is null\n              and s.expire_le > now() and a.actif",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "session_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "super_admin_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "nom",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "email!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "jeton_csrf",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "usurpe_locataire_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      null,
+      false,
+      true
+    ]
+  },
+  "hash": "7e0fdbd697bf36313c61df2066f5967cbc35b38b3e9b1db1cdf964e25297fbd3"
+}

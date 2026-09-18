@@ -1,0 +1,34 @@
+[package]
+name = "web"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+domaine.workspace = true
+persistance.workspace = true
+axum.workspace = true
+axum-extra.workspace = true
+tokio.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+maud.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+chrono-tz.workspace = true
+tracing.workspace = true
+thiserror.workspace = true
+csv.workspace = true
+rust_xlsxwriter.workspace = true
+calamine.workspace = true
+qrcode.workspace = true
+urlencoding.workspace = true
+rand.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "net"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "cookies"] }
+proptest = "1"

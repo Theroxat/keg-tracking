@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into session\n             (tenant_id, utilisateur_id, jeton_hash, jeton_csrf, appareil_libelle,\n              ip_creation, expire_le, usurpee_par)\n           values ($1, $2, $3, $4, $5, $6::text::inet,\n                   now() + make_interval(days => $7), $8)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Bytea",
+        "Text",
+        "Text",
+        "Text",
+        "Int4",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "363815a2240f86fa44b10f289eb759bdff8f73b17dd892eb6961e7228a0a9f11"
+}

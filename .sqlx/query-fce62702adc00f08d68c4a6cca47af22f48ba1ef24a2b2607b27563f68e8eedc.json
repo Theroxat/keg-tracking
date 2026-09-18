@@ -1,0 +1,43 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into utilisateur (tenant_id, email, mot_de_passe_hash, nom, prenom, role)\n           values ($1, $2::citext, $3, $4, $5, $6) returning id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        {
+          "Custom": {
+            "name": "citext",
+            "kind": "Simple"
+          }
+        },
+        "Text",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "role_utilisateur",
+            "kind": {
+              "Enum": [
+                "lecture",
+                "production",
+                "administrateur"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "fce62702adc00f08d68c4a6cca47af22f48ba1ef24a2b2607b27563f68e8eedc"
+}

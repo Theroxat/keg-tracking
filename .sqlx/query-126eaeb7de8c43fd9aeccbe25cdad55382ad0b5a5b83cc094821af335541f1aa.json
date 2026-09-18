@@ -1,0 +1,37 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update document_mouvement\n              set statut_cible = $2, type_biere_id = $3, lot_id = $4, cuve_id = $5,\n                  emplacement_id = $6, client_id = $7, adresse_client_id = $8,\n                  commentaire = $9, modifie_le = now()\n            where id = $1 and etat = 'brouillon'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        {
+          "Custom": {
+            "name": "statut_fut",
+            "kind": {
+              "Enum": [
+                "recu",
+                "sale",
+                "propre",
+                "rempli",
+                "livre",
+                "hors_service",
+                "perdu"
+              ]
+            }
+          }
+        },
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "126eaeb7de8c43fd9aeccbe25cdad55382ad0b5a5b83cc094821af335541f1aa"
+}

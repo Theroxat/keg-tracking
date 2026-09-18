@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update locataire set etat = $2, modifie_le = now() where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        {
+          "Custom": {
+            "name": "etat_locataire",
+            "kind": {
+              "Enum": [
+                "actif",
+                "suspendu"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5274c671911e6a62042eada2dabeb39ff92ebf8e303e0441d14a62281c28eb70"
+}

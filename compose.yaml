@@ -1,0 +1,89 @@
+# Déploiement de production.
+#
+# Le tunnel Cloudflare publie https://qr.selfhostr.io vers
+# http://<cette machine>:6666. C'est lui qui fournit le contexte sécurisé
+# exigé par `getUserMedia` : sans HTTPS, la caméra est bloquée par le
+# navigateur et le produit ne fonctionne plus.
+
+name: webqr
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "${PORT_PUBLIC:-6666}:6666"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    environment:
+      DATABASE_URL_OWNER:   "postgres://webqr_owner:${MDP_OWNER:?MDP_OWNER manquant}@postgres:5432/webqr"
+      DATABASE_URL_APP:     "postgres://webqr_app:${MDP_APP:?MDP_APP manquant}@postgres:5432/webqr"
+      DATABASE_URL_EDITEUR: "postgres://webqr_editeur:${MDP_EDITEUR:?MDP_EDITEUR manquant}@postgres:5432/webqr"
+      DATABASE_URL_AUTH:    "postgres://webqr_auth:${MDP_AUTH:?MDP_AUTH manquant}@postgres:5432/webqr"
+      SECRET_APP:           "${SECRET_APP:?SECRET_APP manquant (au moins 32 caractères)}"
+      DOMAINE_PUBLIC:       "${DOMAINE_PUBLIC:?DOMAINE_PUBLIC manquant}"
+      FUSEAU_DEFAUT:        "${FUSEAU_DEFAUT:-Europe/Paris}"
+      DERRIERE_PROXY:       "true"
+      COOKIES_SECURISES:    "true"
+      RUST_LOG:             "${RUST_LOG:-info}"
+      TZ:                   "${FUSEAU_DEFAUT:-Europe/Paris}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant}"
+      POSTGRES_DB: webqr
+      MDP_OWNER: "${MDP_OWNER}"
+      MDP_APP: "${MDP_APP}"
+      MDP_EDITEUR: "${MDP_EDITEUR}"
+      MDP_AUTH: "${MDP_AUTH}"
+      TZ: "${FUSEAU_DEFAUT:-Europe/Paris}"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d webqr"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  sauvegarde:
+    image: postgres:17-alpine
+    environment:
+      PGHOST: postgres
+      PGUSER: postgres
+      PGDATABASE: webqr
+      PGPASSWORD: "${POSTGRES_PASSWORD}"
+      RETENTION_QUOTIDIENNE: "${RETENTION_QUOTIDIENNE:-7}"
+      RETENTION_HEBDOMADAIRE: "${RETENTION_HEBDOMADAIRE:-4}"
+      RETENTION_MENSUELLE: "${RETENTION_MENSUELLE:-6}"
+      TZ: "${FUSEAU_DEFAUT:-Europe/Paris}"
+    volumes:
+      - ./docker/sauvegarde.sh:/sauvegarde.sh:ro
+      - sauvegardes:/sauvegardes
+    entrypoint: ["/bin/sh", "/sauvegarde.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pg_data:
+  caddy_data:
+  caddy_config:
+  sauvegardes:

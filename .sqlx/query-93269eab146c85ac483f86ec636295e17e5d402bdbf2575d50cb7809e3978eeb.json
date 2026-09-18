@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update emplacement set nom = $2, actif = $3 where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "93269eab146c85ac483f86ec636295e17e5d402bdbf2575d50cb7809e3978eeb"
+}

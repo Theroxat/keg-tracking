@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update document_mouvement\n              set etat = 'valide', valide_par = $2, valide_le = now(), modifie_le = now()\n            where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ae99d9cb895ecca00f6309306d62210881815d20221675f58147e171efafb8ba"
+}

@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select c.id, c.nom, c.actif,\n                  (select count(*) from fut f where f.cuve_id = c.id) as \"futs!\"\n             from cuve c where (not $1 or c.actif) order by c.nom",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "nom",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "actif",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 3,
+        "name": "futs!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "0b9f910402a867b7c846c1ba36b954b0a32cce5475765dda08bcc20f9aa2cdba"
+}

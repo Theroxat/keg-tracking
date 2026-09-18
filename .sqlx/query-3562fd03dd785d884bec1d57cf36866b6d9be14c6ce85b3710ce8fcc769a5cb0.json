@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select mot_de_passe_hash from utilisateur where id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "mot_de_passe_hash",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "3562fd03dd785d884bec1d57cf36866b6d9be14c6ce85b3710ce8fcc769a5cb0"
+}

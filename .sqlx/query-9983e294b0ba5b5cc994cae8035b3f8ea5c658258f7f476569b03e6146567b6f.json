@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select e.id, e.nom, e.actif,\n                  (select count(*) from fut f where f.emplacement_id = e.id) as \"futs!\"\n             from emplacement e where (not $1 or e.actif) order by e.nom",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "nom",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "actif",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 3,
+        "name": "futs!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "9983e294b0ba5b5cc994cae8035b3f8ea5c658258f7f476569b03e6146567b6f"
+}

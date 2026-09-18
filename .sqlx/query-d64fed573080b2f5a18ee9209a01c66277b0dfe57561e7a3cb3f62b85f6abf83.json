@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update session set echecs_pin = echecs_pin + 1,\n                  pin_bloque_jusqu_a = now() + make_interval(secs => 2 * echecs_pin)\n            where id = $1 returning echecs_pin",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "echecs_pin",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d64fed573080b2f5a18ee9209a01c66277b0dfe57561e7a3cb3f62b85f6abf83"
+}

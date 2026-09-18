@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update locataire set nom = $2, prefixe_qr = $3, emplacement_defaut_id = $4,\n                  fuseau_horaire = $5, seuil_alerte_non_revenu_jours = $6,\n                  seuil_alerte_dluo_jours = $7, contenances_autorisees = $8,\n                  modifie_le = now()\n             where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Uuid",
+        "Text",
+        "Int4",
+        "Int4",
+        "Int4Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8c65f75e0a41a1d7930a89342ccf31ad99b537c49e3775d9f77e5244b9b059a4"
+}

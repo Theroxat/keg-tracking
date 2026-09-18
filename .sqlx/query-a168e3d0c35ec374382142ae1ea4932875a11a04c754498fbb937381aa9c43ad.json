@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update lot set numero = $2, date_brassage = $3, type_biere_id = $4,\n                  cuve_id = $5, dluo = $6, commentaire = $7 where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Date",
+        "Uuid",
+        "Uuid",
+        "Date",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a168e3d0c35ec374382142ae1ea4932875a11a04c754498fbb937381aa9c43ad"
+}

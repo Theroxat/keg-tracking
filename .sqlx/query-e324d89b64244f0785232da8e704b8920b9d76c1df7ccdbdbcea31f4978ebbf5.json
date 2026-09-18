@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select j.id, a.nom as \"qui?\", j.action, l.nom as \"locataire?\",\n                  j.details, j.survenu_le\n             from journal_audit_editeur j\n             left join super_admin a on a.id = j.super_admin_id\n             left join locataire   l on l.id = j.locataire_id\n            order by j.survenu_le desc limit $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "qui?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "action",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "locataire?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "details",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 5,
+        "name": "survenu_le",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "e324d89b64244f0785232da8e704b8920b9d76c1df7ccdbdbcea31f4978ebbf5"
+}

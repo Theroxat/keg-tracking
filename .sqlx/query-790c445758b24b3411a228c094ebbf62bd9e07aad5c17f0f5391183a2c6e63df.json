@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update adresse_client set libelle = $2, rue = $3, code_postal = $4,\n                  ville = $5, archive = $6 where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "790c445758b24b3411a228c094ebbf62bd9e07aad5c17f0f5391183a2c6e63df"
+}

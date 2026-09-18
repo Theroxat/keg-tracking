@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select id, appareil_libelle, cree_le, derniere_activite_le, expire_le\n             from session\n            where utilisateur_id = $1 and revoquee_le is null and expire_le > now()\n            order by derniere_activite_le desc",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "appareil_libelle",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "cree_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 3,
+        "name": "derniere_activite_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "expire_le",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3c688bc72789757ddb95421042e905cf52dee5ff79adc0c4210757c204faaa85"
+}

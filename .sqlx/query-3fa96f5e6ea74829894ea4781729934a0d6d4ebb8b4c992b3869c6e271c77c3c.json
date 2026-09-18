@@ -1,0 +1,92 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select id, nom, identifiant_court::text as \"identifiant_court!\",\n                  prefixe_qr, emplacement_defaut_id, fuseau_horaire,\n                  seuil_alerte_non_revenu_jours, seuil_alerte_dluo_jours,\n                  contenances_autorisees, etat as \"etat: EtatLocataire\", cree_le\n             from locataire where id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "nom",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "identifiant_court!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "prefixe_qr",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "emplacement_defaut_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
+        "name": "fuseau_horaire",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "seuil_alerte_non_revenu_jours",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 7,
+        "name": "seuil_alerte_dluo_jours",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 8,
+        "name": "contenances_autorisees",
+        "type_info": "Int4Array"
+      },
+      {
+        "ordinal": 9,
+        "name": "etat: EtatLocataire",
+        "type_info": {
+          "Custom": {
+            "name": "etat_locataire",
+            "kind": {
+              "Enum": [
+                "actif",
+                "suspendu"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "cree_le",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3fa96f5e6ea74829894ea4781729934a0d6d4ebb8b4c992b3869c6e271c77c3c"
+}

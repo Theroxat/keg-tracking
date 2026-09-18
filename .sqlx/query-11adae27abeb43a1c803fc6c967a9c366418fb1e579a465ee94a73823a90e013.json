@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select b.id, b.nom, b.couleur, b.actif, b.ordre,\n                  (select count(*) from fut f where f.type_biere_id = b.id) as \"futs!\"\n             from type_biere b\n            where (not $1 or b.actif)\n            order by b.ordre, b.nom",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "nom",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "couleur",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "actif",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
+        "name": "ordre",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "futs!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "11adae27abeb43a1c803fc6c967a9c366418fb1e579a465ee94a73823a90e013"
+}

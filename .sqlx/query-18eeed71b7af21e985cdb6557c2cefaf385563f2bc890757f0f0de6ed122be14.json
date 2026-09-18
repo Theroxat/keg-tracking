@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select f.id, f.code_qr, f.client_id, c.societe as \"client?\",\n                  f.statut_depuis_le as depuis_le,\n                  extract(day from now() - f.statut_depuis_le)::int as \"jours!\",\n                  l.numero as \"lot?\"\n             from fut f\n             left join client c on c.id = f.client_id\n             left join lot l    on l.id = f.lot_id\n            where f.client_id = $1 and f.statut = 'livre'\n            order by f.statut_depuis_le",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "code_qr",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "client_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "client?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "depuis_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "jours!",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "lot?",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      null,
+      false
+    ]
+  },
+  "hash": "18eeed71b7af21e985cdb6557c2cefaf385563f2bc890757f0f0de6ed122be14"
+}

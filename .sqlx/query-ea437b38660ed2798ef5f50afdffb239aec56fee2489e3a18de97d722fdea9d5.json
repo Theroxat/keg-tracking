@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into compteur_reference (tenant_id, cle, valeur)\n           values (locataire_courant(), $1, 1)\n           on conflict (tenant_id, cle)\n           do update set valeur = compteur_reference.valeur + 1\n           returning valeur",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "valeur",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "ea437b38660ed2798ef5f50afdffb239aec56fee2489e3a18de97d722fdea9d5"
+}

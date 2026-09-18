@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from session where expire_le < now() - interval '90 days'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "df78c6344e71c826415bccff31e19f018f4a3eaeb18a1d34aa8bfee7072d4749"
+}

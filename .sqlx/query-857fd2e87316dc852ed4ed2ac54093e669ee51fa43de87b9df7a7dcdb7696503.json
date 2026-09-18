@@ -1,0 +1,73 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select u.id, u.tenant_id, u.mot_de_passe_hash, u.actif,\n                  u.echecs_connexion, u.verrouille_jusqu_a,\n                  l.etat as \"locataire_etat: EtatLocataire\"\n             from utilisateur u join locataire l on l.id = u.tenant_id\n            where u.email = $1::citext",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "tenant_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "mot_de_passe_hash",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "actif",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
+        "name": "echecs_connexion",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "verrouille_jusqu_a",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "locataire_etat: EtatLocataire",
+        "type_info": {
+          "Custom": {
+            "name": "etat_locataire",
+            "kind": {
+              "Enum": [
+                "actif",
+                "suspendu"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "citext",
+            "kind": "Simple"
+          }
+        }
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "857fd2e87316dc852ed4ed2ac54093e669ee51fa43de87b9df7a7dcdb7696503"
+}

@@ -1,0 +1,125 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select f.id, f.code_qr, f.statut as \"statut: Statut\", f.emplacement_id,\n                  f.client_id, f.adresse_client_id, f.type_biere_id, f.lot_id, f.cuve_id,\n                  f.date_remplissage, f.statut_depuis_le, f.dernier_lavage_le,\n                  f.dernier_lavage_par, f.dernier_evenement_id, f.dernier_evenement_le,\n                  f.sequence_courante\n             from fut f order by f.code_qr",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "code_qr",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "statut: Statut",
+        "type_info": {
+          "Custom": {
+            "name": "statut_fut",
+            "kind": {
+              "Enum": [
+                "recu",
+                "sale",
+                "propre",
+                "rempli",
+                "livre",
+                "hors_service",
+                "perdu"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "emplacement_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "client_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
+        "name": "adresse_client_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 6,
+        "name": "type_biere_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
+        "name": "lot_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 8,
+        "name": "cuve_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 9,
+        "name": "date_remplissage",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 10,
+        "name": "statut_depuis_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 11,
+        "name": "dernier_lavage_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 12,
+        "name": "dernier_lavage_par",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 13,
+        "name": "dernier_evenement_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 14,
+        "name": "dernier_evenement_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 15,
+        "name": "sequence_courante",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "bb3b5d919a0330834f0e2328ae3697609e68fad325ebb3061273392e425a6615"
+}

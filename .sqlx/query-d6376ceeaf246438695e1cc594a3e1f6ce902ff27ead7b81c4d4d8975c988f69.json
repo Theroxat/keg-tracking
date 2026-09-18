@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select code_qr from fut where code_qr = any($1::text[]) order by code_qr",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "code_qr",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d6376ceeaf246438695e1cc594a3e1f6ce902ff27ead7b81c4d4d8975c988f69"
+}

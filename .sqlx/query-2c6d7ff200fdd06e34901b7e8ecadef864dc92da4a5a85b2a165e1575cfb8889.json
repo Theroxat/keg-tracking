@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into adresse_client (tenant_id, client_id, libelle, rue, code_postal, ville)\n           values (locataire_courant(), $1, $2, $3, $4, $5) returning id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "2c6d7ff200fdd06e34901b7e8ecadef864dc92da4a5a85b2a165e1575cfb8889"
+}

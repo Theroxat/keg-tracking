@@ -1,0 +1,82 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "with livraisons as (\n             select distinct on (e.fut_id, e.client_id)\n                    e.fut_id, e.client_id, e.adresse_client_id, e.survenu_le\n               from evenement_fut e\n              where e.lot_id = $1 and e.statut_apres = 'livre' and e.client_id is not null\n              order by e.fut_id, e.client_id, e.survenu_le desc\n           )\n           select c.id as client_id, c.societe, c.contact_nom, c.telephone, c.email,\n                  coalesce(max(a.rue || ' ' || a.code_postal || ' ' || a.ville), '') as \"adresse!\",\n                  count(distinct l.fut_id)                as \"futs!\",\n                  array_agg(distinct f.code_qr)           as \"codes_qr!\",\n                  min(l.survenu_le)                       as \"premiere_livraison!\",\n                  max(l.survenu_le)                       as \"derniere_livraison!\",\n                  count(distinct f.id) filter\n                    (where f.statut = 'livre' and f.client_id = c.id\n                       and f.lot_id = $1)                 as \"futs_encore_detenus!\"\n             from livraisons l\n             join client c on c.id = l.client_id\n             join fut f    on f.id = l.fut_id\n             left join adresse_client a on a.id = l.adresse_client_id\n            group by c.id, c.societe, c.contact_nom, c.telephone, c.email\n            order by c.societe",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "client_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "societe",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "contact_nom",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "telephone",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "email",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "adresse!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "futs!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 7,
+        "name": "codes_qr!",
+        "type_info": "TextArray"
+      },
+      {
+        "ordinal": 8,
+        "name": "premiere_livraison!",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "derniere_livraison!",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 10,
+        "name": "futs_encore_detenus!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "6275c925f041520d13567136b940ebb447a6e3a6c2ad53d91c3aaedc6650c9b4"
+}

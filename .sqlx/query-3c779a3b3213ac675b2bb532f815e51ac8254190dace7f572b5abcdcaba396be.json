@@ -1,0 +1,39 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select id, mot_de_passe_hash, actif from super_admin where email = $1::citext",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "mot_de_passe_hash",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "actif",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "citext",
+            "kind": "Simple"
+          }
+        }
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3c779a3b3213ac675b2bb532f815e51ac8254190dace7f572b5abcdcaba396be"
+}

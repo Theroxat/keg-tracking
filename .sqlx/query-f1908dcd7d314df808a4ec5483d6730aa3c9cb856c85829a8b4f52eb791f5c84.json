@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "with nouveaux as (\n             insert into fut (tenant_id, code_qr, contenance_litres, statut,\n                              emplacement_id, cree_par, modifie_par)\n             select locataire_courant(), code, $2, 'recu', $3, $4, $4\n               from unnest($1::text[]) as code\n             returning id, statut\n           )\n           insert into evenement_fut\n             (id, tenant_id, fut_id, sequence, type_evenement, origine,\n              statut_avant, statut_apres, emplacement_id, utilisateur_id, commentaire)\n           select gen_random_uuid(), locataire_courant(), n.id, 1,\n                  'mise_en_service', 'systeme', null, n.statut, $3, $4,\n                  'Mise en service en masse'\n             from nouveaux n\n           returning 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "?column?",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "TextArray",
+        "Int4",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "f1908dcd7d314df808a4ec5483d6730aa3c9cb856c85829a8b4f52eb791f5c84"
+}

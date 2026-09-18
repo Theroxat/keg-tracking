@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update document_mouvement set etat = 'abandonne', modifie_le = now()\n            where id = $1 and etat = 'brouillon'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b92b5f07511380562c51522496faace0b316bae6d6f7f7942996c24f8bd131ae"
+}
