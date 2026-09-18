@@ -303,6 +303,13 @@
     if (!elHors) return;
     elHors.textContent = message;
     elHors.classList.remove('rien');
+    // Sans caméra, les contrôles qui la pilotent n'ont plus de sens, et le
+    // témoin de décodeur ne doit pas rester bloqué sur « Chargement… ».
+    elBasculer && elBasculer.classList.add('rien');
+    elTorche && elTorche.classList.add('rien');
+    etiqueterDecodeur(t('libelleSaisieSeule'));
+    const champ = elManuel && elManuel.querySelector('input[name=code_qr]');
+    champ && champ.focus({ preventScroll: true });
   }
 
   async function demarrerCamera() {
@@ -330,6 +337,7 @@
       await elVideo.play();
       piste = flux.getVideoTracks()[0];
       if (elHors) elHors.classList.add('rien');
+      elBasculer && elBasculer.classList.remove('rien');
       preparerTorche();
       if (!decodeur) decodeur = await choisirDecodeur();
       lancerBoucle();

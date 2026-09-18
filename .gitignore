@@ -3,3 +3,6 @@
 /.env
 /sauvegardes
 recette.json
+/node_modules
+/package-lock.json
+/package.json

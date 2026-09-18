@@ -53,6 +53,7 @@ pub fn ilot(
             data-zxing-wasm={ "/statique/zxing_reader.wasm?v=" (v) }
             data-libelle-natif=(t!("scan.decodeur_natif"))
             data-libelle-wasm=(t!("scan.decodeur_wasm"))
+            data-libelle-saisie-seule=(t!("scan.saisie_seule"))
             data-libelle-camera-indisponible=(t!("scan.camera_indisponible"))
             data-libelle-camera-refusee=(t!("scan.camera_refusee"))
             data-libelle-contexte-non-securise=(t!("scan.contexte_non_securise"))

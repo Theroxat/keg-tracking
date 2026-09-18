@@ -173,6 +173,12 @@ pub async fn afficher(
                 input id="champ-q" type="search" name="q" value=[r.q.as_deref()]
                       placeholder=(t!("parc.recherche_placeholder"));
             }
+            // Sur téléphone, les filtres secondaires sont repliés : sinon
+            // ils occupent tout le premier écran avant la moindre donnée.
+            // Bascule en CSS pure, sans JavaScript, et sans `name` pour que
+            // la case ne parte pas dans la requête.
+            input type="checkbox" id="filtres-plus" class="bascule-filtres";
+            div class="filtres__avances" {
             div class="champ" {
                 label for="champ-statut" { (t!("champ.statut")) }
                 select id="champ-statut" name="statut" {
@@ -212,7 +218,11 @@ pub async fn afficher(
                     }
                 }
             }
+            }
             div class="boutons" {
+                label for="filtres-plus" class="bouton bascule-filtres__bouton" {
+                    (t!("parc.plus_de_filtres"))
+                }
                 button type="submit" class="bouton bouton--vif" { (t!("action.filtrer")) }
                 @if filtres.actifs() {
                     a class="bouton bouton--nu" href="/parc" { (t!("action.reinitialiser")) }
@@ -262,7 +272,7 @@ pub async fn afficher(
             ))
         } @else {
             div class="tableau-cadre" {
-                table class="tableau" {
+                table class="tableau tableau--cartes" {
                     thead { tr {
                         (c::entete_tri(t!("champ.code_qr"), "code_qr", tri_code, desc, &base_tri))
                         (c::entete_tri(t!("champ.statut"), "statut", tri_code, desc, &base_tri))
@@ -276,26 +286,39 @@ pub async fn afficher(
                     } }
                     tbody {
                         @for f in &futs {
+                            // `cel-titre` / `cel-marque` / `data-libelle` pilotent la
+                            // bascule en cartes sous 720 px : sur téléphone, une table
+                            // de neuf colonnes ne se lit pas.
                             tr {
-                                td { a class="lien-ligne" href=(format!("/futs/{}", f.id)) { (f.code_qr) } }
-                                td { (c::badge_statut(f.statut)) }
-                                td {
+                                td class="cel-titre" {
+                                    a class="lien-ligne" href=(format!("/futs/{}", f.id)) { (f.code_qr) }
+                                }
+                                td class="cel-marque" { (c::badge_statut(f.statut)) }
+                                td data-libelle=(t!("champ.biere")) {
                                     @if let Some(b) = &f.biere {
                                         span style="display:inline-flex;align-items:center;gap:6px" {
                                             (c::pastille_biere(f.couleur_biere.as_ref())) (b)
                                         }
                                     } @else { span class="discret" { "—" } }
                                 }
-                                td class="mono petit" { (c::texte_ou_tiret(f.lot.as_ref())) }
-                                td class="petit" { (c::texte_ou_tiret(f.cuve.as_ref())) }
-                                td class="petit" { (c::texte_ou_tiret(f.emplacement.as_ref())) }
-                                td {
+                                td class="mono petit" data-libelle=(t!("champ.lot")) {
+                                    (c::texte_ou_tiret(f.lot.as_ref()))
+                                }
+                                td class="petit" data-libelle=(t!("champ.cuve")) {
+                                    (c::texte_ou_tiret(f.cuve.as_ref()))
+                                }
+                                td class="petit" data-libelle=(t!("champ.emplacement")) {
+                                    (c::texte_ou_tiret(f.emplacement.as_ref()))
+                                }
+                                td data-libelle=(t!("champ.client")) {
                                     @if let (Some(cl), Some(id)) = (&f.client, f.client_id) {
                                         a href=(format!("/clients/{id}")) { (cl) }
                                     } @else { span class="discret" { "—" } }
                                 }
-                                td class="petit num" { (c::depuis(f.statut_depuis_le)) }
-                                td class="petit discret num" {
+                                td class="petit num" data-libelle=(t!("champ.anciennete")) {
+                                    (c::depuis(f.statut_depuis_le))
+                                }
+                                td class="petit discret num" data-libelle=(t!("champ.derniere_activite")) {
                                     @match f.dernier_evenement_le {
                                         Some(d) => (c::depuis(d)),
                                         None => span class="discret" { "—" },

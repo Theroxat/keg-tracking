@@ -185,6 +185,26 @@ Il n'est pas le même selon qui regarde.
   contenances autorisées, fuseau horaire.
 - **Journal d'audit** — qui a fait quoi, quand.
 
+## Sur téléphone
+
+L'interface change de forme sous 720 px, elle ne se contente pas de
+rétrécir :
+
+- les listes deviennent des **cartes** — code et statut sur la première
+  ligne, puis les champs renseignés, les champs vides disparaissent ;
+- sur la fiche d'un fût, les **actions remontent avant la chronologie** :
+  elles seraient sinon sous soixante événements ;
+- les filtres secondaires du parc sont **repliés** derrière « Plus de
+  filtres », pour que le premier résultat soit visible dès le premier
+  écran ;
+- toutes les cibles tactiles font **au moins 44 px**, et les champs de
+  saisie 16 px de police — en dessous, iOS zoome tout seul à chaque clic ;
+- la barre du bas reprend les cinq écrans utiles à l'atelier.
+
+Un outil vérifie qu'aucune page ne déborde horizontalement, sur iPhone 13,
+Pixel 5 et un écran de 320 px : `outils/audit-mobile.mjs`, rejoué par
+l'intégration continue.
+
 ## Conseil matériel
 
 Une étiquette QR papier ne survit pas à un lavage à la soude à 80 °C.

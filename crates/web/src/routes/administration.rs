@@ -72,9 +72,9 @@ pub async fn referentiels(
                 div class="carte__corps" {
                     @for e in entrees {
                         form method="post" action=(format!("/administration/referentiels/{genre}/{}", e.id))
-                             style="display:flex;gap:6px;align-items:center;margin-bottom:8px" {
+                             style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap" {
                             (csrf(&jeton))
-                            input type="text" name="nom" value=(e.nom) required;
+                            input type="text" name="nom" value=(e.nom) required style="flex:1 1 140px";
                             label class="coche" style="white-space:nowrap" {
                                 input type="checkbox" name="actif" value="1" checked[e.actif];
                                 span class="petit" { (t!("champ.actif")) }
@@ -84,9 +84,9 @@ pub async fn referentiels(
                         }
                     }
                     form method="post" action=(format!("/administration/referentiels/{genre}"))
-                         style="display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bordure)" {
+                         style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--bordure)" {
                         (csrf(&jeton))
-                        input type="text" name="nom" placeholder=(t!("champ.nom")) required;
+                        input type="text" name="nom" placeholder=(t!("champ.nom")) required style="flex:1 1 140px";
                         button class="bouton bouton--vif bouton--petit" { (t!("action.ajouter")) }
                     }
                 }
@@ -96,17 +96,17 @@ pub async fn referentiels(
 
     let corps = html! {
         div class="avis" { (t!("ref.explication")) }
-        div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))" {
+        div class="colonnes" {
             section class="carte" {
                 div class="carte__tete" { h2 { (t!("ref.bieres")) } span class="petit discret" { (bieres.len()) } }
                 div class="carte__corps" {
                     @for b in &bieres {
                         form method="post" action=(format!("/administration/referentiels/biere/{}", b.id))
-                             style="display:flex;gap:6px;align-items:center;margin-bottom:8px" {
+                             style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap" {
                             (csrf(&jeton))
                             input type="color" name="couleur" value=(b.couleur)
-                                  style="width:40px;min-height:34px;padding:2px";
-                            input type="text" name="nom" value=(b.nom) required;
+                                  style="width:52px;flex:none";
+                            input type="text" name="nom" value=(b.nom) required style="flex:1 1 130px";
                             input type="number" name="ordre" value=(b.ordre) style="width:64px"
                                   aria-label=(t!("champ.ordre"));
                             label class="coche" { input type="checkbox" name="actif" value="1" checked[b.actif];
@@ -116,10 +116,10 @@ pub async fn referentiels(
                         }
                     }
                     form method="post" action="/administration/referentiels/biere"
-                         style="display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bordure)" {
+                         style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--bordure)" {
                         (csrf(&jeton))
-                        input type="color" name="couleur" value="#c08a3e" style="width:40px;min-height:34px;padding:2px";
-                        input type="text" name="nom" placeholder=(t!("champ.nom")) required;
+                        input type="color" name="couleur" value="#c08a3e" style="width:52px;flex:none";
+                        input type="text" name="nom" placeholder=(t!("champ.nom")) required style="flex:1 1 140px";
                         button class="bouton bouton--vif bouton--petit" { (t!("action.ajouter")) }
                     }
                 }

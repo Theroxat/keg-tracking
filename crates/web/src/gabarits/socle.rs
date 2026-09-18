@@ -122,6 +122,8 @@ fn icone(nom: &str) -> Markup {
 struct Lien {
     href: &'static str,
     cle: &'static str,
+    /// Libellé court pour la barre du bas : la place y est comptée.
+    cle_courte: &'static str,
     icone: &'static str,
     role_min: domaine::Role,
     mobile: bool,
@@ -131,6 +133,7 @@ const LIENS: &[Lien] = &[
     Lien {
         href: "/",
         cle: "nav.tableau_de_bord",
+        cle_courte: "nav.court.tableau_de_bord",
         icone: "tableau",
         role_min: domaine::Role::Lecture,
         mobile: true,
@@ -138,6 +141,7 @@ const LIENS: &[Lien] = &[
     Lien {
         href: "/scan",
         cle: "nav.scan",
+        cle_courte: "nav.court.scan",
         icone: "scan",
         role_min: domaine::Role::Production,
         mobile: true,
@@ -145,6 +149,7 @@ const LIENS: &[Lien] = &[
     Lien {
         href: "/parc",
         cle: "nav.parc",
+        cle_courte: "nav.court.parc",
         icone: "parc",
         role_min: domaine::Role::Lecture,
         mobile: true,
@@ -152,6 +157,7 @@ const LIENS: &[Lien] = &[
     Lien {
         href: "/documents",
         cle: "nav.documents",
+        cle_courte: "nav.court.documents",
         icone: "documents",
         role_min: domaine::Role::Lecture,
         mobile: true,
@@ -159,6 +165,7 @@ const LIENS: &[Lien] = &[
     Lien {
         href: "/clients",
         cle: "nav.clients",
+        cle_courte: "nav.court.clients",
         icone: "clients",
         role_min: domaine::Role::Lecture,
         mobile: true,
@@ -166,6 +173,7 @@ const LIENS: &[Lien] = &[
     Lien {
         href: "/lots",
         cle: "nav.lots",
+        cle_courte: "nav.lots",
         icone: "lots",
         role_min: domaine::Role::Lecture,
         mobile: false,
@@ -173,6 +181,7 @@ const LIENS: &[Lien] = &[
     Lien {
         href: "/administration",
         cle: "nav.administration",
+        cle_courte: "nav.administration",
         icone: "admin",
         role_min: domaine::Role::Administrateur,
         mobile: false,
@@ -262,7 +271,7 @@ pub fn page(cadre: Cadre<'_>, corps: Markup) -> Markup {
                     @for l in LIENS {
                         @if l.mobile && role.permet(l.role_min) {
                             a href=(l.href) aria-current=[actif(cadre.chemin, l.href).then_some("page")] {
-                                (icone(l.icone)) span { (traduire(l.cle)) }
+                                (icone(l.icone)) span { (traduire(l.cle_courte)) }
                             }
                         }
                     }
