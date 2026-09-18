@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select l.id as lot_id, l.numero, b.nom as biere, l.dluo as \"dluo!\",\n                  (l.dluo - current_date)::int as \"jours_restants!\",\n                  count(f.id) as \"futs_concernes!\"\n             from lot l\n             join type_biere b on b.id = l.type_biere_id\n             join fut f on f.lot_id = l.id and f.statut in ('rempli', 'livre')\n            where l.dluo is not null\n              and l.dluo <= current_date + make_interval(days => $1)\n            group by l.id, l.numero, b.nom, l.dluo\n            order by l.dluo",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "lot_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "numero",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "biere",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "dluo!",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 4,
+        "name": "jours_restants!",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "futs_concernes!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      null,
+      null
+    ]
+  },
+  "hash": "dc35b3e597e7e3e0e573c5b3e7528e2d3b6b0b9b94c90ec3bcf17caf98e9c96b"
+}

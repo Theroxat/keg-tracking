@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update document_mouvement set modifie_le = now() where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9e83a86eb22c3ce1d96d9c78f46adc4b0011a8b5916a830c1debc4c0935deeee"
+}

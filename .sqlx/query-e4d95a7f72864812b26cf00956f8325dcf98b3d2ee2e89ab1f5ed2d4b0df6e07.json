@@ -1,0 +1,83 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select c.id, c.societe, c.contact_nom, c.contact_prenom, c.telephone,\n                  c.email, c.commentaire, c.archive, c.cree_le,\n                  (select count(*) from fut f\n                    where f.client_id = c.id and f.statut = 'livre')  as \"futs_detenus!\",\n                  (select count(*) from adresse_client a\n                    where a.client_id = c.id and not a.archive)       as \"adresses!\"\n             from client c\n            where ($1 or not c.archive)\n              and ($2::text is null or c.societe ilike '%' || $2 || '%'\n                   or c.contact_nom ilike '%' || $2 || '%')\n            order by c.archive, c.societe",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "societe",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "contact_nom",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "contact_prenom",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "telephone",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "email",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "commentaire",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "archive",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 8,
+        "name": "cree_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "futs_detenus!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 10,
+        "name": "adresses!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bool",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "e4d95a7f72864812b26cf00956f8325dcf98b3d2ee2e89ab1f5ed2d4b0df6e07"
+}

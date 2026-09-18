@@ -1,0 +1,15 @@
+[package]
+name = "domaine"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+thiserror.workspace = true
+sqlx = { workspace = true, default-features = false, features = ["postgres", "uuid", "chrono", "macros"] }
+
+[dev-dependencies]
+proptest = "1"

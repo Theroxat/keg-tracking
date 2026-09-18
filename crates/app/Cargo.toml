@@ -1,0 +1,25 @@
+[package]
+name = "app"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "webqr"
+path = "src/main.rs"
+
+[dependencies]
+domaine.workspace = true
+persistance.workspace = true
+web.workspace = true
+tokio.workspace = true
+clap.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+sqlx.workspace = true
+rand.workspace = true
+serde_json.workspace = true
+axum.workspace = true

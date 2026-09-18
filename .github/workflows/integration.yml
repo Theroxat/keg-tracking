@@ -1,0 +1,182 @@
+name: Intégration continue
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  MDP_OWNER: motdepasse_owner_ci
+  MDP_APP: motdepasse_app_ci
+  MDP_EDITEUR: motdepasse_editeur_ci
+  MDP_AUTH: motdepasse_auth_ci
+  SECRET_APP: secret-applicatif-de-ci-0123456789
+  SERVEUR_TEST: localhost:5432
+
+jobs:
+  qualite:
+    name: Compilation, lint, tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: webqr
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Rôles PostgreSQL et extensions
+        # Reproduit exactement docker/initdb/01-roles.sh : les tests doivent
+        # tourner sur la même configuration de rôles que la production,
+        # sans quoi ils ne prouvent rien sur la RLS.
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 <<SQL
+          create role webqr_owner   login createdb password '${MDP_OWNER}';
+          create role webqr_app     login password '${MDP_APP}';
+          create role webqr_editeur login password '${MDP_EDITEUR}';
+          create role webqr_auth    login password '${MDP_AUTH}';
+          alter role webqr_app     nosuperuser nocreatedb nocreaterole nobypassrls;
+          alter role webqr_editeur nosuperuser nocreatedb nocreaterole nobypassrls;
+          alter role webqr_auth    nosuperuser nocreatedb nocreaterole nobypassrls;
+          alter role webqr_owner   nosuperuser nobypassrls;
+          alter database webqr owner to webqr_owner;
+          SQL
+          for base in template1 webqr; do
+            psql -h localhost -U postgres -d "$base" -v ON_ERROR_STOP=1 \
+              -c "create extension if not exists citext;" \
+              -c "create extension if not exists pg_trgm;"
+          done
+          psql -h localhost -U postgres -d webqr -v ON_ERROR_STOP=1 \
+            -c "alter schema public owner to webqr_owner;" \
+            -c "grant usage on schema public to webqr_app, webqr_editeur, webqr_auth;"
+
+      - name: Format
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Requêtes SQLx à jour
+        # Échoue si une requête a changé sans que `cargo sqlx prepare` ait
+        # été rejoué : l'image Docker se construit hors ligne et ne
+        # pardonnerait pas l'oubli.
+        env:
+          DATABASE_URL: postgres://webqr_owner:${{ env.MDP_OWNER }}@localhost:5432/webqr
+        run: |
+          cargo install sqlx-cli --no-default-features --features postgres,rustls --locked
+          cargo sqlx migrate run
+          cargo sqlx prepare --workspace --check -- --all-targets
+
+      - name: Tests
+        env:
+          DATABASE_URL: postgres://webqr_owner:${{ env.MDP_OWNER }}@localhost:5432/webqr
+        run: cargo test --workspace --all-targets
+
+      - name: Cohérence des projections sur le jeu de démonstration
+        # Rejouer le flux d'événements doit redonner exactement l'état
+        # courant. Un écart fait échouer le travail.
+        env:
+          DATABASE_URL_OWNER: postgres://webqr_owner:${{ env.MDP_OWNER }}@localhost:5432/webqr
+          DATABASE_URL_APP: postgres://webqr_app:${{ env.MDP_APP }}@localhost:5432/webqr
+          DATABASE_URL_EDITEUR: postgres://webqr_editeur:${{ env.MDP_EDITEUR }}@localhost:5432/webqr
+          DATABASE_URL_AUTH: postgres://webqr_auth:${{ env.MDP_AUTH }}@localhost:5432/webqr
+          DOMAINE_PUBLIC: ci.local
+        run: |
+          cargo run --bin webqr -- provisionner-brasserie \
+            --nom "Brasserie CI" --slug ci --prefixe-qr CI \
+            --admin-email ci@exemple.fr --admin-mot-de-passe 'Integration-Continue-2026!'
+          cargo run --bin webqr -- semer-demonstration --locataire ci --futs 400
+          cargo run --bin webqr -- reconstruire-projections --verifier
+
+      - name: Les étiquettes générées sont décodables
+        # Moitié numérique du critère « une planche imprimée est scannable » :
+        # on fait relire les QR par le décodeur zxing embarqué dans le binaire.
+        env:
+          DATABASE_URL_OWNER: postgres://webqr_owner:${{ env.MDP_OWNER }}@localhost:5432/webqr
+          DATABASE_URL_APP: postgres://webqr_app:${{ env.MDP_APP }}@localhost:5432/webqr
+          DATABASE_URL_EDITEUR: postgres://webqr_editeur:${{ env.MDP_EDITEUR }}@localhost:5432/webqr
+          DATABASE_URL_AUTH: postgres://webqr_auth:${{ env.MDP_AUTH }}@localhost:5432/webqr
+          DOMAINE_PUBLIC: ci.local
+          COOKIES_SECURISES: "false"
+          ADRESSE_ECOUTE: 127.0.0.1:8099
+        run: |
+          set -euo pipefail
+          cargo run --bin webqr -- serve &
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:8099/pret && break; sleep 1; done
+          jeton=$(curl -sS -D - -o /dev/null -H 'Origin: http://ci.local'             --data-urlencode 'email=ci@exemple.fr'             --data-urlencode 'mot_de_passe=Integration-Continue-2026!'             http://127.0.0.1:8099/connexion             | sed -n 's/.*wq_session=\([^;]*\).*/\1/p' | tr -d '\r')
+          test -n "$jeton"
+          curl -fsS -H "Cookie: wq_session=$jeton"             'http://127.0.0.1:8099/administration/etiquettes/planche?de=1&a=24'             -o /tmp/planche.html
+          node outils/verifier-etiquettes.mjs /tmp/planche.html
+
+  securite:
+    name: Audit des dépendances
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo install cargo-deny cargo-audit --locked
+      - run: cargo deny check
+      - run: cargo audit
+
+  image:
+    name: Image Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  restauration:
+    name: Exercice de restauration
+    runs-on: ubuntu-latest
+    # Une sauvegarde jamais restaurée n'est pas une sauvegarde.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: webqr
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sauvegarder, détruire, restaurer, vérifier
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          psql -h localhost -U postgres -d webqr -v ON_ERROR_STOP=1 \
+            -c "create table temoin (id int primary key, valeur text);" \
+            -c "insert into temoin select g, 'ligne ' || g from generate_series(1,1000) g;"
+          pg_dump -h localhost -U postgres --format=custom --file=/tmp/webqr.dump webqr
+          psql -h localhost -U postgres -d postgres -c "drop database webqr with (force);"
+          psql -h localhost -U postgres -d postgres -c "create database webqr;"
+          pg_restore -h localhost -U postgres --dbname=webqr /tmp/webqr.dump
+          lignes=$(psql -h localhost -U postgres -d webqr -tAc "select count(*) from temoin")
+          echo "lignes restaurées : $lignes"
+          test "$lignes" = "1000"

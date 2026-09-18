@@ -1,0 +1,88 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select l.id, l.numero, l.date_brassage, l.type_biere_id,\n                  b.nom as biere, b.couleur as couleur_biere,\n                  l.cuve_id, c.nom as cuve, l.dluo, l.commentaire, l.cree_le,\n                  (select count(*) from fut f where f.lot_id = l.id) as \"futs!\"\n             from lot l\n             join type_biere b on b.id = l.type_biere_id\n             join cuve c on c.id = l.cuve_id\n            where l.id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "numero",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "date_brassage",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 3,
+        "name": "type_biere_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "biere",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "couleur_biere",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "cuve_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
+        "name": "cuve",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "dluo",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 9,
+        "name": "commentaire",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "cree_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 11,
+        "name": "futs!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "d4d21648356dc644ce3b133e37e09679c81b50e831399900e2ddacfa3679e397"
+}

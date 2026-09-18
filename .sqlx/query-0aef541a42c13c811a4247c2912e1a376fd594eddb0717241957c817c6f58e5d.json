@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from ligne_document ld using document_mouvement d\n            where ld.id = $2 and ld.document_id = $1\n              and d.id = ld.document_id and d.etat = 'brouillon'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0aef541a42c13c811a4247c2912e1a376fd594eddb0717241957c817c6f58e5d"
+}

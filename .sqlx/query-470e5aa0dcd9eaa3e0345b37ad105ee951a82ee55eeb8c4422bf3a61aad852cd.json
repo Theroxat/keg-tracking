@@ -1,0 +1,82 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select c.id, c.societe, c.contact_nom, c.contact_prenom, c.telephone,\n                  c.email, c.commentaire, c.archive, c.cree_le,\n                  (select count(*) from fut f\n                    where f.client_id = c.id and f.statut = 'livre') as \"futs_detenus!\",\n                  (select count(*) from adresse_client a\n                    where a.client_id = c.id and not a.archive)      as \"adresses!\"\n             from client c where c.id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "societe",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "contact_nom",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "contact_prenom",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "telephone",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "email",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "commentaire",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "archive",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 8,
+        "name": "cree_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "futs_detenus!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 10,
+        "name": "adresses!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "470e5aa0dcd9eaa3e0345b37ad105ee951a82ee55eeb8c4422bf3a61aad852cd"
+}

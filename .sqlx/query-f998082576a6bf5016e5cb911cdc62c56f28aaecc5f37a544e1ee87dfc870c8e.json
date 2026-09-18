@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update utilisateur\n              set echecs_connexion = echecs_connexion + 1,\n                  verrouille_jusqu_a = case\n                    when echecs_connexion + 1 >= $2\n                    then now() + make_interval(\n                           mins => least(30, power(2, echecs_connexion + 1 - $2)::int))\n                    else verrouille_jusqu_a end\n            where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f998082576a6bf5016e5cb911cdc62c56f28aaecc5f37a544e1ee87dfc870c8e"
+}

@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update fut set contenance_litres = $2, date_mise_en_service = $3,\n                  commentaire = $4, modifie_le = now(), modifie_par = $5\n            where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int4",
+        "Date",
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0f8f1d0bd59a41a7f800b787a88ce81e86fd4b6a034f990f158a5616f37e3b82"
+}

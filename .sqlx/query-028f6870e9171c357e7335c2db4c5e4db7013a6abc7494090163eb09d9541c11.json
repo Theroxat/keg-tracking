@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update session set revoquee_le = now()\n            where utilisateur_id = $1 and revoquee_le is null",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "028f6870e9171c357e7335c2db4c5e4db7013a6abc7494090163eb09d9541c11"
+}

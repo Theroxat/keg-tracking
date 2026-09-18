@@ -1,0 +1,44 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select\n             (select count(*) from locataire)                       as \"locataires!\",\n             (select count(*) from locataire where etat = 'actif')  as \"locataires_actifs!\",\n             (select count(*) from utilisateur)                     as \"utilisateurs!\",\n             (select count(*) from fut)                             as \"futs!\",\n             (select count(*) from evenement_fut)                   as \"evenements!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "locataires!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "locataires_actifs!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "utilisateurs!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "futs!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "evenements!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "e23c59eb9b1689dcfb1677d46596e35d050ee272da0bb310f93688a50063e245"
+}

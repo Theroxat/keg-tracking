@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update client set archive = $2, modifie_le = now() where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e4141f76f1fb5d373f02e06c9cecb5e5325c7cd8aa6adf80a3d6407c091c1240"
+}

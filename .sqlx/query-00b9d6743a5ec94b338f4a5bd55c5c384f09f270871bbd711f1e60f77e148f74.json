@@ -1,0 +1,215 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select d.id, d.type_document as \"type_document: TypeDocument\", d.reference,\n                  d.etat as \"etat: EtatDocument\", d.statut_cible as \"statut_cible: Statut\",\n                  d.type_biere_id, b.nom as \"biere?\", d.lot_id, l.numero as \"lot?\",\n                  d.cuve_id, cv.nom as \"cuve?\", d.emplacement_id, em.nom as \"emplacement?\",\n                  d.client_id, c.societe as \"client?\", d.adresse_client_id,\n                  nullif(trim(coalesce(a.libelle,'') || ' - ' || coalesce(a.rue,'') || ' '\n                         || coalesce(a.code_postal,'') || ' ' || coalesce(a.ville,'')), '- ')\n                    as \"adresse?\",\n                  d.commentaire, d.cree_par,\n                  nullif(trim(coalesce(uc.prenom,'') || ' ' || coalesce(uc.nom,'')), '')\n                    as \"cree_par_nom?\",\n                  d.cree_le, d.modifie_le,\n                  nullif(trim(coalesce(uv.prenom,'') || ' ' || coalesce(uv.nom,'')), '')\n                    as \"valide_par_nom?\",\n                  d.valide_le,\n                  (select count(*) from ligne_document ld where ld.document_id = d.id)\n                    as \"lignes!\"\n             from document_mouvement d\n             left join type_biere b   on b.id  = d.type_biere_id\n             left join lot l          on l.id  = d.lot_id\n             left join cuve cv        on cv.id = d.cuve_id\n             left join emplacement em on em.id = d.emplacement_id\n             left join client c       on c.id  = d.client_id\n             left join adresse_client a on a.id = d.adresse_client_id\n             left join utilisateur uc on uc.id = d.cree_par\n             left join utilisateur uv on uv.id = d.valide_par\n            where ($1::etat_document is null or d.etat = $1)\n            order by d.modifie_le desc limit $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "type_document: TypeDocument",
+        "type_info": {
+          "Custom": {
+            "name": "type_document",
+            "kind": {
+              "Enum": [
+                "livraison",
+                "retour",
+                "operation_interne"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "reference",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "etat: EtatDocument",
+        "type_info": {
+          "Custom": {
+            "name": "etat_document",
+            "kind": {
+              "Enum": [
+                "brouillon",
+                "valide",
+                "abandonne"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "statut_cible: Statut",
+        "type_info": {
+          "Custom": {
+            "name": "statut_fut",
+            "kind": {
+              "Enum": [
+                "recu",
+                "sale",
+                "propre",
+                "rempli",
+                "livre",
+                "hors_service",
+                "perdu"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "type_biere_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 6,
+        "name": "biere?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "lot_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 8,
+        "name": "lot?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "cuve_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 10,
+        "name": "cuve?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 11,
+        "name": "emplacement_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 12,
+        "name": "emplacement?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 13,
+        "name": "client_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 14,
+        "name": "client?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 15,
+        "name": "adresse_client_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 16,
+        "name": "adresse?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 17,
+        "name": "commentaire",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 18,
+        "name": "cree_par",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 19,
+        "name": "cree_par_nom?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 20,
+        "name": "cree_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 21,
+        "name": "modifie_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 22,
+        "name": "valide_par_nom?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 23,
+        "name": "valide_le",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 24,
+        "name": "lignes!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "etat_document",
+            "kind": {
+              "Enum": [
+                "brouillon",
+                "valide",
+                "abandonne"
+              ]
+            }
+          }
+        },
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      null,
+      false,
+      true,
+      null,
+      false,
+      false,
+      null,
+      true,
+      null
+    ]
+  },
+  "hash": "00b9d6743a5ec94b338f4a5bd55c5c384f09f270871bbd711f1e60f77e148f74"
+}

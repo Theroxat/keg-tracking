@@ -259,8 +259,9 @@ partagée entre locataires.
 - `ligne_document (tenant_id, document_id)`
 - `session (jeton_hash)`
 
-Toutes les listes sont paginées côté serveur par curseur (clé composite
-`(tri, id)`), pas par `OFFSET` : le coût reste constant quelle que soit la page.
+Toutes les listes sont paginées **côté serveur**, 50 lignes par page, avec
+un plafond dur de 500 quelle que soit la valeur reçue du client. La
+pagination est par `limit/offset` : voir l'écart 6 au §18.
 
 ---
 
@@ -345,15 +346,17 @@ dépasse le modèle, mais elle laisse une trace.
 
 ## 5. Isolation multi-locataire
 
-### 5.1 Trois rôles PostgreSQL
+### 5.1 Quatre rôles PostgreSQL
 
 | Rôle | Usage | RLS |
 |---|---|---|
 | `webqr_owner` | propriétaire des tables, joue les migrations au démarrage puis n'est plus utilisé | contourne (propriétaire) |
 | `webqr_app` | **toutes** les requêtes des locataires | **soumis** |
 | `webqr_editeur` | back-office éditeur uniquement | politique dédiée `USING (true)` |
+| `webqr_auth` | résolution de session et vérification de mot de passe | politique dédiée, droits strictement énumérés — voir écart 7 au §18 |
 
-Aucun de ces rôles n'est superutilisateur et aucun ne porte `BYPASSRLS`. Le point
+Aucun de ces rôles n'est superutilisateur et aucun ne porte `BYPASSRLS` —
+un test le vérifie explicitement. Le point
 décisif : `webqr_app` **n'est pas propriétaire des tables**, sans quoi PostgreSQL
 lui ferait contourner les politiques silencieusement. C'est l'erreur classique
 d'implémentation de la RLS, et la raison pour laquelle le test du §11.1 est écrit
@@ -727,15 +730,16 @@ est restaurée dans une base jetable et un contrôle de cohérence est exécuté
 | `qrcode` | planches d'étiquettes | génère du SVG inséré directement dans la page d'impression |
 | `tracing`, `tracing-subscriber` | journalisation structurée | A.8 |
 | `metrics-exporter-prometheus` | métriques | A.8 |
-| `tower_governor` | limitation de débit par IP | complété par le comptage en base, par compte |
+| `qrcode` (déjà listé) | planches d'étiquettes | correction d'erreur élevée : l'atelier est humide |
 | `thiserror` | types d'erreur | |
 | `proptest` (dev) | test basé sur les propriétés | machine à états, §11.2 |
 | `reqwest` (dev) | tests d'intégration HTTP | |
 
-Hors Rust, épinglés par version et somme de contrôle, téléchargés dans l'étape de
-construction Docker : le binaire autonome **Tailwind**, le binaire **esbuild**,
-**htmx** 2.x et **zxing-wasm**, tous servis depuis notre domaine. Aucun CDN :
-la politique de sécurité de contenu est stricte.
+Hors Rust, **embarqués dans le binaire** par `include_str!` : **htmx** 2.x et
+**zxing-wasm** (34 Kio de colle + 919 Kio de wasm, chargés paresseusement et
+seulement là où le décodeur natif manque). Aucun CDN, aucune chaîne de
+construction front : la politique de sécurité de contenu est stricte et
+l'image Docker est autosuffisante.
 
 Pas de crate de validation généraliste : les messages doivent être en français,
 par champ, et réinjectables dans un fragment htmx. Un accumulateur d'erreurs
@@ -828,7 +832,8 @@ réponses documentées :
 
 | Situation | Réponse |
 |---|---|
-| Production, nom de domaine | Caddy obtient et renouvelle le certificat automatiquement. Rien à faire. |
+| **Déploiement retenu : tunnel Cloudflare** | Le tunnel publie `https://qr.selfhostr.io` vers `http://<machine>:6666` et fournit le certificat. Caddy sert en clair derrière lui, sur le port 6666, et transmet `X-Forwarded-Proto: https` pour que les cookies restent `Secure`. |
+| Production, nom de domaine pointé directement | Caddy obtient et renouvelle le certificat automatiquement. Rien à faire. |
 | Développement, poste local | `compose.dev.yaml` sert `https://webqr.localhost` avec `tls internal`. `caddy trust` installe l'autorité locale. |
 | **Test sur un vrai téléphone** | un tunnel — `tailscale funnel` ou `cloudflared tunnel` — donne une URL publique avec un certificat valide, sans ouvrir de port. C'est la voie recommandée, et la seule qui fonctionne aussi sur iOS sans manipuler de profil de configuration. `mkcert` reste documenté en repli pour Android. |
 
@@ -937,4 +942,66 @@ première installation.
 7. Jeu de démonstration.
 8. Intégration continue complète.
 
-**Fin de la Phase 0. Je m'arrête ici et j'attends validation.**
+---
+
+## 18. Ce qui a changé pendant la construction
+
+La Phase 0 était une proposition. Voici, en toute transparence, les sept
+points où la réalisation s'est écartée du document, et pourquoi.
+
+| # | Écart | Raison |
+|---|---|---|
+| 1 | **Tailwind remplacé par une feuille de style écrite à la main** (~410 lignes, tokens compris) | C'était le seul choix que la spécification autorisait à remplacer. L'atelier demande des composants très spécifiques — cibles de 56 px, retour plein écran, planche d'étiquettes au millimètre — que l'on écrit plus vite directement. Gain : plus de binaire à télécharger, plus d'étape de construction, et une feuille plus petite que ce que Tailwind aurait produit. |
+| 2 | **Pas de crate de limitation de débit** | `tower_governor` a été remplacé par une fenêtre glissante maison de quarante lignes, parce que le vrai rempart est le comptage **par compte en base**, qui survit à un redémarrage. La partie en mémoire n'est qu'un amortisseur. |
+| 3 | **Les gabarits vivent dans les modules de routes**, pas dans un dossier `gabarits/` séparé par page | `gabarits/` garde l'ossature et les composants partagés. Éclater chaque page en deux fichiers doublait le nombre de fichiers sans rien clarifier : avec Maud, le gabarit **est** du code, et il se lit mieux à côté de son gestionnaire. |
+| 4 | **`fut.recherche_txt` abandonné** | La colonne dénormalisée aurait dérivé. La recherche joint `client` et `lot`, chacun indexé en trigramme. À 5 000 fûts la différence est inmesurable, et il y a un risque d'incohérence en moins. |
+| 5 | **JavaScript au lieu de TypeScript** | La spécification demandait un îlot « vanilla, sans framework ». En supprimant `esbuild`, on supprime un binaire épinglé, une étape de construction et une source de divergence entre ce qu'on lit et ce qui s'exécute. Le fichier fait 409 lignes et se lit d'un bloc. |
+| 6 | **Pagination `limit/offset`, pas par curseur** | Annoncé par curseur au §3.3, réalisé en `offset`, avec un plafond dur de 500 lignes. À l'échelle visée — 5 000 fûts, 50 lignes par page — les deux sont instantanés, et l'offset autorise le tri par n'importe quelle colonne sans multiplier les requêtes. Mesuré : **13 à 25 ms** par page sur le jeu de démonstration de 3 000 fûts et 190 000 événements. À revoir si un client dépasse 100 000 fûts. |
+| 7 | **Un quatrième rôle PostgreSQL, `webqr_auth`** | Non prévu. Résoudre un cookie impose de lire **avant** de savoir de quel locataire il s'agit. Plutôt que d'élargir le rôle éditeur — qui voit tout — ce besoin précis a reçu un rôle aux droits énumérés : lecture de `locataire`, `utilisateur`, `session`, et écriture des seuls compteurs d'échec. Il ne peut lire ni le parc, ni les clients, ni les lots, ni même modifier la colonne `role`. Un test le vérifie. |
+
+Trois défauts ont par ailleurs été trouvés **par les tests et les
+vérifications, pas par relecture** — ils méritent d'être notés :
+
+- l'export CSV était plafonné à 500 lignes, parce qu'il réutilisait le
+  plafond de pagination de l'affichage ;
+- la création en masse laissait `sequence_courante` à zéro : dans
+  PostgreSQL, une CTE modifiante ne voit pas les lignes qu'une autre vient
+  d'écrire, donc l'`update` de la projection ne trouvait rien ;
+- la première sauvegarde s'exécutait pendant les migrations et archivait
+  une base vide. Le script attend désormais le schéma et **relit chaque
+  archive** avant de la conserver.
+
+## 19. État de la réalisation
+
+Les sept phases sont réalisées. Vérifications exécutées sur le jeu de
+démonstration (3 000 fûts, 190 155 événements) :
+
+| Critère d'acceptation | Résultat |
+|---|---|
+| `docker compose up` sert l'application sans étape manuelle | ✅ port 6666, quatre services `healthy` |
+| Une commande crée une brasserie et son administrateur | ✅ mot de passe fort imposé ou généré |
+| **Le test d'isolation multi-locataire passe** | ✅ 6 tests, tables énumérées depuis le catalogue |
+| Accès refusé côté serveur sans le rôle requis | ✅ inventaire complet × 3 rôles |
+| Chaîne d'intégration : compilation, clippy, format, tests | ✅ 53 tests, clippy `-D warnings` |
+| 3 000 fûts se chargent et se filtrent sans latence | ✅ 13–25 ms par page |
+| Transitions invalides refusées avec un message clair | ✅ matrice 7 × 7 testée exhaustivement |
+| La reconstruction redonne un état identique | ✅ 0 divergence sur 190 155 événements |
+| L'export reflète exactement les filtres actifs | ✅ 3 000 lignes brutes, 564 filtrées sur « Propre » |
+| Un client détenteur de fûts ne peut pas être supprimé | ✅ vérifié côté serveur |
+| Une adresse d'un autre client est rejetée même forgée | ✅ refusée par l'application **et** par la base |
+| Une capture de 30 fûts survit à un rechargement | ✅ et à un redémarrage du processus |
+| Validation atomique : une ligne en erreur n'écrit rien | ✅ testé avec un conflit injecté sur la 17ᵉ ligne |
+| Une restauration de sauvegarde est effectuée et vérifiée | ✅ 3 000 fûts / 190 155 événements restaurés, 0 erreur |
+
+Reste à faire à la main, parce que cela demande du matériel réel :
+
+- **la démonstration sur un vrai téléphone Android et un vrai iPhone**
+  (critère de la Phase 4). Le code gère les trois chemins — `BarcodeDetector`
+  natif, repli zxing-wasm, douchette — mais seul un appareil physique le
+  prouve ;
+- l'impression d'une planche d'étiquettes et sa relecture par
+  l'application (critère de la Phase 6) : la planche est calée sur un
+  format 70 × 37 mm, à confirmer sur l'imprimante et le support retenus.
+
+**Fin de la Phase 0. Le document reste la référence ; les §18 et §19
+enregistrent l'écart entre la proposition et la réalisation.**

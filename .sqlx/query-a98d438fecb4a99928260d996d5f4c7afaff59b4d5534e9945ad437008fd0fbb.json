@@ -1,0 +1,59 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select id, client_id, libelle, rue, code_postal, ville, archive\n             from adresse_client\n            where client_id = $1 and ($2 or not archive)\n            order by archive, libelle",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "client_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "libelle",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "rue",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "code_postal",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "ville",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "archive",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "a98d438fecb4a99928260d996d5f4c7afaff59b4d5534e9945ad437008fd0fbb"
+}

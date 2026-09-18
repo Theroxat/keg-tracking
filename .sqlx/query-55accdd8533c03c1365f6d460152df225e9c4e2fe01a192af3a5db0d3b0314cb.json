@@ -1,0 +1,44 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update fut set\n             statut = coalesce($2, statut),\n             emplacement_id = $3, client_id = $4, adresse_client_id = $5,\n             type_biere_id = $6, lot_id = $7, cuve_id = $8,\n             date_remplissage = $9, statut_depuis_le = coalesce($10, statut_depuis_le),\n             dernier_lavage_le = $11, dernier_lavage_par = $12,\n             dernier_evenement_id = $13, dernier_evenement_le = $14,\n             sequence_courante = $15, modifie_le = now(), modifie_par = $16\n           where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        {
+          "Custom": {
+            "name": "statut_fut",
+            "kind": {
+              "Enum": [
+                "recu",
+                "sale",
+                "propre",
+                "rempli",
+                "livre",
+                "hors_service",
+                "perdu"
+              ]
+            }
+          }
+        },
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Uuid",
+        "Uuid",
+        "Timestamptz",
+        "Int8",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "55accdd8533c03c1365f6d460152df225e9c4e2fe01a192af3a5db0d3b0314cb"
+}
