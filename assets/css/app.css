@@ -104,6 +104,8 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
   box-shadow: 0 0 0 4px var(--accent-fond);
 }
 .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+/* Numéro de lot : un code, saisi et affiché en monospace comme le reste. */
+input[name="numero"] { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .num { font-variant-numeric: tabular-nums; }
 .discret { color: var(--encre-3); }
 .petit { font-size: 13px; }
@@ -589,6 +591,12 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 }
 .barre-action .bouton { min-height: 64px; font-size: 19px; white-space: normal; text-align: center; }
 .barre-action span.bouton[aria-disabled="true"] { cursor: default; color: var(--encre-3); opacity: 1; }
+/* Le contenu ne passe jamais sous la barre « Terminer » : hauteur de la barre
+   (80 px) + marge, et sur mobile la barre de navigation basse (108 px). */
+.contenu:has(.barre-action) { padding-bottom: calc(92px + 12px + env(safe-area-inset-bottom)); }
+@media (max-width: 860px) {
+  .contenu:has(.barre-action) { padding-bottom: calc(80px + 108px + 12px + env(safe-area-inset-bottom)); }
+}
 .bouton--retirer { min-height: 48px; padding: 0 20px; background: var(--grave-fond); color: var(--grave); }
 @media (max-width: 720px) {
   .tableau--captures td.cel-secondaire, .tableau--captures td:first-child { display: none; }
