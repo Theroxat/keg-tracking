@@ -105,10 +105,10 @@ pub async fn liste(
                             (c::Champ::texte("date_brassage", t!("champ.date_brassage"),
                                 aujourdhui.to_string()).de_type("date").requis().rendre())
                             (c::selection("type_biere_id", t!("champ.type_biere"),
-                                &bieres.iter().map(|b| (b.id.to_string(), b.nom.clone())).collect::<Vec<_>>(),
+                                &c::options(&bieres, |x| x.id, |x| x.nom.clone()),
                                 None, Some("—"), true))
                             (c::selection("cuve_id", t!("champ.cuve"),
-                                &cuves.iter().map(|x| (x.id.to_string(), x.nom.clone())).collect::<Vec<_>>(),
+                                &c::options(&cuves, |x| x.id, |x| x.nom.clone()),
                                 None, Some("—"), true))
                             (c::Champ::texte("dluo", t!("champ.dluo"), "").de_type("date").rendre())
                         }

@@ -19,7 +19,7 @@ use crate::gabarits::socle::{page, page_nue, Cadre};
 use crate::i18n::traduire;
 use crate::middleware::Session;
 use crate::routes::scan::{ilot, Demande, Reponse};
-use crate::routes::{page_avec_avis, rediriger, Contexte};
+use crate::routes::{page_avec_avis, rediriger, uuid_opt, Contexte};
 use crate::{t, ErreurWeb, Etat};
 
 use persistance::document::{self, Configuration, ResultatCapture};
@@ -166,16 +166,16 @@ pub async fn nouvelle(
                     None, Some("—"), false))
                 div class="grille" {
                     (c::selection("type_biere_id", t!("champ.type_biere"),
-                        &bieres.iter().map(|b| (b.id.to_string(), b.nom.clone())).collect::<Vec<_>>(),
+                        &c::options(&bieres, |x| x.id, |x| x.nom.clone()),
                         None, Some("—"), false))
                     (c::selection("lot_id", t!("champ.lot"),
                         &lots.iter().map(|l| (l.id.to_string(), format!("{} — {}", l.numero, l.biere))).collect::<Vec<_>>(),
                         None, Some("—"), false))
                     (c::selection("cuve_id", t!("champ.cuve"),
-                        &cuves.iter().map(|x| (x.id.to_string(), x.nom.clone())).collect::<Vec<_>>(),
+                        &c::options(&cuves, |x| x.id, |x| x.nom.clone()),
                         None, Some("—"), false))
                     (c::selection("emplacement_id", t!("champ.emplacement"),
-                        &emplacements.iter().map(|x| (x.id.to_string(), x.nom.clone())).collect::<Vec<_>>(),
+                        &c::options(&emplacements, |x| x.id, |x| x.nom.clone()),
                         None, Some("—"), false))
                 }
                 div class="grille" {
@@ -232,12 +232,6 @@ pub struct FormConfig {
     adresse_client_id: Option<String>,
     #[serde(default)]
     commentaire: String,
-}
-
-fn uuid_opt(v: &Option<String>) -> Option<Uuid> {
-    v.as_deref()
-        .filter(|s| !s.trim().is_empty())
-        .and_then(|s| Uuid::parse_str(s).ok())
 }
 
 impl FormConfig {

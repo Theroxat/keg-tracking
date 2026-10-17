@@ -12,7 +12,7 @@ use crate::gabarits::composants as c;
 use crate::gabarits::csrf;
 use crate::gabarits::socle::{page, page_nue, Cadre};
 use crate::middleware::Session;
-use crate::routes::{page_avec_avis, rediriger, Contexte};
+use crate::routes::{page_avec_avis, rediriger, uuid_opt, Contexte};
 use crate::{t, ErreurWeb, Etat};
 
 #[derive(Deserialize, Default)]
@@ -80,7 +80,7 @@ pub async fn afficher(
                         input type="hidden" name="de" value=(de);
                         input type="hidden" name="a" value=(a);
                         (c::selection("emplacement_id", t!("champ.emplacement"),
-                            &emplacements.iter().map(|e| (e.id.to_string(), e.nom.clone())).collect::<Vec<_>>(),
+                            &c::options(&emplacements, |x| x.id, |x| x.nom.clone()),
                             loc.emplacement_defaut_id.map(|i| i.to_string()).as_deref(), Some("—"), false))
                         (c::selection("contenance_litres", t!("champ.contenance"),
                             &loc.contenances_autorisees.iter().map(|l| (l.to_string(), format!("{l} L"))).collect::<Vec<_>>(),
@@ -221,11 +221,7 @@ pub async fn creer(
         tx.conn(),
         &liste,
         f.contenance_litres,
-        f.emplacement_id
-            .as_deref()
-            .filter(|x| !x.is_empty())
-            .and_then(|x| uuid::Uuid::parse_str(x).ok())
-            .or(loc.emplacement_defaut_id),
+        uuid_opt(&f.emplacement_id).or(loc.emplacement_defaut_id),
         Some(s.utilisateur_id),
     )
     .await?;

@@ -11,7 +11,7 @@ use crate::gabarits::csrf;
 use crate::gabarits::socle::{page, Cadre};
 use crate::i18n::traduire;
 use crate::middleware::Session;
-use crate::routes::{page_avec_avis, rediriger, Contexte};
+use crate::routes::{page_avec_avis, rediriger, uuid_opt, Contexte};
 use crate::{t, ErreurWeb, Etat};
 
 // ------------------------------------------------------------------ accueil
@@ -346,10 +346,7 @@ pub async fn creer_utilisateur(
     let securise = etat.config.cookies_securises;
     let role = Role::depuis_code(&f.role).ok_or(ErreurWeb::Introuvable)?;
     let mot_de_passe = mot_de_passe_temporaire();
-    let hachage = etat
-        .hacheur
-        .hacher(&mot_de_passe)
-        .map_err(|e| ErreurWeb::Interne(e.to_string()))?;
+    let hachage = etat.hacheur.hacher(&mot_de_passe)?;
 
     let mut tx = etat
         .depot
@@ -492,10 +489,7 @@ pub async fn modifier_utilisateur(
 
     if f.reinitialiser.is_some() {
         let nouveau = mot_de_passe_temporaire();
-        let hachage = etat
-            .hacheur
-            .hacher(&nouveau)
-            .map_err(|e| ErreurWeb::Interne(e.to_string()))?;
+        let hachage = etat.hacheur.hacher(&nouveau)?;
         persistance::utilisateur::changer_mot_de_passe(tx.conn(), id, &hachage).await?;
         persistance::utilisateur::definir_pin(tx.conn(), id, None).await?;
         persistance::audit::tracer(
@@ -569,7 +563,7 @@ pub async fn parametres(
             (c::Champ::texte("prefixe_qr", t!("etiq.prefixe"), &loc.prefixe_qr)
                 .requis().aide("Majuscules et chiffres. Unique sur toute l'installation.").rendre())
             (c::selection("emplacement_defaut_id", t!("param.emplacement_defaut"),
-                &emplacements.iter().map(|e| (e.id.to_string(), e.nom.clone())).collect::<Vec<_>>(),
+                &c::options(&emplacements, |x| x.id, |x| x.nom.clone()),
                 loc.emplacement_defaut_id.map(|i| i.to_string()).as_deref(), Some("—"), false))
             div class="grille" {
                 (c::Champ::texte("seuil_alerte_non_revenu_jours", t!("param.seuil_non_revenu"),
@@ -650,11 +644,7 @@ pub async fn enregistrer_parametres(
         &persistance::locataire::ParametresLocataire {
             nom: f.nom.trim().to_string(),
             prefixe_qr: f.prefixe_qr.trim().to_uppercase(),
-            emplacement_defaut_id: f
-                .emplacement_defaut_id
-                .as_deref()
-                .filter(|x| !x.is_empty())
-                .and_then(|x| Uuid::parse_str(x).ok()),
+            emplacement_defaut_id: uuid_opt(&f.emplacement_defaut_id),
             fuseau_horaire: f.fuseau_horaire.trim().to_string(),
             seuil_alerte_non_revenu_jours: f.seuil_alerte_non_revenu_jours.max(1),
             seuil_alerte_dluo_jours: f.seuil_alerte_dluo_jours.max(0),

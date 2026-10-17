@@ -11,7 +11,7 @@ use crate::gabarits::csrf;
 use crate::gabarits::socle::{page, Cadre};
 use crate::i18n::traduire;
 use crate::middleware::Session;
-use crate::routes::{page_avec_avis, rediriger, Contexte};
+use crate::routes::{page_avec_avis, rediriger, uuid_opt, Contexte};
 use crate::{t, ErreurWeb, Etat};
 
 pub async fn fiche(
@@ -48,23 +48,10 @@ pub async fn fiche(
     let est_admin = s.role == Role::Administrateur;
     let tz = s.fuseau_horaire.clone();
 
-    let opt = |v: &[(String, String)]| v.to_vec();
-    let opts_bieres: Vec<(String, String)> = bieres
-        .iter()
-        .map(|b| (b.id.to_string(), b.nom.clone()))
-        .collect();
-    let opts_cuves: Vec<(String, String)> = cuves
-        .iter()
-        .map(|x| (x.id.to_string(), x.nom.clone()))
-        .collect();
-    let opts_empl: Vec<(String, String)> = emplacements
-        .iter()
-        .map(|x| (x.id.to_string(), x.nom.clone()))
-        .collect();
-    let opts_clients: Vec<(String, String)> = clients
-        .iter()
-        .map(|x| (x.id.to_string(), x.societe.clone()))
-        .collect();
+    let opts_bieres: Vec<(String, String)> = c::options(&bieres, |x| x.id, |x| x.nom.clone());
+    let opts_cuves: Vec<(String, String)> = c::options(&cuves, |x| x.id, |x| x.nom.clone());
+    let opts_empl: Vec<(String, String)> = c::options(&emplacements, |x| x.id, |x| x.nom.clone());
+    let opts_clients: Vec<(String, String)> = c::options(&clients, |x| x.id, |x| x.societe.clone());
     let opts_lots: Vec<(String, String)> = lots
         .iter()
         .map(|l| (l.id.to_string(), format!("{} — {}", l.numero, l.biere)))
@@ -86,116 +73,13 @@ pub async fn fiche(
         div class="fiche" {
             div class="fiche__etat" {
                 // --------------------------------------------- état courant
-                section class="carte" {
-                    div class="carte__tete" {
-                        h2 { (t!("fut.etat_courant")) }
-                        (c::badge_statut(f.statut))
-                    }
-                    div class="carte__corps" {
-                        dl style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:12px;margin:0" {
-                            (paire(t!("champ.contenance"), html! { (f.contenance_litres) " " (t!("unite.litres")) }))
-                            (paire(t!("champ.depuis"), html! { (c::depuis(f.statut_depuis_le)) }))
-                            (paire(t!("champ.biere"), html! {
-                                @if let Some(b) = &f.biere {
-                                    span style="display:inline-flex;align-items:center;gap:6px" {
-                                        (c::pastille_biere(f.couleur_biere.as_ref())) (b) }
-                                } @else { span class="discret" { "—" } }
-                            }))
-                            (paire(t!("champ.lot"), html! {
-                                @if let (Some(l), Some(lid)) = (&f.lot, f.lot_id) {
-                                    a href=(format!("/parc?lot={lid}")) class="mono" { (l) }
-                                } @else { span class="discret" { "—" } }
-                            }))
-                            (paire(t!("champ.dluo"), html! {
-                                @match f.dluo {
-                                    Some(d) => {
-                                        @let reste = (d - chrono::Utc::now().date_naive()).num_days();
-                                        @if reste < 0 { (c::badge("grave", t!("lot.dluo_depassee"))) }
-                                        @else if reste < loc.seuil_alerte_dluo_jours as i64 {
-                                            (c::badge("alerte", &c::jour(d)))
-                                        } @else { span class="num" { (c::jour(d)) } }
-                                    },
-                                    None => span class="discret" { "—" },
-                                }
-                            }))
-                            (paire(t!("champ.cuve"), html! { (c::texte_ou_tiret(f.cuve.as_ref())) }))
-                            (paire(t!("champ.emplacement"), html! { (c::texte_ou_tiret(f.emplacement.as_ref())) }))
-                            (paire(t!("champ.client"), html! {
-                                @if let (Some(cl), Some(cid)) = (&f.client, f.client_id) {
-                                    a href=(format!("/clients/{cid}")) { (cl) }
-                                } @else { span class="discret" { "—" } }
-                            }))
-                            (paire(t!("champ.date_remplissage"), c::option_date_heure(f.date_remplissage, &tz)))
-                            (paire(t!("champ.lave_le"), html! {
-                                @match f.dernier_lavage_le {
-                                    Some(d) => {
-                                        span class="num" { (c::date_heure(d, &tz)) }
-                                        @if let Some(q) = &f.dernier_lavage_par {
-                                            span class="discret petit" { " — " (q) }
-                                        }
-                                    },
-                                    None => span class="discret" { "—" },
-                                }
-                            }))
-                            (paire(t!("champ.date_mise_en_service"), html! { span class="num" { (c::jour(f.date_mise_en_service)) } }))
-                        }
-                        @if !f.commentaire.is_empty() {
-                            p class="petit" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bordure)" {
-                                (f.commentaire)
-                            }
-                        }
-                    }
-                }
+                (carte_etat(&f, &loc, &tz))
 
             }
 
             div class="fiche__chrono" {
                 // --------------------------------------------- chronologie
-                section class="carte" {
-                    div class="carte__tete" {
-                        h2 { (t!("fut.chronologie")) }
-                        span class="petit discret" { (chronologie.len()) " événements" }
-                    }
-                    div class="carte__corps" {
-                        @if chronologie.is_empty() {
-                            p class="discret" { (t!("fut.aucun_evenement")) }
-                        } @else {
-                            ul class="chrono" {
-                                @for e in &chronologie {
-                                    li {
-                                        div class="chrono__point"
-                                            style=[e.statut_apres.map(|st| format!("background:var(--st-{})", st.code()))] {}
-                                        div {
-                                            div class="chrono__tete" {
-                                                @if let Some(st) = e.statut_apres { (c::badge_statut(st)) }
-                                                @else { span class="badge badge--neutre" { (traduire(e.type_evenement.cle_i18n())) } }
-                                                @if e.type_evenement == domaine::TypeEvenement::TransitionForcee {
-                                                    (c::badge("grave", traduire("evenement.transition_forcee")))
-                                                }
-                                                span class="chrono__quand" { (c::date_heure(e.survenu_le, &tz)) }
-                                                span class="petit discret" { "· " (traduire(e.origine.cle_i18n())) }
-                                                @if let Some(r) = &e.document_reference {
-                                                    span class="petit mono discret" { "· " (r) }
-                                                }
-                                            }
-                                            div class={ "chrono__detail" @if e.type_evenement == domaine::TypeEvenement::TransitionForcee { " chrono__forcee" } @else { "" } } {
-                                                @if let Some(x) = &e.client { (t!("champ.client")) ": " (x) ". " }
-                                                @if let Some(x) = &e.lot { (t!("champ.lot")) ": " (x) ". " }
-                                                @if let Some(x) = &e.biere { (x) ". " }
-                                                @if let Some(x) = &e.emplacement { (t!("champ.emplacement")) ": " (x) ". " }
-                                                @if !e.commentaire.is_empty() { (e.commentaire) " " }
-                                                @if !e.justification.is_empty() {
-                                                    b { (t!("champ.justification")) " : " } (e.justification)
-                                                }
-                                                @if let Some(q) = &e.par { span class="discret" { " — " (q) } }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                (carte_chronologie(&chronologie, &tz))
             }
 
             // --------------------------------------------- actions
@@ -205,7 +89,7 @@ pub async fn fiche(
                         div class="carte__tete" { h2 { (t!("fut.actions")) } }
                         div class="carte__corps" {
                             (formulaire_transition(&s, &f, &opts_bieres, &opts_lots, &opts_cuves,
-                                                   &opts_empl, &opts_clients, &opt(&opts_adresses)))
+                                                   &opts_empl, &opts_clients, &opts_adresses))
                         }
                     }
                     @if est_admin {
@@ -279,6 +163,130 @@ pub async fn fiche(
         avait,
         etat.config.cookies_securises,
     ))
+}
+
+/// Carte « état courant » de la fiche fût.
+fn carte_etat(
+    f: &persistance::fut::Fut,
+    loc: &persistance::locataire::Locataire,
+    tz: &str,
+) -> Markup {
+    html! {
+    section class="carte" {
+        div class="carte__tete" {
+            h2 { (t!("fut.etat_courant")) }
+            (c::badge_statut(f.statut))
+        }
+        div class="carte__corps" {
+            dl style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:12px;margin:0" {
+                (paire(t!("champ.contenance"), html! { (f.contenance_litres) " " (t!("unite.litres")) }))
+                (paire(t!("champ.depuis"), html! { (c::depuis(f.statut_depuis_le)) }))
+                (paire(t!("champ.biere"), html! {
+                    @if let Some(b) = &f.biere {
+                        span style="display:inline-flex;align-items:center;gap:6px" {
+                            (c::pastille_biere(f.couleur_biere.as_ref())) (b) }
+                    } @else { span class="discret" { "—" } }
+                }))
+                (paire(t!("champ.lot"), html! {
+                    @if let (Some(l), Some(lid)) = (&f.lot, f.lot_id) {
+                        a href=(format!("/parc?lot={lid}")) class="mono" { (l) }
+                    } @else { span class="discret" { "—" } }
+                }))
+                (paire(t!("champ.dluo"), html! {
+                    @match f.dluo {
+                        Some(d) => {
+                            @let reste = (d - chrono::Utc::now().date_naive()).num_days();
+                            @if reste < 0 { (c::badge("grave", t!("lot.dluo_depassee"))) }
+                            @else if reste < loc.seuil_alerte_dluo_jours as i64 {
+                                (c::badge("alerte", &c::jour(d)))
+                            } @else { span class="num" { (c::jour(d)) } }
+                        },
+                        None => span class="discret" { "—" },
+                    }
+                }))
+                (paire(t!("champ.cuve"), html! { (c::texte_ou_tiret(f.cuve.as_ref())) }))
+                (paire(t!("champ.emplacement"), html! { (c::texte_ou_tiret(f.emplacement.as_ref())) }))
+                (paire(t!("champ.client"), html! {
+                    @if let (Some(cl), Some(cid)) = (&f.client, f.client_id) {
+                        a href=(format!("/clients/{cid}")) { (cl) }
+                    } @else { span class="discret" { "—" } }
+                }))
+                (paire(t!("champ.date_remplissage"), c::option_date_heure(f.date_remplissage, tz)))
+                (paire(t!("champ.lave_le"), html! {
+                    @match f.dernier_lavage_le {
+                        Some(d) => {
+                            span class="num" { (c::date_heure(d, tz)) }
+                            @if let Some(q) = &f.dernier_lavage_par {
+                                span class="discret petit" { " — " (q) }
+                            }
+                        },
+                        None => span class="discret" { "—" },
+                    }
+                }))
+                (paire(t!("champ.date_mise_en_service"), html! { span class="num" { (c::jour(f.date_mise_en_service)) } }))
+            }
+            @if !f.commentaire.is_empty() {
+                p class="petit" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bordure)" {
+                    (f.commentaire)
+                }
+            }
+        }
+    }
+    }
+}
+
+/// Carte « chronologie » de la fiche fût.
+fn carte_chronologie(
+    chronologie: &[persistance::evenement::EntreeChronologie],
+    tz: &str,
+) -> Markup {
+    html! {
+    section class="carte" {
+        div class="carte__tete" {
+            h2 { (t!("fut.chronologie")) }
+            span class="petit discret" { (chronologie.len()) " événements" }
+        }
+        div class="carte__corps" {
+            @if chronologie.is_empty() {
+                p class="discret" { (t!("fut.aucun_evenement")) }
+            } @else {
+                ul class="chrono" {
+                    @for e in chronologie {
+                        li {
+                            div class="chrono__point"
+                                style=[e.statut_apres.map(|st| format!("background:var(--st-{})", st.code()))] {}
+                            div {
+                                div class="chrono__tete" {
+                                    @if let Some(st) = e.statut_apres { (c::badge_statut(st)) }
+                                    @else { span class="badge badge--neutre" { (traduire(e.type_evenement.cle_i18n())) } }
+                                    @if e.type_evenement == domaine::TypeEvenement::TransitionForcee {
+                                        (c::badge("grave", traduire("evenement.transition_forcee")))
+                                    }
+                                    span class="chrono__quand" { (c::date_heure(e.survenu_le, tz)) }
+                                    span class="petit discret" { "· " (traduire(e.origine.cle_i18n())) }
+                                    @if let Some(r) = &e.document_reference {
+                                        span class="petit mono discret" { "· " (r) }
+                                    }
+                                }
+                                div class={ "chrono__detail" @if e.type_evenement == domaine::TypeEvenement::TransitionForcee { " chrono__forcee" } @else { "" } } {
+                                    @if let Some(x) = &e.client { (t!("champ.client")) ": " (x) ". " }
+                                    @if let Some(x) = &e.lot { (t!("champ.lot")) ": " (x) ". " }
+                                    @if let Some(x) = &e.biere { (x) ". " }
+                                    @if let Some(x) = &e.emplacement { (t!("champ.emplacement")) ": " (x) ". " }
+                                    @if !e.commentaire.is_empty() { (e.commentaire) " " }
+                                    @if !e.justification.is_empty() {
+                                        b { (t!("champ.justification")) " : " } (e.justification)
+                                    }
+                                    @if let Some(q) = &e.par { span class="discret" { " — " (q) } }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    }
 }
 
 fn paire(libelle: &str, valeur: Markup) -> Markup {
@@ -402,12 +410,6 @@ pub struct FormTransition {
     commentaire: Option<String>,
     #[serde(default)]
     forcer: Option<String>,
-}
-
-fn uuid_opt(v: &Option<String>) -> Option<Uuid> {
-    v.as_deref()
-        .filter(|s| !s.trim().is_empty())
-        .and_then(|s| Uuid::parse_str(s).ok())
 }
 
 pub async fn transition(

@@ -112,3 +112,9 @@ impl From<sqlx::Error> for ErreurWeb {
         ErreurWeb::Interne(e.to_string())
     }
 }
+
+impl From<rust_xlsxwriter::XlsxError> for ErreurWeb {
+    fn from(e: rust_xlsxwriter::XlsxError) -> Self {
+        ErreurWeb::Interne(e.to_string())
+    }
+}

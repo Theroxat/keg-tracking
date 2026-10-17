@@ -142,6 +142,18 @@ impl<'a> Champ<'a> {
     }
 }
 
+/// Options de liste déroulante issues d'un référentiel : (identifiant, libellé).
+pub fn options<T>(
+    elements: &[T],
+    ident: impl Fn(&T) -> uuid::Uuid,
+    libelle: impl Fn(&T) -> String,
+) -> Vec<(String, String)> {
+    elements
+        .iter()
+        .map(|x| (ident(x).to_string(), libelle(x)))
+        .collect()
+}
+
 /// Liste déroulante. Les référentiels ne se saisissent jamais librement.
 pub fn selection(
     nom: &str,

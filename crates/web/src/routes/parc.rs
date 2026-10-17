@@ -425,9 +425,7 @@ pub async fn exporter(
             }
         }
         feuille.set_freeze_panes(1, 0).ok();
-        let octets = classeur
-            .save_to_buffer()
-            .map_err(|e| ErreurWeb::Interne(e.to_string()))?;
+        let octets = classeur.save_to_buffer()?;
         return Ok((
             [
                 (
