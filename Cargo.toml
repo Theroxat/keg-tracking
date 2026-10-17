@@ -33,7 +33,7 @@ base64      = "0.22"
 clap        = { version = "4", features = ["derive", "env"] }
 csv         = "1"
 rust_xlsxwriter = "0.89"
-calamine    = "0.26"
+calamine    = "0.36"
 qrcode      = { version = "0.14", default-features = false, features = ["svg"] }
 tracing     = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }

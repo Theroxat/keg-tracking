@@ -80,7 +80,7 @@ jobs:
           DATABASE_URL: postgres://webqr_owner:${{ env.MDP_OWNER }}@localhost:5432/webqr
         run: |
           cargo install sqlx-cli --no-default-features --features postgres,rustls --locked
-          cargo sqlx migrate run
+          cargo sqlx migrate run --source crates/persistance/migrations
           cargo sqlx prepare --workspace --check -- --all-targets
 
       - name: Tests
@@ -185,10 +185,13 @@ jobs:
           psql -h localhost -U postgres -d webqr -v ON_ERROR_STOP=1 \
             -c "create table temoin (id int primary key, valeur text);" \
             -c "insert into temoin select g, 'ligne ' || g from generate_series(1,1000) g;"
-          pg_dump -h localhost -U postgres --format=custom --file=/tmp/webqr.dump webqr
+          # Le client du runner est plus ancien que le serveur 17 : pg_dump et
+          # pg_restore tournent dans l'image officielle, version identique.
+          pg17() { docker run --rm -i --network host -e PGPASSWORD postgres:17 "$@"; }
+          pg17 pg_dump -h localhost -U postgres --format=custom webqr > /tmp/webqr.dump
           psql -h localhost -U postgres -d postgres -c "drop database webqr with (force);"
           psql -h localhost -U postgres -d postgres -c "create database webqr;"
-          pg_restore -h localhost -U postgres --dbname=webqr /tmp/webqr.dump
+          pg17 pg_restore -h localhost -U postgres --dbname=webqr < /tmp/webqr.dump
           lignes=$(psql -h localhost -U postgres -d webqr -tAc "select count(*) from temoin")
           echo "lignes restaurées : $lignes"
           test "$lignes" = "1000"

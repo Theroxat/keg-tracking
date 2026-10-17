@@ -1,0 +1,13 @@
+# Même politique que deny.toml (advisories.ignore).
+[advisories]
+ignore = [
+  # zip : failles de `extract()`, jamais appelé (lecture en mémoire et
+  # écriture seulement, via calamine et rust_xlsxwriter).
+  "RUSTSEC-2026-0367",
+  "RUSTSEC-2026-0368",
+  "RUSTSEC-2026-0369",
+  # rsa (Marvin) : présent dans Cargo.lock par sqlx-mysql, que sqlx-macros
+  # référence sans jamais le compiler ; non lié au binaire (cargo tree -i rsa
+  # est vide), sans correctif amont.
+  "RUSTSEC-2023-0071",
+]

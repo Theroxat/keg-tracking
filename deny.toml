@@ -3,18 +3,33 @@
 
 [advisories]
 yanked = "deny"
+ignore = [
+  # zip (rust_xlsxwriter 0.89 -> zip 4, calamine 0.36 -> zip 8) : les trois
+  # failles visent `ZipArchive::extract` / `ZipStreamReader::extract`, qui
+  # écrivent des fichiers sur le disque (liens symboliques, bits SUID).
+  # Le projet n'extrait jamais d'archive : calamine lit le classeur importé
+  # en mémoire et rust_xlsxwriter ne fait qu'écrire. Chemin vulnérable
+  # inatteignable. À retirer dès que ces deux crates passent à zip >= 9.
+  { id = "RUSTSEC-2026-0367", reason = "extract() jamais appelé, lecture en mémoire et écriture seulement" },
+  { id = "RUSTSEC-2026-0368", reason = "extract() jamais appelé, lecture en mémoire et écriture seulement" },
+  { id = "RUSTSEC-2026-0369", reason = "extract() jamais appelé, lecture en mémoire et écriture seulement" },
+]
 
 [licenses]
 allow = [
   "MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "BSD-2-Clause",
   "BSD-3-Clause", "ISC", "Unicode-3.0", "Zlib", "MPL-2.0", "CC0-1.0",
-  "OpenSSL", "Unlicense", "BSL-1.0",
+  "OpenSSL", "Unlicense", "BSL-1.0", "CDLA-Permissive-2.0",
 ]
 confidence-threshold = 0.9
+# Les crates du dépôt ne sont pas publiées (`publish = false`) : pas de licence.
+private = { ignore = true }
 
 [bans]
 multiple-versions = "allow"
 wildcards = "deny"
+# Les dépendances internes par chemin (`workspace = true`) n'ont pas de version.
+allow-wildcard-paths = true
 
 [sources]
 unknown-registry = "deny"
