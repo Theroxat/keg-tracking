@@ -4,7 +4,7 @@
 
 **QR-code traceability for returnable beer kegs, offered as SaaS to breweries.**
 
-[**Live app**](https://qr.selfhostr.io) · [Releases](https://github.com/Theroxat/WebQr_brasserie/releases) · [Changelog](CHANGELOG.md) · [User guide (FR)](docs/guide-utilisateur.md)
+[**Live demo**](https://theroxat.github.io/WebQr_brasserie/demo/) · [Project page](https://theroxat.github.io/WebQr_brasserie/) · [Releases](https://github.com/Theroxat/WebQr_brasserie/releases) · [Changelog](CHANGELOG.md) · [User guide (FR)](docs/guide-utilisateur.md)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/Theroxat/WebQr_brasserie/integration.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/Theroxat/WebQr_brasserie/actions/workflows/integration.yml)
 ![Rust 1.85+](https://img.shields.io/badge/rust-1.85%2B-dea584?logo=rust&logoColor=white)
@@ -12,7 +12,7 @@
 ![Tests](https://img.shields.io/badge/tests-62%20passing-2ea44f)
 [![Release](https://img.shields.io/github/v/release/Theroxat/WebQr_brasserie)](https://github.com/Theroxat/WebQr_brasserie/releases)
 ![Languages](https://img.shields.io/badge/languages-FR%20%7C%20EN-blue)
-![License: Proprietary](https://img.shields.io/badge/license-Proprietary-lightgrey)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 </div>
 
@@ -314,4 +314,4 @@ Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Re
 
 ## License
 
-Proprietary. All rights reserved. See [LICENSE](LICENSE).
+[MIT](LICENSE) © Theroxat
