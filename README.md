@@ -4,104 +4,44 @@
 
 **QR-code traceability for returnable beer kegs, offered as SaaS to breweries.**
 
-[![CI](https://github.com/Theroxat/WebQr_brasserie/actions/workflows/integration.yml/badge.svg)](https://github.com/Theroxat/WebQr_brasserie/actions/workflows/integration.yml)
-![Rust 1.85+](https://img.shields.io/badge/Rust-1.85%2B-orange?logo=rust)
-![PostgreSQL 17](https://img.shields.io/badge/PostgreSQL-17-336791?logo=postgresql&logoColor=white)
-![htmx](https://img.shields.io/badge/htmx-server--rendered-3366cc)
-![License: Proprietary](https://img.shields.io/badge/License-Proprietary-lightgrey)
+[**Live app**](https://qr.selfhostr.io) · [Releases](https://github.com/Theroxat/WebQr_brasserie/releases) · [Changelog](CHANGELOG.md) · [User guide (FR)](docs/guide-utilisateur.md)
 
-<br>
-
-<table>
-  <tr>
-    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/scan-mobile-dark.png"><img src="docs/images/scan-mobile-light.png" alt="Scan screen on a phone" width="240"></picture></td>
-    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/capture-mobile-dark.png"><img src="docs/images/capture-mobile-light.png" alt="Batch capture on a phone" width="240"></picture></td>
-    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/images/keg-mobile-dark.png"><img src="docs/images/keg-mobile-light.png" alt="Keg page on a phone" width="240"></picture></td>
-  </tr>
-</table>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/fleet-desktop-dark.png">
-  <img src="docs/images/fleet-desktop-light.png" alt="Keg fleet overview on desktop" width="860">
-</picture>
+[![CI](https://img.shields.io/github/actions/workflow/status/Theroxat/WebQr_brasserie/integration.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/Theroxat/WebQr_brasserie/actions/workflows/integration.yml)
+![Rust 1.85+](https://img.shields.io/badge/rust-1.85%2B-dea584?logo=rust&logoColor=white)
+![PostgreSQL 17](https://img.shields.io/badge/postgresql-17-336791?logo=postgresql&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-62%20passing-2ea44f)
+[![Release](https://img.shields.io/github/v/release/Theroxat/WebQr_brasserie)](https://github.com/Theroxat/WebQr_brasserie/releases)
+![Languages](https://img.shields.io/badge/languages-FR%20%7C%20EN-blue)
+![License: Proprietary](https://img.shields.io/badge/license-Proprietary-lightgrey)
 
 </div>
 
-<details>
-<summary><b>Screenshots</b></summary>
-
-<br>
-
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/keg-desktop-dark.png">
-  <img src="docs/images/keg-desktop-light.png" alt="Keg page with full timeline, desktop" width="860">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.png">
+  <img src="docs/images/hero-light.png" alt="The keg fleet on desktop, with the scan screen on a phone" width="100%">
 </picture>
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/lot-desktop-dark.png">
-  <img src="docs/images/lot-desktop-light.png" alt="Lot page and product recall, desktop" width="860">
-</picture>
+> **A self-hosted, multi-tenant SaaS for breweries.** Every keg carries a QR
+> label and every field operation is a scan. The interface is available in French
+> and English. The phone camera needs HTTPS: browsers block it on plain `http://`
+> addresses (see the warning in [Quick start](#quick-start)).
 
-</details>
-
-> The application itself is in French. UI labels are quoted in French with an English gloss in parentheses.
-
-## Contents
-
-[Why](#why) · [Features](#features) · [Diagrams](#diagrams) · [Quick start](#quick-start) · [Configuration](#configuration) · [Operations](#operations-commands) · [Development](#development) · [Architecture](#architecture) · [Tests and CI](#tests-and-ci) · [Documentation](#documentation) · [Out of scope](#out-of-scope-v1) · [License](#license)
-
----
-
-## Why
-
-Every keg carries a QR label, and every field operation is done by scanning that label with a phone. The **history of operations is the source of truth**, not the keg record. At any moment the application answers:
-
-1. **Where is this keg**, and for how long?
-2. **What is in it?** Which beer, which lot, which tank?
-3. **How many clean kegs** are available for filling?
-4. **Which ones have not come back** after more than N days?
-5. **Who received lot 2026-017?** The product recall, in one click.
-
----
+At any moment the application answers: where is this keg and for how long, what is in it (beer, lot, tank), how many clean kegs are available, which ones have not come back after N days, and who received lot 2026-017 (the product recall, in one click). The **history of operations is the source of truth**, not the keg record.
 
 ## Features
 
-### In the field (mobile)
-
-| Screen | What it does |
-|---|---|
-| **Scanner** | Accepts a Bluetooth scanner (seen as a keyboard), the rear camera with torch, or manual entry (collapsed). Each read gives three simultaneous cues: full-screen colour, sound and vibration. Green is brief; red and amber stay until tapped. |
-| « Plusieurs fûts d'un coup » (*batch operation*) | Three steps (choose, scan, confirm) with presets: washing, filling, delivery, customer return. Configure once, then scan dozens of kegs in a row. A keg incompatible with the operation is rejected at scan time, while it is still in hand. The capture is stored server-side and survives a page refresh or a dead battery. Validation is transactional: everything passes, or nothing is written. |
-| **Delivery note** | Generated as soon as a delivery is validated; printable, with two signature fields. |
-
-Below 720 px the interface reshapes itself: lists become cards, touch targets are at least 44 px, and a bottom navigation bar depends on the role (Production: home, large Scan button, batch). The PIN is typed on a touch keypad. Design « Atelier clair » (*bright workshop*), with a dark theme.
-
-### At the office (desktop)
-
-| Screen | What it does |
-|---|---|
-| **Dashboard** | Role-dependent. The office sees counters per status, kegs not returned, best-before (DLUO) alerts and recent activity. The workshop sees two large buttons and the two figures that matter. |
-| **Global search** | Kegs, customers and lots from a single field, opened with the `/` key. |
-| **Fleet** (« Parc ») | Full-text search, combinable filters, column sorting (including location), age in status and last movement. CSV or Excel export reuses exactly the active filters. |
-| **Keg page** | Centred on the next action, other allowed actions under « Autre action… » (*other action*), full timeline, label reprint. |
-| **Customers** | Kegs held by each customer with their age, in red beyond the threshold. A customer holding kegs cannot be archived, and a customer is never deleted. |
-| **Lots and product recall** | Editable lot page, filters by beer and DLUO, shortcut « Remplir des fûts avec ce lot » (*fill kegs with this lot*). Recall: every customer concerned by a lot, with contact details, quantities and exact QR codes. Exportable and printable. |
-| **Administration** | Reference data (beers, locations, tanks), users, QR label sheets (3 × 8, 70 × 37 mm), migration import from a spreadsheet (CSV template provided, fully validated before any write), settings and a filterable, paginated audit log. |
-
-### Roles
-
-| Role | Rights |
-|---|---|
-| **Lecture** (*read*) | View and export. No writes. |
-| **Production** | Scan, create and validate operations, edit kegs. |
-| **Administrateur** (*administrator*) | Everything within their brewery: users, reference data, settings, forced transitions. |
-| *Éditeur* (*publisher*) | Separate back-office (`/editeur`), outside any brewery: create, suspend, supervise. |
-
-A session lasts 30 days on a known device. After 15 minutes of inactivity it locks and asks for a **six-digit PIN**, so it stays usable with gloves on.
-
----
-
-## Diagrams
+- **Scanner:** Bluetooth scanner (seen as a keyboard), rear camera with torch, or manual entry. Each read gives a full-screen colour, a sound and a vibration.
+- **Batch operations** (washing, filling, delivery, customer return): configure once, scan dozens of kegs. An incompatible keg is rejected at scan time. The capture is stored server-side and survives a refresh or a dead battery. Validation is transactional: everything passes, or nothing is written.
+- **Delivery note** generated on validation, printable, with two signature fields.
+- **Fleet:** full-text search, combinable filters, sorting, age in status, CSV and Excel export that reuses the active filters.
+- **Keg page** with the next action, other allowed actions, full timeline and label reprint.
+- **Customers** with the kegs they hold (red beyond the threshold). A customer holding kegs cannot be archived, and a customer is never deleted.
+- **Lots and product recall:** every customer concerned by a lot, with contacts, quantities and exact QR codes. Exportable and printable.
+- **Dashboard and global search** (`/` key), role-dependent.
+- **Administration:** beers, locations, tanks, users, QR label sheets (3 x 8, 70 x 37 mm), spreadsheet import (CSV template, fully validated before any write), settings and a filterable audit log.
+- **Roles:** Read, Production, Administrator within a brewery, plus a separate publisher back-office (`/editeur`). A session lasts 30 days on a known device, locks after 15 minutes of inactivity and asks for a six-digit PIN.
+- **Mobile first:** below 720 px, lists become cards, touch targets are at least 44 px, and the bottom navigation depends on the role. Light and dark themes.
+- **Interface in French and English.**
 
 ### Keg lifecycle
 
@@ -135,29 +75,46 @@ stateDiagram-v2
 
 > Simplified view; the exact transition table lives in the `domaine` crate.
 
-### Deployment
+## Screenshots
 
-```mermaid
-flowchart LR
-    B[Browser] -- https --> T["TLS tunnel / proxy"]
-    T --> C["Caddy :6666"]
-    C --> A["app (webqr serve)"]
-    A --> P[("PostgreSQL 17")]
-    K["backup"] --> P
-```
+<details>
+<summary><b>Show screenshots</b></summary>
 
-### Crates
+<br>
 
-Strictly descending dependencies:
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/scan-mobile-dark.png">
+  <img src="docs/images/scan-mobile-light.png" alt="Scan screen on a phone" width="300">
+</picture>
 
-```mermaid
-flowchart LR
-    app --> web --> persistance --> domaine
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/capture-mobile-dark.png">
+  <img src="docs/images/capture-mobile-light.png" alt="Batch capture on a phone" width="300">
+</picture>
 
----
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/keg-mobile-dark.png">
+  <img src="docs/images/keg-mobile-light.png" alt="Keg page on a phone" width="300">
+</picture>
 
-## Quick start
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/fleet-desktop-dark.png">
+  <img src="docs/images/fleet-desktop-light.png" alt="Keg fleet overview on desktop" width="860">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/keg-desktop-dark.png">
+  <img src="docs/images/keg-desktop-light.png" alt="Keg page with full timeline, desktop" width="860">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/lot-desktop-dark.png">
+  <img src="docs/images/lot-desktop-light.png" alt="Lot page and product recall, desktop" width="860">
+</picture>
+
+</details>
+
+## Quick start (Docker Compose)
 
 **Prerequisite:** Docker with the `compose` plugin. No Rust, Node or PostgreSQL is needed on the machine.
 
@@ -191,8 +148,6 @@ Health check: `curl -fsS http://localhost:6666/sante`.
 
 **Updating:** `git pull && docker compose up -d --build`. Migrations run automatically at startup.
 
----
-
 ## Configuration
 
 Configuration is done exclusively through environment variables, in `.env`. If variables are missing, the application refuses to start and lists **all** of them at once.
@@ -208,8 +163,6 @@ Configuration is done exclusively through environment variables, in `.env`. If v
 | `RUST_LOG` | Log level (default `info`) |
 | `RETENTION_QUOTIDIENNE` / `_HEBDOMADAIRE` / `_MENSUELLE` | Number of backups kept (7 / 4 / 6) |
 
----
-
 ## Operations commands
 
 All run with `docker compose run --rm app <command>`:
@@ -224,8 +177,6 @@ All run with `docker compose run --rm app <command>`:
 | `supprimer-locataire` | Permanently deletes a brewery |
 
 Backups, restore procedure, secret rotation and support access are described in [docs/exploitation.md](docs/exploitation.md).
-
----
 
 ## Development
 
@@ -255,6 +206,8 @@ The passwords must match those in `.env`.
 ./dev.sh cargo sqlx prepare --workspace -- --all-targets # after any modified query
 ```
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full rules.
+
 ### Contributor rules
 
 | If you… | Then also… |
@@ -262,14 +215,12 @@ The passwords must match those in `.env`.
 | add a route | register it with its role in `web::routes::INVENTAIRE` (otherwise a test fails) |
 | change an SQLx query | rerun `cargo sqlx prepare` (CI checks with `--check`) |
 | add a business table | give it a `tenant_id` column and end the migration with `select appliquer_rls();` |
-| add a variant of `Statut`, `Role`, `TypeEvenement` or `TypeDocument` | update `TOUS`, `cle_i18n()` and `crates/web/src/i18n/fr.rs` |
+| add a variant of `Statut`, `Role`, `TypeEvenement` or `TypeDocument` | update `TOUS`, `cle_i18n()` and `crates/web/src/i18n/fr.rs` and `en.rs` |
 | add user-visible text | go through `t!("cle")` (a missing key is a compile error) |
 | add JavaScript behaviour | no `onclick` or inline `<script>` (the CSP blocks them): use a `data-*` attribute handled by `assets/js/commun.js` |
 | add a static asset | put it in `assets/` and embed it in `crates/web/src/statique.rs`. No CDN: the CSP is `default-src 'self'`. |
 
 Project language is French (identifiers, comments, commit messages); only infrastructure (Docker, CI) and third-party names stay in English.
-
----
 
 ## Architecture
 
@@ -281,6 +232,26 @@ Project language is French (identifiers, comments, commit messages); only infras
 | `persistance` | SQLx, embedded migrations, `Depot` and the isolation guard |
 | `web` | Routes, Maud templates, i18n, middleware |
 | `app` | The `webqr` binary: `serve` and the operations commands |
+
+### Deployment
+
+```mermaid
+flowchart LR
+    B[Browser] -- https --> T["TLS tunnel / proxy"]
+    T --> C["Caddy :6666"]
+    C --> A["app (webqr serve)"]
+    A --> P[("PostgreSQL 17")]
+    K["backup"] --> P
+```
+
+### Crates
+
+Strictly descending dependencies:
+
+```mermaid
+flowchart LR
+    app --> web --> persistance --> domaine
+```
 
 ### Three structural guarantees
 
@@ -299,9 +270,7 @@ They are the reason the architecture exists, and each has its own test.
 
 3. **Access control on every route.** Routes are grouped in three groups, each with a minimum role. The inventory `routes::INVENTAIRE` is the single source for the access test, which tries every route with every role.
 
----
-
-## Tests and CI
+## Tests & CI
 
 Each test gets a **fresh, migrated PostgreSQL database** with the real production roles. Without that, the RLS tests would prove nothing.
 
@@ -324,8 +293,6 @@ The GitHub Actions workflow (`.github/workflows/integration.yml`, « Intégratio
 - Docker image build;
 - backup then restore exercise.
 
----
-
 ## Documentation
 
 The documents in `docs/` are **written in French**.
@@ -337,13 +304,13 @@ The documents in `docs/` are **written in French**.
 | [docs/guide-utilisateur.md](docs/guide-utilisateur.md) | User: the product, screen by screen |
 | [docs/PHASE-0-ARCHITECTURE.md](docs/PHASE-0-ARCHITECTURE.md) | Technical decisions and their reasons. It predates the code: on contradiction, the code wins. |
 
----
-
-## Out of scope (v1)
+## Limits (out of scope for v1)
 
 Billing, deposits and amounts due, offline operation, native app, self-service sign-up, public API, custom statuses, multi-site.
 
----
+## Contributing
+
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Report vulnerabilities privately, as described in [SECURITY.md](SECURITY.md).
 
 ## License
 
