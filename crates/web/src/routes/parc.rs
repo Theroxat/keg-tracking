@@ -268,7 +268,12 @@ pub async fn afficher(
         @if futs.is_empty() {
             (c::vide(
                 if filtres.actifs() { t!("parc.aucun_fut") } else { t!("parc.parc_vide") },
-                None,
+                (!filtres.actifs() && s.role == domaine::Role::Administrateur).then(|| html! {
+                    div class="boutons" {
+                        a class="bouton bouton--vif" href="/administration/etiquettes" { (t!("etiq.titre")) }
+                        a class="bouton" href="/administration/import" { (t!("import.titre")) }
+                    }
+                }),
             ))
         } @else {
             div class="tableau-cadre" {
@@ -279,7 +284,7 @@ pub async fn afficher(
                         th { (t!("champ.biere")) }
                         th { (t!("champ.lot")) }
                         th { (t!("champ.cuve")) }
-                        (c::entete_tri(t!("champ.emplacement"), "code_qr", tri_code, desc, &base_tri))
+                        (c::entete_tri(t!("champ.emplacement"), "emplacement", tri_code, desc, &base_tri))
                         (c::entete_tri(t!("champ.client"), "client", tri_code, desc, &base_tri))
                         (c::entete_tri(t!("champ.anciennete"), "anciennete", tri_code, desc, &base_tri))
                         (c::entete_tri(t!("champ.derniere_activite"), "activite", tri_code, desc, &base_tri))
@@ -334,7 +339,11 @@ pub async fn afficher(
     };
 
     let cadre = Cadre::new(&s, &ctx.chemin, t!("parc.titre"))
-        .sous_titre(format!("{} fûts au total", total))
+        .sous_titre(if total == 1 {
+            t!("parc.total_un").to_string()
+        } else {
+            t!("parc.total", n = total)
+        })
         .avis(ctx.avis);
     Ok(page_avec_avis(
         page(cadre, corps),

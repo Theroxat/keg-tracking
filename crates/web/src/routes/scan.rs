@@ -34,7 +34,10 @@ pub struct Demande {
 }
 
 /// Bloc commun aux deux écrans de scan : viseur, champ douchette, retour
-/// plein écran, saisie manuelle, journal des derniers scans.
+/// plein écran, saisie de secours.
+///
+/// Un seul chemin évident : la caméra démarre seule, la saisie manuelle
+/// reste repliée tant qu'elle n'est pas nécessaire.
 pub fn ilot(
     url_envoi: &str,
     cible_rafraichir: Option<&str>,
@@ -51,12 +54,11 @@ pub fn ilot(
             data-rafraichir=[cible_rafraichir]
             data-zxing-js={ "/statique/zxing-reader.js?v=" (v) }
             data-zxing-wasm={ "/statique/zxing_reader.wasm?v=" (v) }
-            data-libelle-natif=(t!("scan.decodeur_natif"))
-            data-libelle-wasm=(t!("scan.decodeur_wasm"))
-            data-libelle-saisie-seule=(t!("scan.saisie_seule"))
+            data-libelle-demarrage=(t!("scan.camera_demarrage"))
             data-libelle-camera-indisponible=(t!("scan.camera_indisponible"))
             data-libelle-camera-refusee=(t!("scan.camera_refusee"))
             data-libelle-contexte-non-securise=(t!("scan.contexte_non_securise"))
+            data-libelle-toucher=(t!("scan.toucher_pour_continuer"))
             data-libelle-erreur-reseau=(t!("app.erreur_serveur")) {
 
             // Champ invisible qui garde le focus : la douchette Bluetooth
@@ -67,30 +69,40 @@ pub fn ilot(
             div class="viseur" {
                 video id="scan-video" playsinline muted autoplay {}
                 div class="viseur__cadre" {}
-                div id="scan-hors" class="viseur__hors rien" {}
+                div id="scan-hors" class=(if camera { "viseur__hors" } else { "viseur__hors rien" }) {
+                    p id="scan-hors-texte" { (t!("scan.camera_demarrage")) }
+                    button type="button" id="scan-reessayer"
+                           class="bouton bouton--vif bouton--atelier rien" {
+                        (t!("scan.reessayer"))
+                    }
+                }
                 div class="viseur__outils" {
-                    button type="button" id="scan-basculer" class="bouton bouton--petit" {
+                    button type="button" id="scan-basculer" class="bouton rien" {
                         (t!("scan.basculer_camera"))
                     }
-                    button type="button" id="scan-torche" class="bouton bouton--petit rien"
+                    button type="button" id="scan-torche" class="bouton rien"
                             aria-pressed="false" {
                         (t!("scan.torche"))
                     }
                 }
             }
 
-            div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px" {
-                span class="minus" id="scan-decodeur" { (t!("app.chargement")) }
-                span id="douchette-temoin" class="douchette-temoin rien" {
-                    span class="pastille" style="background:var(--ok)" {}
-                    (t!("scan.douchette_active"))
-                }
+            span id="douchette-temoin" class="douchette-temoin rien" {
+                span class="pastille" style="background:var(--ok)" {}
+                (t!("scan.douchette_active"))
             }
 
-            form id="scan-manuel" style="display:flex;gap:8px;margin-top:10px" {
-                input type="text" name="code_qr" placeholder=(t!("scan.saisie_placeholder"))
-                      autocomplete="off" autocapitalize="characters" spellcheck="false";
-                button type="submit" class="bouton" { (t!("action.valider")) }
+            // Ouverte d'office par l'îlot quand la caméra est indisponible.
+            details id="scan-saisie" class="saisie-secours" {
+                summary { (t!("scan.saisie_manuelle")) }
+                form id="scan-manuel" class="saisie-secours__form" {
+                    input type="text" name="code_qr" placeholder=(t!("scan.saisie_placeholder"))
+                          aria-label=(t!("scan.saisie_placeholder"))
+                          autocomplete="off" autocapitalize="characters" spellcheck="false";
+                    button type="submit" class="bouton bouton--vif bouton--atelier" {
+                        (t!("action.valider"))
+                    }
+                }
             }
 
             div id="scan-retour" class="retour" aria-live="assertive" {}
@@ -108,7 +120,9 @@ pub async fn afficher(
     let corps = html! {
         div class="scan" {
             div { (ilot("/api/scan", None, &s.jeton_csrf, true)) }
-            aside class="carte" {
+            // Journal utile au bureau ; sur téléphone il ne ferait que
+            // pousser le viseur hors de l'écran.
+            aside class="carte scan__journal" {
                 div class="carte__tete" { h2 { (t!("scan.derniers_scans")) } }
                 div class="carte__corps carte__corps--serre" {
                     ul class="journal-scan" id="scan-journal" {

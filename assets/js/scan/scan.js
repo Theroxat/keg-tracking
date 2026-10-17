@@ -27,9 +27,10 @@
   const elRetour = document.getElementById('scan-retour');
   const elJournal = document.getElementById('scan-journal');
   const elDouchette = document.getElementById('champ-douchette');
-  const elEtatDecodeur = document.getElementById('scan-decodeur');
   const elHors = document.getElementById('scan-hors');
-  const elCompteur = document.getElementById('scan-compteur');
+  const elHorsTexte = document.getElementById('scan-hors-texte');
+  const elReessayer = document.getElementById('scan-reessayer');
+  const elSaisie = document.getElementById('scan-saisie');
   const elManuel = document.getElementById('scan-manuel');
   const elBasculer = document.getElementById('scan-basculer');
   const elTorche = document.getElementById('scan-torche');
@@ -65,12 +66,28 @@
     try { navigator.vibrate && navigator.vibrate(motif); } catch (_) {}
   }
 
+  // Le vert est bref : en capture, l'opérateur enchaîne les fûts. Le rouge
+  // et l'ambre restent affichés jusqu'à un toucher : un refus ne doit pas
+  // pouvoir passer inaperçu pendant qu'on regarde le fût suivant.
+  const DUREE_SUCCES_CAPTURE_MS = 450;
   let minuteurRetour = null;
+  let retourBloquant = false;
+
+  function fermerRetour() {
+    clearTimeout(minuteurRetour);
+    if (elRetour) { elRetour.dataset.etat = ''; elRetour.innerHTML = ''; }
+    retourBloquant = false;
+    reprendre();
+  }
+
   function montrer(etat, titre, detail) {
     if (!elRetour) return;
+    clearTimeout(minuteurRetour);
     elRetour.dataset.etat = etat;
+    elRetour.dataset.mode = CIBLE_RAFRAICHIR ? 'capture' : 'unitaire';
     elRetour.innerHTML = '';
     const fort = document.createElement('div');
+    fort.className = 'retour__titre';
     fort.textContent = titre;
     elRetour.appendChild(fort);
     if (detail) {
@@ -82,12 +99,26 @@
     else if (etat === 'echec') { bip([300, 220], 0.1); vibrer([70, 60, 70]); }
     else { bip([620], 0.09); vibrer([30, 40, 30]); }
 
-    clearTimeout(minuteurRetour);
-    minuteurRetour = setTimeout(() => {
-      elRetour.dataset.etat = '';
-      reprendre();
-    }, RELANCE_MS);
+    if (etat === 'succes') {
+      retourBloquant = false;
+      minuteurRetour = setTimeout(fermerRetour,
+        CIBLE_RAFRAICHIR ? DUREE_SUCCES_CAPTURE_MS : RELANCE_MS);
+    } else {
+      retourBloquant = true;
+      const suite = document.createElement('p');
+      suite.className = 'retour__suite';
+      suite.textContent = t('libelleToucher');
+      elRetour.appendChild(suite);
+    }
   }
+
+  // Un toucher n'importe où sur l'écran coloré le referme.
+  elRetour && elRetour.addEventListener('click', () => {
+    if (retourBloquant) fermerRetour();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (retourBloquant && e.key === 'Escape') fermerRetour();
+  });
 
   // ---------------------------------------------------------------- journal
   function journaliser(code, etat, texte) {
@@ -116,13 +147,33 @@
   let enCours = Promise.resolve();
   let derniereValeur = '';
   let derniereHeure = 0;
+  // La caméra relit le même fût tant qu'il reste dans le champ : on l'ignore
+  // tant qu'il est vu en continu, sans quoi le vert bref serait aussitôt
+  // suivi d'un « déjà scanné ».
+  const PERSISTANCE_CAMERA_MS = 2500;
+  let derniereCamera = '';
+  let derniereVueCamera = 0;
 
-  function envoyer(code) {
+  // `geste` : vrai pour la douchette et la saisie manuelle, qui sont des
+  // actions délibérées ; faux pour la caméra, qui lit en continu.
+  function envoyer(code, geste) {
     code = (code || '').trim();
     if (!code) return;
-    // Anti-rebond : le même code relu dans la foulée est ignoré.
     const maintenant = Date.now();
-    if (code === derniereValeur && maintenant - derniereHeure < RELANCE_MS) return;
+    if (!geste) {
+      const memeFut = code === derniereCamera &&
+        maintenant - derniereVueCamera < PERSISTANCE_CAMERA_MS;
+      derniereCamera = code;
+      derniereVueCamera = maintenant;
+      if (memeFut || retourBloquant) return;
+    } else {
+      // Anti-rebond : le même code relu dans la foulée est ignoré.
+      if (code === derniereValeur && maintenant - derniereHeure < RELANCE_MS) return;
+      // Une lecture douchette vaut acquittement d'un refus affiché : le
+      // refus a déjà sonné et vibré, rien n'a été enregistré, et bloquer
+      // ferait perdre en silence les lectures suivantes.
+      if (retourBloquant) fermerRetour();
+    }
     derniereValeur = code;
     derniereHeure = maintenant;
 
@@ -136,9 +187,8 @@
     }))).then((rep) => {
       montrer(rep.resultat || 'echec', rep.titre || code, rep.detail || '');
       journaliser(rep.code || code, rep.resultat || 'echec', rep.detail || rep.titre || '');
-      if (elCompteur && typeof rep.compteur === 'number') {
-        elCompteur.textContent = rep.compteur;
-      }
+      // Le compteur et le bouton « Terminer » reviennent du serveur avec
+      // le fragment rafraîchi : rien à recalculer ici.
       if (rep.rafraichir && CIBLE_RAFRAICHIR && window.htmx) {
         window.htmx.ajax('GET', rep.rafraichir, { target: CIBLE_RAFRAICHIR, swap: 'innerHTML' });
       }
@@ -195,7 +245,7 @@
       if (tampon.length >= MIN_CARACTERES) {
         const rapide = estUneDouchette();
         temoinDouchette(rapide);
-        envoyer(tampon);
+        envoyer(tampon, true);
         e.preventDefault();
       }
       tampon = ''; horodatages = [];
@@ -240,7 +290,6 @@
         const formats = await window.BarcodeDetector.getSupportedFormats();
         if (formats.includes('qr_code')) {
           detecteurNatif = new window.BarcodeDetector({ formats: ['qr_code'] });
-          etiqueterDecodeur(t('libelleNatif'));
           return async (source) => {
             const codes = await detecteurNatif.detect(source);
             return codes.length ? codes[0].rawValue : null;
@@ -254,7 +303,6 @@
     mod.prepareZXingModule({
       overrides: { locateFile: (f) => (f.endsWith('.wasm') ? racine.dataset.zxingWasm : f) },
     });
-    etiqueterDecodeur(t('libelleWasm'));
     return async (source) => {
       const canvas = versCanvas(source);
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -262,10 +310,6 @@
       const res = await mod.readBarcodes(image, { formats: ['QRCode'], tryHarder: false });
       return res && res.length ? res[0].text : null;
     };
-  }
-
-  function etiqueterDecodeur(texte) {
-    if (elEtatDecodeur && texte) elEtatDecodeur.textContent = texte;
   }
 
   function chargerScript(src) {
@@ -299,18 +343,25 @@
   function suspendre() { enPause = true; }
   function reprendre() { enPause = false; }
 
-  function afficherHors(message) {
+  function messageViseur(message, reessayer) {
     if (!elHors) return;
-    elHors.textContent = message;
+    if (elHorsTexte) elHorsTexte.textContent = message;
+    elReessayer && elReessayer.classList.toggle('rien', !reessayer);
     elHors.classList.remove('rien');
-    // Sans caméra, les contrôles qui la pilotent n'ont plus de sens, et le
-    // témoin de décodeur ne doit pas rester bloqué sur « Chargement… ».
+  }
+
+  // Sans caméra, les contrôles qui la pilotent n'ont plus de sens ; la
+  // saisie de secours s'ouvre d'elle-même.
+  function afficherHors(message, reessayer) {
+    messageViseur(message, reessayer);
     elBasculer && elBasculer.classList.add('rien');
     elTorche && elTorche.classList.add('rien');
-    etiqueterDecodeur(t('libelleSaisieSeule'));
+    if (elSaisie) elSaisie.open = true;
     const champ = elManuel && elManuel.querySelector('input[name=code_qr]');
     champ && champ.focus({ preventScroll: true });
   }
+
+  elReessayer && elReessayer.addEventListener('click', () => demarrerCamera());
 
   async function demarrerCamera() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -324,6 +375,7 @@
       afficherHors(t('libelleContexteNonSecurise'));
       return;
     }
+    messageViseur(t('libelleDemarrage'), false);
     try {
       arreterCamera();
       flux = await navigator.mediaDevices.getUserMedia({
@@ -343,7 +395,7 @@
       lancerBoucle();
     } catch (e) {
       afficherHors(e && e.name === 'NotAllowedError'
-        ? t('libelleCameraRefusee') : t('libelleCameraIndisponible'));
+        ? t('libelleCameraRefusee') : t('libelleCameraIndisponible'), true);
     }
   }
 
@@ -383,7 +435,7 @@
       dernierDecodage = maintenant;
       try {
         const valeur = await decodeur(elVideo);
-        if (valeur) envoyer(valeur);
+        if (valeur) envoyer(valeur, false);
       } catch (_) { /* une image ratée n'est pas un incident */ }
     };
     boucle = requestAnimationFrame(tick);
@@ -401,7 +453,7 @@
     e.preventDefault();
     const champ = elManuel.querySelector('input[name=code_qr]');
     if (champ && champ.value.trim()) {
-      envoyer(champ.value);
+      envoyer(champ.value, true);
       champ.value = '';
       setTimeout(reprendreFocus, 50);
     }

@@ -31,13 +31,12 @@ pub async fn accueil(
     };
     let corps = html! {
         div class="cartes" {
-            (tuile("/administration/referentiels", t!("ref.titre"), t!("ref.explication")))
-            (tuile("/administration/utilisateurs", t!("util.titre"), t!("role.administrateur.description")))
-            (tuile("/lots", t!("lot.titre"), t!("rappel.titre")))
-            (tuile("/administration/etiquettes", t!("etiq.titre"), t!("etiq.planche_note")))
-            (tuile("/administration/import", t!("import.titre"), t!("import.explication")))
-            (tuile("/administration/parametres", t!("param.titre"), t!("param.seuil_non_revenu")))
-            (tuile("/administration/journal", t!("journal.titre"), t!("journal.action")))
+            (tuile("/administration/referentiels", t!("ref.titre"), t!("ref.resume")))
+            (tuile("/administration/utilisateurs", t!("util.titre"), t!("util.resume")))
+                        (tuile("/administration/etiquettes", t!("etiq.titre"), t!("etiq.resume")))
+            (tuile("/administration/import", t!("import.titre"), t!("import.resume")))
+            (tuile("/administration/parametres", t!("param.titre"), t!("param.resume")))
+            (tuile("/administration/journal", t!("journal.titre"), t!("journal.resume")))
         }
     };
     let cadre = Cadre::new(&s, &ctx.chemin, t!("admin.titre")).avis(ctx.avis);
@@ -95,6 +94,7 @@ pub async fn referentiels(
     };
 
     let corps = html! {
+        (c::retour_administration())
         div class="avis" { (t!("ref.explication")) }
         div class="colonnes" {
             section class="carte" {
@@ -261,18 +261,19 @@ pub async fn utilisateurs(
     let tz = s.fuseau_horaire.clone();
 
     let corps = html! {
+        (c::retour_administration())
         div class="tableau-cadre" {
             table class="tableau" {
                 thead { tr {
                     th { (t!("champ.nom")) } th { (t!("champ.email")) } th { (t!("champ.role")) }
-                    th { (t!("champ.pin")) } th { "Dernière connexion" } th { (t!("champ.actif")) } th {}
+                    th { (t!("champ.pin")) } th { (t!("util.derniere_connexion")) } th { (t!("champ.actif")) } th {}
                 } }
                 tbody {
                     @for u in &liste {
                         tr {
                             td style="font-weight:600" {
                                 (format!("{} {}", u.prenom, u.nom).trim())
-                                @if u.id == s.utilisateur_id { " " (c::badge("neutre", "vous")) }
+                                @if u.id == s.utilisateur_id { " " (c::badge("neutre", t!("util.vous"))) }
                             }
                             td class="petit" { (u.email) }
                             td { (c::badge("neutre", traduire(u.role.cle_i18n()))) }
@@ -415,7 +416,8 @@ pub async fn fiche_utilisateur(
     let soi_meme = u.id == s.utilisateur_id;
 
     let corps = html! {
-        form method="post" action=(format!("/administration/utilisateurs/{id}")) style="max-width:600px" {
+        form method="post" action=(format!("/administration/utilisateurs/{id}")) style="max-width:600px"
+              onsubmit=(confirmation_fiche(u.role, u.actif)) {
             (csrf(&s.jeton_csrf))
             @if soi_meme {
                 div class="avis avis--alerte" { (t!("util.pas_soi_meme")) }
@@ -557,11 +559,12 @@ pub async fn parametres(
     tx.valider().await?;
 
     let corps = html! {
+        (c::retour_administration())
         form method="post" action="/administration/parametres" style="max-width:640px" {
             (csrf(&s.jeton_csrf))
             (c::Champ::texte("nom", t!("champ.nom"), &loc.nom).requis().rendre())
             (c::Champ::texte("prefixe_qr", t!("etiq.prefixe"), &loc.prefixe_qr)
-                .requis().aide("Majuscules et chiffres. Unique sur toute l'installation.").rendre())
+                .requis().aide(t!("param.prefixe_aide")).rendre())
             (c::selection("emplacement_defaut_id", t!("param.emplacement_defaut"),
                 &c::options(&emplacements, |x| x.id, |x| x.nom.clone()),
                 loc.emplacement_defaut_id.map(|i| i.to_string()).as_deref(), Some("—"), false))
@@ -687,6 +690,7 @@ pub async fn journal(
     let tz = s.fuseau_horaire.clone();
 
     let corps = html! {
+        (c::retour_administration())
         @if entrees.is_empty() {
             (c::vide(t!("journal.aucune_entree"), None))
         } @else {
@@ -694,7 +698,7 @@ pub async fn journal(
                 table class="tableau" {
                     thead { tr {
                         th { (t!("journal.quand")) } th { (t!("journal.qui")) }
-                        th { (t!("journal.action")) } th { (t!("journal.cible")) } th { "Détails" }
+                        th { (t!("journal.action")) } th { (t!("journal.cible")) } th { (t!("journal.details")) }
                     } }
                     tbody {
                         @for e in &entrees {
@@ -723,6 +727,24 @@ pub async fn journal(
         avait,
         etat.config.cookies_securises,
     ))
+}
+
+/// Confirmation côté navigateur, uniquement si l'enregistrement change le
+/// rôle, désactive le compte ou réinitialise le mot de passe : un simple
+/// changement de nom ne demande rien. Le serveur revérifie tout.
+fn confirmation_fiche(role: Role, actif: bool) -> String {
+    let js = |m: &str| serde_json::to_string(m).unwrap_or_default();
+    format!(
+        "var f=this;var b=event.submitter;\
+         if(b&&b.name==='reinitialiser'){{return confirm({reinit});}}\
+         var r=f.elements['role'];var a=f.elements['actif'];\
+         if((r&&r.value!=={role})||({actif}&&a&&!a.checked)){{return confirm({modif});}}\
+         return true;",
+        reinit = js(t!("util.reinitialiser_confirmation")),
+        modif = js(t!("util.modifier_confirmation")),
+        role = js(role.code()),
+        actif = actif,
+    )
 }
 
 pub fn _m() -> Markup {

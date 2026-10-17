@@ -54,7 +54,12 @@ pub async fn liste(
             button type="submit" class="bouton" { (t!("action.filtrer")) }
         }
         @if clients.is_empty() {
-            (c::vide(t!("app.aucun_resultat"), None))
+            (c::vide(
+                t!("app.aucun_resultat"),
+                s.role.peut_ecrire().then(|| html! {
+                    a class="bouton bouton--vif" href="/clients/nouveau" { (t!("client.creer")) }
+                }),
+            ))
         } @else {
             div class="tableau-cadre" {
                 table class="tableau tableau--cartes" {
@@ -68,7 +73,7 @@ pub async fn liste(
                             tr {
                                 td class="cel-titre" {
                                     a href=(format!("/clients/{}", cl.id)) style="font-weight:600" { (cl.societe) }
-                                    @if cl.archive { " " (c::badge("neutre", "archivé")) }
+                                    @if cl.archive { " " (c::badge("neutre", t!("app.archive"))) }
                                 }
                                 td class="petit" data-libelle=(t!("champ.contact")) {
                                     (format!("{} {}", cl.contact_prenom, cl.contact_nom).trim())
@@ -101,7 +106,11 @@ pub async fn liste(
         }
     };
     let cadre = Cadre::new(&s, &ctx.chemin, t!("client.titre"))
-        .sous_titre(format!("{} clients", clients.len()))
+        .sous_titre(if clients.len() == 1 {
+            t!("client.un").to_string()
+        } else {
+            t!("client.nombre", n = clients.len())
+        })
         .actions(actions)
         .avis(ctx.avis);
     Ok(page_avec_avis(
@@ -280,7 +289,7 @@ pub async fn fiche(
                                                 td class="cel-titre" { a class="lien-ligne" href=(format!("/futs/{}", f.id)) { (f.code_qr) } }
                                                 td class="mono petit" data-libelle=(t!("champ.lot")) { (c::texte_ou_tiret(f.lot.as_ref())) }
                                                 td class="cel-marque serre num" {
-                                                    @if f.jours > 30 { (c::badge("grave", &format!("{} j", f.jours))) }
+                                                    @if f.jours > 30 { (c::badge("grave", &format!("{} {}", f.jours, t!("unite.jours_court")))) }
                                                     @else { span class="petit" { (f.jours) " j" } }
                                                 }
                                             }
@@ -312,7 +321,7 @@ pub async fn fiche(
                                                value=(if a.archive { "0" } else { "1" }) {
                                             @if a.archive { (t!("action.desarchiver")) } @else { (t!("action.archiver")) }
                                         }
-                                        @if a.archive { (c::badge("neutre", "archivée")) }
+                                        @if a.archive { (c::badge("neutre", t!("app.archivee"))) }
                                     }
                                 }
                             }
@@ -361,7 +370,8 @@ pub async fn fiche(
                                     (t!("client.archive_impossible", n = cl.futs_detenus))
                                 }
                             } @else {
-                                form method="post" action=(format!("/clients/{id}/archiver")) {
+                                form method="post" action=(format!("/clients/{id}/archiver"))
+                                      onsubmit=[(!cl.archive).then(|| c::confirmer_soumission(t!("client.archiver_confirmation")))] {
                                     (csrf(&s.jeton_csrf))
                                     input type="hidden" name="archive" value=(if cl.archive { "0" } else { "1" });
                                     button class={ "bouton bouton--large " @if cl.archive { "" } @else { "bouton--grave" } } {

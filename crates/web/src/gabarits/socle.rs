@@ -105,6 +105,7 @@ const ICONES: &[(&str, &str)] = &[
     ("clients", "M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"),
     ("admin", "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10.6 3.09V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 16.11 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"),
     ("lots", "M12 2 3 7v10l9 5 9-5V7zM3 7l9 5 9-5M12 12v10"),
+    ("plusieurs", "M8 8h12v12H8zM4 16V4h12"),
 ];
 
 fn icone(nom: &str) -> Markup {
@@ -124,71 +125,121 @@ fn icone(nom: &str) -> Markup {
 struct Lien {
     href: &'static str,
     cle: &'static str,
-    /// Libellé court pour la barre du bas : la place y est comptée.
-    cle_courte: &'static str,
     icone: &'static str,
     role_min: domaine::Role,
-    mobile: bool,
 }
 
 const LIENS: &[Lien] = &[
     Lien {
         href: "/",
         cle: "nav.tableau_de_bord",
-        cle_courte: "nav.court.tableau_de_bord",
         icone: "tableau",
         role_min: domaine::Role::Lecture,
-        mobile: true,
     },
     Lien {
         href: "/scan",
         cle: "nav.scan",
-        cle_courte: "nav.court.scan",
         icone: "scan",
         role_min: domaine::Role::Production,
-        mobile: true,
     },
     Lien {
         href: "/parc",
         cle: "nav.parc",
-        cle_courte: "nav.court.parc",
         icone: "parc",
         role_min: domaine::Role::Lecture,
-        mobile: true,
     },
     Lien {
         href: "/documents",
         cle: "nav.documents",
-        cle_courte: "nav.court.documents",
         icone: "documents",
         role_min: domaine::Role::Lecture,
-        mobile: true,
     },
     Lien {
         href: "/clients",
         cle: "nav.clients",
-        cle_courte: "nav.court.clients",
         icone: "clients",
         role_min: domaine::Role::Lecture,
-        mobile: true,
     },
     Lien {
         href: "/lots",
         cle: "nav.lots",
-        cle_courte: "nav.lots",
         icone: "lots",
         role_min: domaine::Role::Lecture,
-        mobile: false,
     },
     Lien {
         href: "/administration",
         cle: "nav.administration",
-        cle_courte: "nav.administration",
         icone: "admin",
         role_min: domaine::Role::Administrateur,
-        mobile: false,
     },
 ];
+
+/// Entrée de la barre du bas. Elle ne reprend pas la navigation du flanc :
+/// l'atelier n'a besoin que de trois gestes, le bureau garde ses listes.
+struct LienMobile {
+    href: &'static str,
+    /// Préfixe qui rend l'entrée active (« /operations » couvre tout le
+    /// parcours, alors que le lien mène à « /operations/nouvelle »).
+    actif: &'static str,
+    /// Libellé court : la place y est comptée.
+    cle: &'static str,
+    icone: &'static str,
+    /// Le scan est le geste principal : plus grand, coloré, au centre.
+    central: bool,
+}
+
+const M_ACCUEIL: LienMobile = LienMobile {
+    href: "/",
+    actif: "/",
+    cle: "nav.court.tableau_de_bord",
+    icone: "tableau",
+    central: false,
+};
+const M_SCAN: LienMobile = LienMobile {
+    href: "/scan",
+    actif: "/scan",
+    cle: "nav.court.scan",
+    icone: "scan",
+    central: true,
+};
+const M_LOT: LienMobile = LienMobile {
+    href: "/operations/nouvelle",
+    actif: "/operations",
+    cle: "nav.court.operation",
+    icone: "plusieurs",
+    central: false,
+};
+const M_PARC: LienMobile = LienMobile {
+    href: "/parc",
+    actif: "/parc",
+    cle: "nav.court.parc",
+    icone: "parc",
+    central: false,
+};
+const M_BONS: LienMobile = LienMobile {
+    href: "/documents",
+    actif: "/documents",
+    cle: "nav.court.documents",
+    icone: "documents",
+    central: false,
+};
+const M_CLIENTS: LienMobile = LienMobile {
+    href: "/clients",
+    actif: "/clients",
+    cle: "nav.court.clients",
+    icone: "clients",
+    central: false,
+};
+
+/// La barre du bas dépend du rôle, pas de la largeur : un opérateur de
+/// production n'y voit que l'accueil, le scan et l'opération par lot.
+fn liens_mobiles(role: domaine::Role) -> &'static [LienMobile] {
+    match role {
+        domaine::Role::Production => &[M_ACCUEIL, M_SCAN, M_LOT],
+        domaine::Role::Administrateur => &[M_ACCUEIL, M_PARC, M_SCAN, M_BONS, M_CLIENTS],
+        domaine::Role::Lecture => &[M_ACCUEIL, M_PARC, M_BONS, M_CLIENTS],
+    }
+}
 
 fn actif(chemin: &str, href: &str) -> bool {
     if href == "/" {
@@ -270,11 +321,11 @@ pub fn page(cadre: Cadre<'_>, corps: Markup) -> Markup {
                     }
                 }
                 nav class="barre-mobile" aria-label=(t!("nav.tableau_de_bord")) {
-                    @for l in LIENS {
-                        @if l.mobile && role.permet(l.role_min) {
-                            a href=(l.href) aria-current=[actif(cadre.chemin, l.href).then_some("page")] {
-                                (icone(l.icone)) span { (traduire(l.cle_courte)) }
-                            }
+                    @for l in liens_mobiles(role) {
+                        a href=(l.href)
+                          class=[l.central.then_some("barre-mobile__central")]
+                          aria-current=[actif(cadre.chemin, l.actif).then_some("page")] {
+                            (icone(l.icone)) span { (traduire(l.cle)) }
                         }
                     }
                 }

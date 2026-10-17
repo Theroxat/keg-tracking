@@ -73,11 +73,11 @@ pub async fn fiche(
         div class="fiche" {
             div class="fiche__etat" {
                 // --------------------------------------------- état courant
-                (carte_etat(&f, &loc, &tz))
-
+                (carte_etat(&f))
             }
 
             div class="fiche__chrono" {
+                (carte_details(&f, &loc, &tz))
                 // --------------------------------------------- chronologie
                 (carte_chronologie(&chronologie, &tz))
             }
@@ -93,20 +93,24 @@ pub async fn fiche(
                         }
                     }
                     @if est_admin {
-                        section class="carte" {
-                            div class="carte__tete" { h2 { (t!("fut.forcage_titre")) } }
+                        section class="carte carte--forcage" {
                             div class="carte__corps" {
-                                p class="petit discret" { (t!("fut.forcage_avertissement")) }
-                                form method="post" action=(format!("/futs/{}/transition", f.id)) {
-                                    (csrf(&s.jeton_csrf))
-                                    input type="hidden" name="forcer" value="1";
-                                    (c::selection("statut", t!("fut.transition_vers"),
-                                        &Statut::TOUS.iter().filter(|x| **x != f.statut)
-                                            .map(|x| (x.code().to_string(), traduire(x.cle_i18n()).to_string()))
-                                            .collect::<Vec<_>>(), None, Some("—"), true))
-                                    (c::zone_texte("justification", t!("champ.justification"), "", None))
-                                    button type="submit" class="bouton bouton--grave bouton--large" {
+                                details {
+                                    summary class="bouton bouton--grave bouton--large fiche__resume" {
                                         (t!("action.forcer"))
+                                    }
+                                    p class="petit discret" style="margin-top:12px" { (t!("fut.forcage_avertissement")) }
+                                    form method="post" action=(format!("/futs/{}/transition", f.id)) {
+                                        (csrf(&s.jeton_csrf))
+                                        input type="hidden" name="forcer" value="1";
+                                        (c::selection("statut", t!("fut.transition_vers"),
+                                            &Statut::TOUS.iter().filter(|x| **x != f.statut)
+                                                .map(|x| (x.code().to_string(), traduire(x.cle_i18n()).to_string()))
+                                                .collect::<Vec<_>>(), None, Some("—"), true))
+                                        (c::zone_texte("justification", t!("champ.justification"), "", None))
+                                        button type="submit" class="bouton bouton--grave bouton--large" {
+                                            (t!("fut.forcage_confirmer"))
+                                        }
                                     }
                                 }
                             }
@@ -127,6 +131,11 @@ pub async fn fiche(
                                 button type="submit" class="bouton bouton--large" { (t!("action.enregistrer")) }
                             }
                         }
+                    }
+                }
+                @if let (true, Some(n)) = (est_admin, numero_etiquette(&f.code_qr, &loc.prefixe_qr)) {
+                    a class="bouton bouton--large" href=(format!("/administration/etiquettes/planche?de={n}&a={n}")) {
+                        (t!("fut.reimprimer_etiquette"))
                     }
                 }
                 @if !voisins.is_empty() {
@@ -165,19 +174,36 @@ pub async fn fiche(
     ))
 }
 
-/// Carte « état courant » de la fiche fût.
-fn carte_etat(
+/// Bandeau de tête de la fiche : statut en grand, code, bière et client.
+fn carte_etat(f: &persistance::fut::Fut) -> Markup {
+    html! {
+        section class="fiche-bandeau" {
+            span class={ "fiche-bandeau__statut badge badge--" (f.statut.code()) } { (traduire(f.statut.cle_i18n())) }
+            div class="fiche-bandeau__code mono" { (f.code_qr) }
+            div class="fiche-bandeau__ligne" {
+                @if let Some(b) = &f.biere {
+                    span { (c::pastille_biere(f.couleur_biere.as_ref())) " " (b) }
+                }
+                @if let (Some(cl), Some(cid)) = (&f.client, f.client_id) {
+                    a href=(format!("/clients/{cid}")) { (cl) }
+                }
+            }
+            div class="petit discret" { (c::depuis(f.statut_depuis_le)) }
+        }
+    }
+}
+
+/// Détails de l'état courant, repliés dans un « Détails ».
+fn carte_details(
     f: &persistance::fut::Fut,
     loc: &persistance::locataire::Locataire,
     tz: &str,
 ) -> Markup {
     html! {
     section class="carte" {
-        div class="carte__tete" {
-            h2 { (t!("fut.etat_courant")) }
-            (c::badge_statut(f.statut))
-        }
-        div class="carte__corps" {
+        details class="fiche-details" {
+            summary class="fiche__resume" { (t!("fut.details")) }
+            div class="carte__corps" {
             dl style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:12px;margin:0" {
                 (paire(t!("champ.contenance"), html! { (f.contenance_litres) " " (t!("unite.litres")) }))
                 (paire(t!("champ.depuis"), html! { (c::depuis(f.statut_depuis_le)) }))
@@ -229,6 +255,7 @@ fn carte_etat(
                 p class="petit" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bordure)" {
                     (f.commentaire)
                 }
+            }
             }
         }
     }
@@ -295,8 +322,39 @@ fn paire(libelle: &str, valeur: Markup) -> Markup {
     }
 }
 
+/// Numéro de l'étiquette déduit du code QR (préfixe du locataire + numéro).
+fn numero_etiquette(code: &str, prefixe: &str) -> Option<i64> {
+    code.strip_prefix(prefixe)?.parse().ok()
+}
+
+/// Libellé verbal de l'action menant au statut cible.
+fn libelle_action(st: Statut) -> &'static str {
+    match st {
+        Statut::Recu => t!("fut.action.recu"),
+        Statut::Sale => t!("fut.action.sale"),
+        Statut::Propre => t!("fut.action.propre"),
+        Statut::Rempli => t!("fut.action.rempli"),
+        Statut::Livre => t!("fut.action.livre"),
+        Statut::Perdu => t!("fut.action.perdu"),
+        Statut::HorsService => t!("fut.action.hors_service"),
+    }
+}
+
+/// Étape normale suivante du cycle Reçu → Sale → Propre → Rempli → Livré → Reçu.
+fn etape_suivante(st: Statut) -> Option<Statut> {
+    match st {
+        Statut::Recu => Some(Statut::Sale),
+        Statut::Sale => Some(Statut::Propre),
+        Statut::Propre => Some(Statut::Rempli),
+        Statut::Rempli => Some(Statut::Livre),
+        Statut::Livre => Some(Statut::Recu),
+        Statut::HorsService | Statut::Perdu => None,
+    }
+}
+
 /// Actions contextuelles : seules les transitions réellement possibles sont
-/// proposées, et celles qui ont des préconditions ouvrent leur formulaire.
+/// proposées (`domaine::statut`). L'étape normale suivante est le gros bouton ;
+/// les autres sont repliées, les actions graves viennent en dernier.
 #[allow(clippy::too_many_arguments)]
 fn formulaire_transition(
     s: &persistance::session::ContexteSession,
@@ -309,82 +367,131 @@ fn formulaire_transition(
     adresses: &[(String, String)],
 ) -> Markup {
     let valides = f.statut.transitions_valides();
+    let principale = etape_suivante(f.statut).filter(|p| valides.contains(p));
+    let graves = |st: &Statut| matches!(st, Statut::Perdu | Statut::HorsService);
+    let action = |st: Statut, vif: bool| {
+        action_transition(
+            s,
+            f,
+            st,
+            vif,
+            bieres,
+            lots,
+            cuves,
+            emplacements,
+            clients,
+            adresses,
+        )
+    };
+    let autres: Vec<Statut> = valides
+        .iter()
+        .copied()
+        .filter(|st| Some(*st) != principale && !graves(st))
+        .collect();
     html! {
-        @for st in valides {
-            @match st {
-                Statut::Rempli => {
-                    details {
-                        summary class="bouton bouton--large" style="margin-bottom:8px" {
-                            (t!("fut.transition_vers")) " " (traduire(st.cle_i18n()))
-                        }
-                        form method="post" action=(format!("/futs/{}/transition", f.id))
-                             style="padding:10px 0 4px" {
-                            (csrf(&s.jeton_csrf))
-                            input type="hidden" name="statut" value=(st.code());
-                            (c::selection("type_biere_id", t!("champ.type_biere"), bieres, None, Some("—"), true))
-                            (c::selection("lot_id", t!("champ.lot"), lots, None, Some("—"), true))
-                            (c::selection("cuve_id", t!("champ.cuve"), cuves, None, Some("—"), true))
-                            button class="bouton bouton--vif bouton--large" { (t!("action.valider")) }
-                        }
-                    }
-                },
-                Statut::Livre => {
-                    details {
-                        summary class="bouton bouton--large" style="margin-bottom:8px" {
-                            (t!("fut.transition_vers")) " " (traduire(st.cle_i18n()))
-                        }
-                        form method="post" action=(format!("/futs/{}/transition", f.id))
-                             style="padding:10px 0 4px" {
-                            (csrf(&s.jeton_csrf))
-                            input type="hidden" name="statut" value=(st.code());
-                            div class="champ" {
-                                label for="champ-client_id" { (t!("champ.client")) span class="discret" { " *" } }
-                                select id="champ-client_id" name="client_id" required
-                                       hx-get="/clients/adresses"
-                                       hx-target="#choix-adresse" hx-trigger="change"
-                                       hx-include="this" {
-                                    option value="" { "—" }
-                                    @for (v, n) in clients { option value=(v) { (n) } }
-                                }
-                            }
-                            div id="choix-adresse" {
-                                (c::selection("adresse_client_id", t!("champ.adresse"), adresses, None, Some("—"), true))
-                            }
-                            button class="bouton bouton--vif bouton--large" { (t!("action.valider")) }
-                        }
-                    }
-                },
-                Statut::Perdu | Statut::HorsService => {
-                    details {
-                        summary class="bouton bouton--large" style="margin-bottom:8px" {
-                            (t!("fut.transition_vers")) " " (traduire(st.cle_i18n()))
-                        }
-                        form method="post" action=(format!("/futs/{}/transition", f.id))
-                             style="padding:10px 0 4px" {
-                            (csrf(&s.jeton_csrf))
-                            input type="hidden" name="statut" value=(st.code());
-                            (c::zone_texte("justification", t!("champ.justification"), "", None))
-                            button class="bouton bouton--grave bouton--large" { (t!("action.valider")) }
-                        }
-                    }
-                },
-                _ => {
+        @if let Some(p) = principale { (action(p, true)) }
+        @if !autres.is_empty() {
+            details class="fiche-autres" {
+                summary class="bouton bouton--large fiche__resume" { (t!("fut.autre_action")) }
+                @for st in &autres { (action(*st, false)) }
+            }
+        }
+        @for st in valides.iter().filter(|st| graves(st)) { (action(*st, false)) }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn action_transition(
+    s: &persistance::session::ContexteSession,
+    f: &persistance::fut::Fut,
+    st: Statut,
+    vif: bool,
+    bieres: &[(String, String)],
+    lots: &[(String, String)],
+    cuves: &[(String, String)],
+    emplacements: &[(String, String)],
+    clients: &[(String, String)],
+    adresses: &[(String, String)],
+) -> Markup {
+    let libelle = libelle_action(st);
+    let classe_resume = if vif {
+        "bouton bouton--vif bouton--atelier fiche__resume"
+    } else if matches!(st, Statut::Perdu | Statut::HorsService) {
+        "bouton bouton--grave bouton--large fiche__resume"
+    } else {
+        "bouton bouton--large fiche__resume"
+    };
+    let classe_bouton = if vif {
+        "bouton bouton--vif bouton--atelier"
+    } else {
+        "bouton bouton--large"
+    };
+    html! {
+        @match st {
+            Statut::Rempli => {
+                details class="fiche-action" {
+                    summary class=(classe_resume) { (libelle) }
                     form method="post" action=(format!("/futs/{}/transition", f.id))
-                         style="margin-bottom:8px" {
+                         style="padding:10px 0 4px" {
                         (csrf(&s.jeton_csrf))
                         input type="hidden" name="statut" value=(st.code());
-                        @if *st == Statut::Recu || *st == Statut::Propre {
-                            select name="emplacement_id" style="margin-bottom:6px" {
-                                option value="" { (t!("champ.emplacement")) " — " (t!("app.aucun")) }
-                                @for (v, n) in emplacements { option value=(v) { (n) } }
+                        (c::selection("type_biere_id", t!("champ.type_biere"), bieres, None, Some("—"), true))
+                        (c::selection("lot_id", t!("champ.lot"), lots, None, Some("—"), true))
+                        (c::selection("cuve_id", t!("champ.cuve"), cuves, None, Some("—"), true))
+                        button class="bouton bouton--vif bouton--large" { (t!("action.valider")) }
+                    }
+                }
+            },
+            Statut::Livre => {
+                details class="fiche-action" {
+                    summary class=(classe_resume) { (libelle) }
+                    form method="post" action=(format!("/futs/{}/transition", f.id))
+                         style="padding:10px 0 4px" {
+                        (csrf(&s.jeton_csrf))
+                        input type="hidden" name="statut" value=(st.code());
+                        div class="champ" {
+                            label for="champ-client_id" { (t!("champ.client")) span class="discret" { " *" } }
+                            select id="champ-client_id" name="client_id" required
+                                   hx-get="/clients/adresses"
+                                   hx-target="#choix-adresse" hx-trigger="change"
+                                   hx-include="this" {
+                                option value="" { "—" }
+                                @for (v, n) in clients { option value=(v) { (n) } }
                             }
                         }
-                        button class="bouton bouton--atelier bouton--large" {
-                            (t!("fut.transition_vers")) " " (traduire(st.cle_i18n()))
+                        div id="choix-adresse" {
+                            (c::selection("adresse_client_id", t!("champ.adresse"), adresses, None, Some("—"), true))
+                        }
+                        button class="bouton bouton--vif bouton--large" { (t!("action.valider")) }
+                    }
+                }
+            },
+            Statut::Perdu | Statut::HorsService => {
+                details class="fiche-action" {
+                    summary class=(classe_resume) { (libelle) }
+                    form method="post" action=(format!("/futs/{}/transition", f.id))
+                         style="padding:10px 0 4px" {
+                        (csrf(&s.jeton_csrf))
+                        input type="hidden" name="statut" value=(st.code());
+                        (c::zone_texte("justification", t!("champ.justification"), "", None))
+                        button class="bouton bouton--grave bouton--large" { (t!("action.valider")) }
+                    }
+                }
+            },
+            _ => {
+                form method="post" action=(format!("/futs/{}/transition", f.id))
+                     class="fiche-action" {
+                    (csrf(&s.jeton_csrf))
+                    input type="hidden" name="statut" value=(st.code());
+                    @if st == Statut::Recu || st == Statut::Propre {
+                        select name="emplacement_id" class="fiche__resume" style="margin-bottom:6px" {
+                            option value="" { (t!("champ.emplacement")) " — " (t!("app.aucun")) }
+                            @for (v, n) in emplacements { option value=(v) { (n) } }
                         }
                     }
-                },
-            }
+                    button class=(classe_bouton) { (libelle) }
+                }
+            },
         }
     }
 }
