@@ -1,6 +1,6 @@
 <div align="center">
 
-# Suivi des fûts — Keg Tracking
+# Keg Tracking
 
 **QR-code traceability for returnable beer kegs, offered as SaaS to breweries.**
 

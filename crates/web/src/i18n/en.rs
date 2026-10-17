@@ -2,7 +2,7 @@
 
 pub static CATALOGUE: &[(&str, &str)] = &[
     // ---------------------------------------------------------- application
-    ("app.nom", "Keg tracking"),
+    ("app.nom", "Keg Tracking"),
     ("app.baseline", "Returnable keg fleet traceability"),
     ("app.chargement", "Loading…"),
     ("app.aucun_resultat", "No results"),
@@ -33,7 +33,7 @@ pub static CATALOGUE: &[(&str, &str)] = &[
     ("nav.court.tableau_de_bord", "Home"),
     ("nav.court.scan", "Scan"),
     ("nav.court.parc", "Fleet"),
-    ("nav.court.documents", "Notes"),
+    ("nav.court.documents", "Docs"),
     ("nav.court.clients", "Customers"),
     ("nav.court.operation", "Multi-scan"),
     ("nav.parc", "Fleet"),
