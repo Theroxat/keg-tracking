@@ -80,25 +80,23 @@ pub async fn afficher(
     ))
 }
 
-/// Écran d'atelier : une cible de 56 px minimum, un contraste élevé, et
-/// tout le reste disparaît.
+/// Écran d'atelier : deux gestes, deux gros boutons, et les deux chiffres
+/// qui comptent au lavage. Tout le reste disparaît.
 fn atelier(s: &persistance::session::ContexteSession, propres: i64, sales: i64) -> Markup {
     html! {
-        div style="display:flex;flex-direction:column;gap:14px;max-width:560px" {
-            a href="/scan" class="bouton bouton--vif bouton--atelier bouton--large"
-              style="min-height:88px;font-size:21px" {
+        div class="atelier" {
+            a href="/scan" class="bouton bouton--vif bouton--atelier bouton--large atelier__principal" {
                 (t!("nav.scan"))
             }
             a href="/operations/nouvelle" class="bouton bouton--atelier bouton--large" {
                 (t!("nav.operation"))
             }
-            p class="discret petit" { (t!("tdb.atelier_consigne")) }
             div class="cartes" {
-                div class="tuile tuile--ok" {
+                a class="tuile tuile--ok atelier__tuile" href="/parc?statut=propre" {
                     span class="tuile__valeur num" { (propres) }
                     span class="tuile__nom" { (t!("tdb.propres_disponibles")) }
                 }
-                div class="tuile" {
+                a class="tuile atelier__tuile" href="/parc?statut=sale" {
                     span class="tuile__valeur num" { (sales) }
                     span class="tuile__nom" { (t!("tdb.a_laver")) }
                 }
@@ -231,7 +229,7 @@ fn bureau(
                                                     (c::badge("alerte", &t!("lot.dluo_proche", n = a.jours_restants)))
                                                 }
                                             }
-                                            td class="serre num petit discret" { (a.futs_concernes) " fûts" }
+                                            td class="serre num petit discret" { (t!("tdb.futs", n = a.futs_concernes)) }
                                         }
                                     }
                                 }
@@ -274,7 +272,7 @@ fn bureau(
                 div class="tuile" {
                     span class="tuile__valeur num" { (format!("{:.0}", d)) }
                     span class="tuile__nom" { (t!("tdb.duree_chez_client")) }
-                    span class="tuile__detail" { (t!("tdb.jours")) " — " (rotation.rotations) " rotations" }
+                    span class="tuile__detail" { (t!("tdb.jours")) " — " (t!("tdb.rotations", n = rotation.rotations)) }
                 }
             }
         }

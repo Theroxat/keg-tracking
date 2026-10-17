@@ -221,7 +221,7 @@ fn page_verrouillage(s: &ContexteSession, erreur: Option<&str>) -> Markup {
     page_nue(
         t!("verrouillage.titre"),
         html! {
-            div class="portail" {
+            div class="portail" { div class="pin-colonne" {
                 form class="portail__carte" method="post" action="/verrouillage" {
                     (csrf(&s.jeton_csrf))
                     div class="portail__marque" {
@@ -231,29 +231,43 @@ fn page_verrouillage(s: &ContexteSession, erreur: Option<&str>) -> Markup {
                     p class="petit" { (t!("verrouillage.consigne")) }
                     @if let Some(e) = erreur { div class="avis avis--grave" role="alert" { (e) } }
                     @if s.a_un_pin {
-                        div class="champ" {
+                        div class="champ" id="pin-repli" {
                             label for="champ-pin" { (t!("champ.pin")) }
-                            input id="champ-pin" name="pin" type="text" inputmode="numeric"
+                            input id="champ-pin" name="pin" type="password" inputmode="numeric"
                                   pattern="[0-9]{6}" maxlength="6" autocomplete="off"
-                                  autofocus required
-                                  style="font-size:28px;letter-spacing:.4em;text-align:center;min-height:60px";
+                                  autofocus required class="pin-champ";
                         }
-                        button type="submit" class="bouton bouton--vif bouton--large bouton--atelier" {
+                        div id="pin-pave" hidden {
+                            div class="pin-points" role="img" aria-label=(t!("verrouillage.avancement")) {
+                                @for _ in 0..6 { span data-rempli="0" {} }
+                            }
+                            div class="pave-pin" {
+                                @for n in 1..=9 {
+                                    button type="button" data-chiffre=(n) { (n) }
+                                }
+                                button type="button" data-effacer="1" class="pave-pin__effacer" {
+                                    (t!("verrouillage.effacer"))
+                                }
+                                button type="button" data-chiffre="0" { "0" }
+                                span {}
+                            }
+                        }
+                        button type="submit" id="pin-valider"
+                              class="bouton bouton--vif bouton--large bouton--atelier" {
                             (t!("verrouillage.bouton"))
                         }
                     } @else {
                         div class="avis avis--alerte" { (t!("verrouillage.pas_de_pin")) }
                     }
-                    div style="margin-top:16px;text-align:center" {
-                        form method="post" action="/deconnexion" {
-                            (csrf(&s.jeton_csrf))
-                            button type="submit" class="bouton bouton--nu bouton--petit" {
-                                (t!("verrouillage.autre_compte"))
-                            }
-                        }
+                }
+                form class="pin-autre" method="post" action="/deconnexion" {
+                    (csrf(&s.jeton_csrf))
+                    button type="submit" class="bouton bouton--large" {
+                        (t!("verrouillage.autre_compte"))
                     }
                 }
-            }
+                script src={ "/statique/pin.js?v=" (crate::statique::version()) } defer {}
+            } }
         },
     )
 }
@@ -363,7 +377,7 @@ pub async fn afficher_compte(
                     table class="tableau" {
                         thead { tr {
                             th { "Appareil" } th { (t!("champ.derniere_activite")) }
-                            th { "Expire" } th {}
+                            th { (t!("champ.expire")) } th {}
                         } }
                         tbody {
                             @for sess in &sessions {

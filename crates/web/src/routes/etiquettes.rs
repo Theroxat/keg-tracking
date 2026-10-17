@@ -44,8 +44,6 @@ pub async fn afficher(
         sqlx::query_scalar("select code_qr from fut order by code_qr desc limit 1")
             .fetch_optional(tx.conn())
             .await?;
-    tx.valider().await?;
-
     let suivant = dernier
         .as_deref()
         .and_then(|c| c.strip_prefix(&loc.prefixe_qr))
@@ -54,8 +52,28 @@ pub async fn afficher(
         .unwrap_or(1);
     let de = r.de.unwrap_or(suivant).max(1);
     let a = r.a.unwrap_or(de + 99).max(de);
+    // Au-delà de la limite de création, l'aperçu n'interroge pas la base.
+    let deja_pris = if a - de <= 5000 {
+        persistance::fut::codes_deja_pris(tx.conn(), &codes(&loc.prefixe_qr, de, a))
+            .await?
+            .len() as i64
+    } else {
+        0
+    };
+    tx.valider().await?;
+    let nombre = a - de + 1;
+    let a_creer = nombre - deja_pris;
+    let premier = format!("{}{:05}", loc.prefixe_qr, de);
+    let dernier_code = format!("{}{:05}", loc.prefixe_qr, a);
+    let confirmation = t!(
+        "etiq.creer_confirmation",
+        n = a_creer,
+        premier = &premier,
+        dernier = &dernier_code
+    );
 
     let corps = html! {
+        (c::retour_administration())
         div class="avis" { (t!("etiq.conseil_materiel")) }
         div class="colonnes" {
             section class="carte" {
@@ -67,15 +85,17 @@ pub async fn afficher(
                             (c::Champ::texte("a", t!("etiq.a"), a.to_string()).de_type("number").rendre())
                         }
                         p class="champ__aide" {
-                            (t!("etiq.apercu",
-                                premier = format!("{}{:05}", loc.prefixe_qr, de),
-                                dernier = format!("{}{:05}", loc.prefixe_qr, a)))
-                            " — " (a - de + 1) " étiquettes"
+                            (t!("etiq.apercu", premier = &premier, dernier = &dernier_code))
+                            " — " (t!("etiq.nb_etiquettes", n = nombre))
                         }
-                        button class="bouton" { (t!("action.voir")) }
+                        p class="champ__aide" {
+                            (t!("etiq.bilan", creer = a_creer, existants = deja_pris))
+                        }
+                        button class="bouton" { (t!("etiq.apercu_plage")) }
                     }
                     hr;
-                    form method="post" action="/administration/etiquettes" {
+                    form method="post" action="/administration/etiquettes"
+                          onsubmit=(c::confirmer_soumission(&confirmation)) {
                         (csrf(&s.jeton_csrf))
                         input type="hidden" name="de" value=(de);
                         input type="hidden" name="a" value=(a);
@@ -83,7 +103,7 @@ pub async fn afficher(
                             &c::options(&emplacements, |x| x.id, |x| x.nom.clone()),
                             loc.emplacement_defaut_id.map(|i| i.to_string()).as_deref(), Some("—"), false))
                         (c::selection("contenance_litres", t!("champ.contenance"),
-                            &loc.contenances_autorisees.iter().map(|l| (l.to_string(), format!("{l} L"))).collect::<Vec<_>>(),
+                            &loc.contenances_autorisees.iter().map(|l| (l.to_string(), format!("{l} {}", t!("unite.litres")))).collect::<Vec<_>>(),
                             None, None, true))
                         button class="bouton bouton--vif bouton--large" { (t!("etiq.creer_futs")) }
                     }

@@ -253,3 +253,22 @@ pub fn entete_tri(libelle: &str, cle: &str, tri_actif: &str, desc: bool, base: &
 pub fn confirmation(message: &str) -> Markup {
     html! { (maud::PreEscaped(format!(r#"hx-confirm="{}""#, message.replace('"', "&quot;")))) }
 }
+
+/// Confirmation pour un formulaire classique (sans htmx) : valeur de
+/// `onsubmit`. Le message passe par JSON, donc correctement échappé en
+/// chaîne JavaScript ; Maud échappe ensuite l'attribut HTML.
+pub fn confirmer_soumission(message: &str) -> String {
+    format!(
+        "return confirm({})",
+        serde_json::to_string(message).unwrap_or_else(|_| "\"\"".into())
+    )
+}
+
+/// Lien de retour en tête des sous-pages d'administration.
+pub fn retour_administration() -> Markup {
+    html! {
+        p class="petit" style="margin:0 0 12px" {
+            a href="/administration" { "← " (t!("admin.titre")) }
+        }
+    }
+}

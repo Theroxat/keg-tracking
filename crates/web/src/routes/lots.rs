@@ -48,7 +48,12 @@ pub async fn liste(
             button class="bouton" { (t!("action.filtrer")) }
         }
         @if lots.is_empty() {
-            (c::vide(t!("lot.aucun"), None))
+            (c::vide(
+                if peut { t!("lot.aucun_formulaire") } else { t!("lot.aucun") },
+                peut.then(|| html! {
+                    a class="bouton bouton--vif" href="#nouveau-lot" { (t!("lot.nouveau")) }
+                }),
+            ))
         } @else {
             div class="tableau-cadre" {
                 table class="tableau tableau--cartes" {
@@ -95,7 +100,7 @@ pub async fn liste(
             }
         }
         @if peut {
-            section class="carte" style="margin-top:14px;max-width:700px" {
+            section class="carte" id="nouveau-lot" style="margin-top:14px;max-width:700px" {
                 div class="carte__tete" { h2 { (t!("lot.nouveau")) } }
                 div class="carte__corps" {
                     form method="post" action="/lots" {
@@ -213,11 +218,11 @@ pub async fn rappel(
         div class="cartes" style="margin-bottom:14px" {
             div class="tuile" {
                 span class="tuile__valeur num" { (destinataires.len()) }
-                span class="tuile__nom" { "Clients concernés" }
+                span class="tuile__nom" { (t!("rappel.clients_concernes")) }
             }
             div class="tuile" {
                 span class="tuile__valeur num" { (total_futs) }
-                span class="tuile__nom" { "Fûts livrés" }
+                span class="tuile__nom" { (t!("rappel.futs_livres")) }
             }
             div class={ "tuile " @if total_detenus > 0 { "tuile--grave" } @else { "tuile--ok" } } {
                 span class="tuile__valeur num" { (total_detenus) }
@@ -233,7 +238,7 @@ pub async fn rappel(
                     thead { tr {
                         th { (t!("champ.societe")) } th { (t!("champ.contact")) }
                         th { (t!("champ.telephone")) } th { (t!("champ.adresse")) }
-                        th { "Fûts" } th { (t!("rappel.encore_detenus")) }
+                        th { (t!("rappel.futs")) } th { (t!("rappel.encore_detenus")) }
                         th { (t!("rappel.derniere_livraison")) } th { (t!("champ.code_qr")) }
                     } }
                     tbody {
@@ -268,10 +273,10 @@ pub async fn rappel(
     };
     let cadre = Cadre::new(&s, &ctx.chemin, t!("rappel.titre"))
         .sous_titre(format!(
-            "{} — {} — brassé le {}",
+            "{} — {} — {}",
             lot.numero,
             lot.biere,
-            c::jour(lot.date_brassage)
+            t!("rappel.brasse_le", date = c::jour(lot.date_brassage))
         ))
         .actions(actions)
         .avis(ctx.avis);
@@ -304,7 +309,7 @@ pub async fn rappel_export(
         t!("champ.telephone"),
         t!("champ.email"),
         t!("champ.adresse"),
-        "Fûts",
+        t!("rappel.futs"),
         t!("rappel.encore_detenus"),
         t!("rappel.premiere_livraison"),
         t!("rappel.derniere_livraison"),

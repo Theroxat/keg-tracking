@@ -110,10 +110,171 @@ fn etapes(courante: u8) -> Markup {
     }
 }
 
+/// Préréglages de l'écran de configuration : les quatre gestes courants de
+/// l'atelier, chacun avec son type de document, son statut cible et les
+/// seuls champs qu'il exige. Ce n'est qu'un préremplissage : le serveur
+/// revérifie tout à la création puis à chaque capture.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Prereglage {
+    Lavage,
+    Remplissage,
+    Livraison,
+    Retour,
+}
+
+/// Champs de configuration qu'un préréglage peut mettre en avant.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ChampOp {
+    Biere,
+    Lot,
+    Cuve,
+    Emplacement,
+    Client,
+}
+
+const TOUS_CHAMPS: [ChampOp; 5] = [
+    ChampOp::Biere,
+    ChampOp::Lot,
+    ChampOp::Cuve,
+    ChampOp::Emplacement,
+    ChampOp::Client,
+];
+
+impl Prereglage {
+    const TOUS: [Prereglage; 4] = [
+        Prereglage::Lavage,
+        Prereglage::Remplissage,
+        Prereglage::Livraison,
+        Prereglage::Retour,
+    ];
+
+    fn code(self) -> &'static str {
+        match self {
+            Prereglage::Lavage => "lavage",
+            Prereglage::Remplissage => "remplissage",
+            Prereglage::Livraison => "livraison",
+            Prereglage::Retour => "retour",
+        }
+    }
+
+    fn depuis_code(code: &str) -> Option<Prereglage> {
+        Prereglage::TOUS.into_iter().find(|p| p.code() == code)
+    }
+
+    fn libelle(self) -> &'static str {
+        match self {
+            Prereglage::Lavage => t!("op.pre.lavage"),
+            Prereglage::Remplissage => t!("op.pre.remplissage"),
+            Prereglage::Livraison => t!("op.pre.livraison"),
+            Prereglage::Retour => t!("op.pre.retour"),
+        }
+    }
+
+    fn type_document(self) -> TypeDocument {
+        match self {
+            Prereglage::Lavage | Prereglage::Remplissage => TypeDocument::OperationInterne,
+            Prereglage::Livraison => TypeDocument::Livraison,
+            Prereglage::Retour => TypeDocument::Retour,
+        }
+    }
+
+    fn statut(self) -> Statut {
+        match self {
+            Prereglage::Lavage => Statut::Propre,
+            Prereglage::Remplissage => Statut::Rempli,
+            Prereglage::Livraison => Statut::Livre,
+            Prereglage::Retour => Statut::Recu,
+        }
+    }
+
+    /// Champs affichés d'emblée — et exigés, puisque le statut cible les
+    /// réclame (préconditions de `domaine::statut`).
+    fn champs(self) -> &'static [ChampOp] {
+        match self {
+            Prereglage::Lavage | Prereglage::Retour => &[],
+            Prereglage::Remplissage => &[ChampOp::Biere, ChampOp::Lot, ChampOp::Cuve],
+            Prereglage::Livraison => &[ChampOp::Client],
+        }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct RequetePrereglage {
+    #[serde(default)]
+    prereglage: Option<String>,
+}
+
+/// Listes de référence nécessaires au formulaire de configuration.
+struct Referentiels {
+    bieres: Vec<persistance::referentiel::TypeBiere>,
+    cuves: Vec<persistance::referentiel::Entree>,
+    emplacements: Vec<persistance::referentiel::Entree>,
+    clients: Vec<persistance::client::Client>,
+    lots: Vec<persistance::lot::Lot>,
+}
+
+fn champ_op(champ: ChampOp, r: &Referentiels, requis: bool) -> Markup {
+    match champ {
+        ChampOp::Biere => c::selection(
+            "type_biere_id",
+            t!("champ.type_biere"),
+            &c::options(&r.bieres, |x| x.id, |x| x.nom.clone()),
+            None,
+            Some("—"),
+            requis,
+        ),
+        ChampOp::Lot => c::selection(
+            "lot_id",
+            t!("champ.lot"),
+            &r.lots
+                .iter()
+                .map(|l| (l.id.to_string(), format!("{} — {}", l.numero, l.biere)))
+                .collect::<Vec<_>>(),
+            None,
+            Some("—"),
+            requis,
+        ),
+        ChampOp::Cuve => c::selection(
+            "cuve_id",
+            t!("champ.cuve"),
+            &c::options(&r.cuves, |x| x.id, |x| x.nom.clone()),
+            None,
+            Some("—"),
+            requis,
+        ),
+        ChampOp::Emplacement => c::selection(
+            "emplacement_id",
+            t!("champ.emplacement"),
+            &c::options(&r.emplacements, |x| x.id, |x| x.nom.clone()),
+            None,
+            Some("—"),
+            requis,
+        ),
+        ChampOp::Client => html! {
+            div class="champ" {
+                label for="champ-client_id" {
+                    (t!("champ.client"))
+                    @if requis { span class="discret" { " *" } }
+                }
+                select id="champ-client_id" name="client_id" required[requis]
+                       hx-get="/clients/adresses" hx-target="#choix-adresse"
+                       hx-trigger="change" hx-include="this" {
+                    option value="" { "—" }
+                    @for cl in &r.clients { option value=(cl.id) { (cl.societe) } }
+                }
+            }
+            div id="choix-adresse" {
+                (c::selection("adresse_client_id", t!("champ.adresse"), &[], None, Some("—"), requis))
+            }
+        },
+    }
+}
+
 pub async fn nouvelle(
     State(etat): State<Etat>,
     ctx: Contexte,
     Session(s): Session,
+    Query(q): Query<RequetePrereglage>,
 ) -> Result<Response, ErreurWeb> {
     if !s.role.peut_ecrire() {
         return Err(ErreurWeb::Interdit);
@@ -135,71 +296,84 @@ pub async fn nouvelle(
         ));
     }
 
-    let bieres = persistance::referentiel::lister_bieres(tx.conn(), true).await?;
-    let cuves = persistance::referentiel::lister_cuves(tx.conn(), true).await?;
-    let emplacements = persistance::referentiel::lister_emplacements(tx.conn(), true).await?;
-    let clients = persistance::client::lister(tx.conn(), false, None).await?;
-    let lots = persistance::lot::lister(tx.conn(), None).await?;
+    let r = Referentiels {
+        bieres: persistance::referentiel::lister_bieres(tx.conn(), true).await?,
+        cuves: persistance::referentiel::lister_cuves(tx.conn(), true).await?,
+        emplacements: persistance::referentiel::lister_emplacements(tx.conn(), true).await?,
+        clients: persistance::client::lister(tx.conn(), false, None).await?,
+        lots: persistance::lot::lister(tx.conn(), None).await?,
+    };
     tx.valider().await?;
+
+    let choix = q.prereglage.as_deref().and_then(Prereglage::depuis_code);
+    let en_avant: &[ChampOp] = choix.map(|p| p.champs()).unwrap_or(&[]);
+    let type_coche = choix
+        .map(|p| p.type_document())
+        .unwrap_or(TypeDocument::OperationInterne);
+    let statut_choisi = choix.map(|p| p.statut().code());
+    let bouton_lancer = html! {
+        button type="submit" class="bouton bouton--vif bouton--atelier bouton--large" {
+            (t!("op.lancer_capture"))
+        }
+    };
 
     let corps = html! {
         (etapes(1))
-        form method="post" action="/operations" style="max-width:760px" {
-            (csrf(&s.jeton_csrf))
-            fieldset {
-                legend { (t!("op.type_operation")) }
-                div class="grille" {
-                    @for td in TypeDocument::TOUS {
-                        label class="coche" style="padding:10px;border:1px solid var(--bordure);border-radius:var(--r-2)" {
-                            input type="radio" name="type_document" value=(td.code())
-                                  checked[td == TypeDocument::OperationInterne] required;
-                            span { (traduire(td.cle_i18n())) }
+        div class="parcours" {
+            @if let Some(p) = choix {
+                div class="prereglage-choisi" {
+                    b { (p.libelle()) }
+                    a class="bouton" href="/operations/nouvelle" { (t!("op.changer")) }
+                }
+            } @else {
+                h2 class="parcours__question" { (t!("op.que_faites_vous")) }
+                div class="prereglages" {
+                    @for p in Prereglage::TOUS {
+                        a class="bouton bouton--atelier bouton--large"
+                          href={ "/operations/nouvelle?prereglage=" (p.code()) } {
+                            (p.libelle())
                         }
                     }
                 }
             }
-            fieldset {
-                legend { (t!("op.valeurs_a_appliquer")) }
-                p class="champ__aide" style="margin-bottom:12px" { (t!("op.champs_vides")) }
-                (c::selection("statut_cible", t!("champ.statut"),
-                    &Statut::TOUS.iter().map(|x| (x.code().to_string(), traduire(x.cle_i18n()).to_string())).collect::<Vec<_>>(),
-                    None, Some("—"), false))
-                div class="grille" {
-                    (c::selection("type_biere_id", t!("champ.type_biere"),
-                        &c::options(&bieres, |x| x.id, |x| x.nom.clone()),
-                        None, Some("—"), false))
-                    (c::selection("lot_id", t!("champ.lot"),
-                        &lots.iter().map(|l| (l.id.to_string(), format!("{} — {}", l.numero, l.biere))).collect::<Vec<_>>(),
-                        None, Some("—"), false))
-                    (c::selection("cuve_id", t!("champ.cuve"),
-                        &c::options(&cuves, |x| x.id, |x| x.nom.clone()),
-                        None, Some("—"), false))
-                    (c::selection("emplacement_id", t!("champ.emplacement"),
-                        &c::options(&emplacements, |x| x.id, |x| x.nom.clone()),
-                        None, Some("—"), false))
+            form method="post" action="/operations" {
+                (csrf(&s.jeton_csrf))
+                @if let Some(p) = choix {
+                    input type="hidden" name="prereglage" value=(p.code());
+                    @for ch in en_avant { (champ_op(*ch, &r, true)) }
+                    (bouton_lancer)
                 }
-                div class="grille" {
-                    div class="champ" {
-                        label for="champ-client_id" { (t!("champ.client")) }
-                        select id="champ-client_id" name="client_id"
-                               hx-get="/clients/adresses" hx-target="#choix-adresse"
-                               hx-trigger="change" hx-include="this" {
-                            option value="" { "—" }
-                            @for cl in &clients { option value=(cl.id) { (cl.societe) } }
+                details class="plus-options" {
+                    summary { (t!("op.autres_reglages")) }
+                    fieldset {
+                        legend { (t!("op.type_operation")) }
+                        div class="choix-lignes" {
+                            @for td in TypeDocument::TOUS {
+                                label class="choix-ligne" {
+                                    input type="radio" name="type_document" value=(td.code())
+                                          checked[td == type_coche] required;
+                                    span { (traduire(td.cle_i18n())) }
+                                }
+                            }
                         }
                     }
-                    div id="choix-adresse" {
-                        (c::selection("adresse_client_id", t!("champ.adresse"), &[], None, Some("—"), false))
+                    fieldset {
+                        legend { (t!("op.valeurs_a_appliquer")) }
+                        p class="champ__aide" style="margin-bottom:12px" { (t!("op.champs_vides")) }
+                        (c::selection("statut_cible", t!("champ.statut"),
+                            &Statut::TOUS.iter().map(|x| (x.code().to_string(), traduire(x.cle_i18n()).to_string())).collect::<Vec<_>>(),
+                            statut_choisi, Some("—"), false))
+                        @for ch in TOUS_CHAMPS {
+                            @if !en_avant.contains(&ch) { (champ_op(ch, &r, false)) }
+                        }
                     }
+                    fieldset {
+                        legend { (t!("champ.commentaire")) }
+                        p class="champ__aide" { (t!("op.commentaire_avant")) }
+                        (c::zone_texte("commentaire", t!("champ.commentaire"), "", None))
+                    }
+                    @if choix.is_none() { (bouton_lancer) }
                 }
-            }
-            fieldset {
-                legend { (t!("champ.commentaire")) }
-                p class="champ__aide" { (t!("op.commentaire_avant")) }
-                (c::zone_texte("commentaire", t!("champ.commentaire"), "", None))
-            }
-            button type="submit" class="bouton bouton--vif bouton--atelier bouton--large" {
-                (t!("op.lancer_capture"))
             }
         }
     };
@@ -216,6 +390,10 @@ pub async fn nouvelle(
 #[derive(Deserialize)]
 pub struct FormConfig {
     type_document: Option<String>,
+    /// Préréglage d'origine : sert seulement à revenir au bon écran en cas
+    /// de refus. Le serveur ne s'y fie pour rien d'autre.
+    #[serde(default)]
+    prereglage: Option<String>,
     #[serde(default)]
     statut_cible: Option<String>,
     #[serde(default)]
@@ -267,6 +445,32 @@ pub async fn creer(
         .and_then(TypeDocument::depuis_code)
         .unwrap_or(TypeDocument::OperationInterne);
     let cfg = f.configuration();
+    let retour = match f.prereglage.as_deref().and_then(Prereglage::depuis_code) {
+        Some(p) => format!("/operations/nouvelle?prereglage={}", p.code()),
+        None => "/operations/nouvelle".to_string(),
+    };
+
+    // Préconditions du statut cible vérifiées dès la configuration : sans
+    // lot ni cuve, chaque fût d'un remplissage serait refusé au scan.
+    if let Some(st) = cfg.statut_cible {
+        let contexte = domaine::ContexteTransition {
+            type_biere_id: cfg.type_biere_id,
+            lot_id: cfg.lot_id,
+            cuve_id: cfg.cuve_id,
+            client_id: cfg.client_id,
+            adresse_client_id: cfg.adresse_client_id,
+            emplacement_id: cfg.emplacement_id,
+            ..Default::default()
+        };
+        if let Err(e) = domaine::statut::verifier_preconditions(st, &contexte) {
+            return Ok(rediriger(
+                &retour,
+                "grave",
+                &crate::i18n::message_erreur(&e),
+                etat.config.cookies_securises,
+            ));
+        }
+    }
 
     // Cohérence client / adresse vérifiée avant même la première capture.
     let mut tx = etat
@@ -285,7 +489,7 @@ pub async fn creer(
     Ok(rediriger(
         &format!("/operations/{id}"),
         "ok",
-        t!("op.etape_capture"),
+        t!("op.aucune_capture"),
         etat.config.cookies_securises,
     ))
 }
@@ -318,43 +522,48 @@ pub async fn capture(
     let lignes = document::lignes(tx.conn(), id).await?;
     tx.valider().await?;
 
+    let n = lignes.len();
     let corps = html! {
         (etapes(2))
+        (compteur_capture(n, false))
         div class="scan" {
             div {
                 (ilot(&format!("/api/operations/{id}/lignes"),
                       Some("#captures"), &s.jeton_csrf, true))
             }
-            aside style="display:flex;flex-direction:column;gap:12px" {
-                div class="compteur-capture" {
-                    b id="scan-compteur" { (lignes.len()) }
-                    span { (t!("op.captures", n = "")) }
-                }
-                (resume_configuration(&doc))
-                div class="boutons" {
-                    a class="bouton bouton--vif bouton--atelier bouton--large"
-                      href=(format!("/operations/{id}/valider")) { (t!("action.valider")) }
-                }
-                form method="post" action=(format!("/operations/{id}/vider")) {
-                    (csrf(&s.jeton_csrf))
-                    button class="bouton bouton--petit bouton--nu"
-                           onclick=(format!("return confirm('{}')", t!("op.vider_confirmation", n = lignes.len()))) {
-                        (t!("action.vider"))
-                    }
-                }
-                form method="post" action=(format!("/operations/{id}/abandonner")) {
-                    (csrf(&s.jeton_csrf))
-                    button class="bouton bouton--petit bouton--nu"
-                           onclick=(format!("return confirm('{}')", t!("op.abandonner_confirmation"))) {
-                        (t!("action.annuler"))
-                    }
-                }
-            }
+            aside { (resume_configuration(&doc)) }
         }
-        section class="carte" style="margin-top:12px" {
-            div class="carte__tete" { h2 { (t!("op.etape_capture")) } }
+        section class="carte capture__liste" {
             div class="carte__corps carte__corps--serre" id="captures" {
                 (tableau_captures(&doc, &lignes, &s.jeton_csrf))
+            }
+        }
+        (barre_terminer(id, n, false))
+        // Les gestes destructeurs sont loin du bouton principal, et chacun
+        // demande une seconde confirmation explicite.
+        details class="plus-options" {
+            summary { (t!("op.plus_options")) }
+            div class="plus-options__corps" {
+                details class="confirmer" {
+                    summary class="bouton bouton--large" { (t!("op.tout_retirer")) }
+                    p { (t!("op.vider_confirmation", n = n)) }
+                    form method="post" action=(format!("/operations/{id}/vider")) {
+                        (csrf(&s.jeton_csrf))
+                        button type="submit" class="bouton bouton--grave bouton--atelier bouton--large" {
+                            (t!("op.oui_tout_retirer"))
+                        }
+                    }
+                }
+                details class="confirmer" {
+                    summary class="bouton bouton--large" { (t!("op.abandonner")) }
+                    p { (t!("op.abandonner_confirmation")) }
+                    form method="post" action=(format!("/operations/{id}/abandonner")) {
+                        (csrf(&s.jeton_csrf))
+                        button type="submit" class="bouton bouton--grave bouton--atelier bouton--large" {
+                            (t!("op.oui_abandonner"))
+                        }
+                    }
+                }
             }
         }
     };
@@ -370,6 +579,54 @@ pub async fn capture(
         avait,
         etat.config.cookies_securises,
     ))
+}
+
+/// Compteur collé en haut de l'écran de capture. Renvoyé hors bande
+/// (`hx-swap-oob`) avec chaque rafraîchissement de la liste : le chiffre
+/// affiché est toujours celui du serveur, y compris après un retrait.
+fn compteur_capture(n: usize, hors_bande: bool) -> Markup {
+    html! {
+        div id="compteur-capture" class="compteur-capture compteur-capture--collant"
+            hx-swap-oob=[hors_bande.then_some("true")] aria-live="polite" {
+            b id="scan-compteur" { (n) }
+            span { @if n == 1 { (t!("op.compteur_un")) } @else { (t!("op.compteur_plusieurs")) } }
+        }
+    }
+}
+
+/// Barre d'action collée en bas, au-dessus de la barre de navigation : un
+/// seul bouton, toujours au même endroit.
+fn barre_terminer(id: Uuid, n: usize, hors_bande: bool) -> Markup {
+    html! {
+        div id="barre-terminer" class="barre-action" hx-swap-oob=[hors_bande.then_some("true")] {
+            @if n == 0 {
+                span class="bouton bouton--atelier bouton--large" aria-disabled="true" {
+                    (t!("op.aucune_capture"))
+                }
+            } @else {
+                a class="bouton bouton--vif bouton--atelier bouton--large"
+                  href=(format!("/operations/{id}/valider")) {
+                    @if n == 1 { (t!("op.terminer_un")) } @else { (t!("op.terminer", n = n)) }
+                }
+            }
+        }
+    }
+}
+
+/// Fragment renvoyé à l'écran de capture : la liste, plus le compteur et
+/// le bouton « Terminer » mis à jour hors bande.
+fn fragment_capture(
+    d: &persistance::document::Document,
+    lignes: &[persistance::document::LigneCapturee],
+    jeton: &str,
+) -> Markup {
+    html! {
+        (tableau_captures(d, lignes, jeton))
+        @if d.etat == EtatDocument::Brouillon {
+            (compteur_capture(lignes.len(), true))
+            (barre_terminer(d.id, lignes.len(), true))
+        }
+    }
 }
 
 fn resume_configuration(d: &persistance::document::Document) -> Markup {
@@ -398,15 +655,20 @@ fn tableau_captures(
     lignes: &[persistance::document::LigneCapturee],
     jeton: &str,
 ) -> Markup {
+    // Un document validé ou abandonné ne se modifie plus : pas de bouton
+    // « Retirer » qui échouerait côté serveur.
+    let modifiable = d.etat == EtatDocument::Brouillon;
     html! {
         @if lignes.is_empty() {
             div class="vide" { (t!("op.aucune_capture")) }
         } @else {
             div class="tableau-cadre" style="border:0" {
-                table class="tableau tableau--cartes" {
+                table class="tableau tableau--cartes tableau--captures" {
                     thead { tr {
                         th { "#" } th { (t!("champ.code_qr")) } th { (t!("op.etat_avant")) }
-                        th { (t!("champ.biere")) } th { (t!("champ.client")) } th {}
+                        th class="cel-secondaire" { (t!("champ.biere")) }
+                        th class="cel-secondaire" { (t!("champ.client")) }
+                        @if modifiable { th {} }
                     } }
                     tbody {
                         @for l in lignes {
@@ -414,13 +676,15 @@ fn tableau_captures(
                                 td class="serre discret num petit" { (l.ordre) }
                                 td class="cel-titre" { a class="lien-ligne" href=(format!("/futs/{}", l.fut_id)) { (l.code_qr) } }
                                 td class="cel-marque" { (c::badge_statut(l.statut_avant_capture)) }
-                                td class="petit" data-libelle=(t!("champ.biere")) { (c::texte_ou_tiret(l.biere.as_ref())) }
-                                td class="petit" data-libelle=(t!("champ.client")) { (c::texte_ou_tiret(l.client.as_ref())) }
-                                td class="cel-action serre" {
-                                    button class="bouton bouton--petit bouton--nu"
-                                           hx-post=(format!("/operations/{}/lignes/{}/retirer", d.id, l.id))
-                                           hx-target="#captures" hx-swap="innerHTML" {
-                                        (t!("action.retirer"))
+                                td class="petit cel-secondaire" data-libelle=(t!("champ.biere")) { (c::texte_ou_tiret(l.biere.as_ref())) }
+                                td class="petit cel-secondaire" data-libelle=(t!("champ.client")) { (c::texte_ou_tiret(l.client.as_ref())) }
+                                @if modifiable {
+                                    td class="cel-action serre" {
+                                        button type="button" class="bouton bouton--retirer"
+                                               hx-post=(format!("/operations/{}/lignes/{}/retirer", d.id, l.id))
+                                               hx-target="#captures" hx-swap="innerHTML" {
+                                            (t!("action.retirer"))
+                                        }
                                     }
                                 }
                             }
@@ -445,7 +709,7 @@ pub async fn fragment_captures(
     let doc = document::lire(tx.conn(), id).await?;
     let lignes = document::lignes(tx.conn(), id).await?;
     tx.valider().await?;
-    Ok(tableau_captures(&doc, &lignes, &s.jeton_csrf).into_response())
+    Ok(fragment_capture(&doc, &lignes, &s.jeton_csrf).into_response())
 }
 
 /// Capture en rafale : aucune validation manuelle entre deux fûts.
@@ -477,10 +741,12 @@ pub async fn capturer(
 
     let rafraichir = Some(format!("/operations/{id}/lignes"));
     match resultat {
+        // Le retour vert affiche en très gros la place du fût dans le lot :
+        // c'est ce que l'opérateur compte en empilant.
         Ok(ResultatCapture::Ajoute(l)) => Json(Reponse {
             resultat: "succes",
             code: l.code_qr.clone(),
-            titre: l.code_qr.clone(),
+            titre: t!("op.numero", n = compteur.unwrap_or(l.ordre as i64)),
             detail: Some(t!("op.ajoute", code = &l.code_qr)),
             rediriger: None,
             rafraichir,
@@ -504,8 +770,12 @@ pub async fn capturer(
         }) => Json(Reponse {
             resultat: "echec",
             code: code_qr.clone(),
-            titre: code_qr,
-            detail: Some(crate::i18n::message_erreur(&raison)),
+            titre: code_qr.clone(),
+            detail: Some(t!(
+                "op.refuse",
+                code = code_qr,
+                raison = crate::i18n::message_erreur(&raison)
+            )),
             rediriger: None,
             rafraichir: None,
             compteur,
@@ -555,7 +825,7 @@ pub async fn retirer_ligne(
     let doc = document::lire(tx.conn(), id).await?;
     let lignes = document::lignes(tx.conn(), id).await?;
     tx.valider().await?;
-    Ok(tableau_captures(&doc, &lignes, &s.jeton_csrf).into_response())
+    Ok(fragment_capture(&doc, &lignes, &s.jeton_csrf).into_response())
 }
 
 pub async fn vider(
@@ -639,7 +909,7 @@ pub async fn recapitulatif(
             }
             (resume_configuration(&doc))
             section class="carte" {
-                div class="carte__corps carte__corps--serre" {
+                div class="carte__corps carte__corps--serre" id="captures" {
                     (tableau_captures(&doc, &lignes, &s.jeton_csrf))
                 }
             }

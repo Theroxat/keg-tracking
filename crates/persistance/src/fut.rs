@@ -150,6 +150,7 @@ pub enum Tri {
     Remplissage,
     Client,
     Contenance,
+    Emplacement,
 }
 
 impl Tri {
@@ -164,6 +165,7 @@ impl Tri {
             Tri::Remplissage => "f.date_remplissage",
             Tri::Client => "c.societe",
             Tri::Contenance => "f.contenance_litres",
+            Tri::Emplacement => "em.nom",
         }
     }
     pub const fn code(self) -> &'static str {
@@ -175,6 +177,7 @@ impl Tri {
             Tri::Remplissage => "remplissage",
             Tri::Client => "client",
             Tri::Contenance => "contenance",
+            Tri::Emplacement => "emplacement",
         }
     }
     pub fn depuis_code(c: &str) -> Tri {
@@ -185,6 +188,7 @@ impl Tri {
             "remplissage" => Tri::Remplissage,
             "client" => Tri::Client,
             "contenance" => Tri::Contenance,
+            "emplacement" => Tri::Emplacement,
             _ => Tri::CodeQr,
         }
     }

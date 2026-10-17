@@ -183,6 +183,7 @@ pub const INVENTAIRE: &[(&str, &str, Role)] = &[
     ("POST", "/administration/etiquettes", Role::Administrateur),
     ("GET", "/administration/import", Role::Administrateur),
     ("POST", "/administration/import", Role::Administrateur),
+    ("GET", "/administration/import/modele", Role::Administrateur),
 ];
 
 pub fn routeur(etat: Etat) -> Router {
@@ -291,6 +292,7 @@ pub fn routeur(etat: Etat) -> Router {
             "/administration/import",
             get(import::afficher).post(import::traiter),
         )
+        .route("/administration/import/modele", get(import::modele))
         .layer(from_fn_with_state(Role::Administrateur, inter::garde_role));
 
     // Périmètre éditeur : sa propre session, son propre cookie, aucune
@@ -320,6 +322,7 @@ pub fn routeur(etat: Etat) -> Router {
         .route("/statique/app.css", get(crate::statique::css))
         .route("/statique/htmx.js", get(crate::statique::htmx))
         .route("/statique/scan.js", get(crate::statique::scan_js))
+        .route("/statique/pin.js", get(crate::statique::pin_js))
         .route("/statique/zxing-reader.js", get(crate::statique::zxing_js))
         .route(
             "/statique/zxing_reader.wasm",

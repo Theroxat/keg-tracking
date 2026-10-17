@@ -38,12 +38,30 @@ pub async fn afficher(
     ))
 }
 
+/// Modèle de fichier : mêmes en-têtes que ceux que l'import attend.
+pub async fn modele() -> impl axum::response::IntoResponse {
+    let corps =
+        "\u{feff}code_qr;contenance;statut;client;emplacement\r\nFUT-00001;30;propre;;Entrepôt\r\n";
+    (
+        [
+            (axum::http::header::CONTENT_TYPE, "text/csv; charset=utf-8"),
+            (
+                axum::http::header::CONTENT_DISPOSITION,
+                "attachment; filename=\"modele-import.csv\"",
+            ),
+        ],
+        corps,
+    )
+}
+
 fn formulaire(
     s: &persistance::session::ContexteSession,
     rapport: Option<&Rapport>,
 ) -> maud::Markup {
     html! {
+        (c::retour_administration())
         div class="avis" { (t!("import.explication")) }
+        p { a class="bouton bouton--petit" href="/administration/import/modele" { (t!("import.modele")) } }
         form method="post" action="/administration/import" enctype="multipart/form-data"
              style="max-width:620px" {
             (csrf(&s.jeton_csrf))
@@ -83,7 +101,7 @@ fn rendu_rapport(r: &Rapport) -> maud::Markup {
                     div class="avis avis--grave" { (t!("import.rien_ecrit")) }
                     div class="tableau-cadre" {
                         table class="tableau" {
-                            thead { tr { th { (t!("import.ligne", n = "")) } th { "Problème" } } }
+                            thead { tr { th { (t!("import.ligne", n = "")) } th { (t!("import.probleme")) } } }
                             tbody {
                                 @for (n, msg) in r.erreurs.iter().take(200) {
                                     tr { td class="num serre" { (n) } td { (msg) } }
@@ -92,12 +110,11 @@ fn rendu_rapport(r: &Rapport) -> maud::Markup {
                         }
                     }
                     @if r.erreurs.len() > 200 {
-                        p class="petit discret" { "… et " (r.erreurs.len() - 200) " autres." }
+                        p class="petit discret" { (t!("import.autres_erreurs", n = r.erreurs.len() - 200)) }
                     }
                 } @else if r.analyse_seule {
                     div class="avis avis--ok" {
-                        "Aucune erreur. Décochez « " (t!("import.analyser"))
-                        " » pour écrire réellement les " (r.lignes_lues) " lignes."
+                        (t!("import.analyse_ok", analyser = t!("import.analyser"), n = r.lignes_lues))
                     }
                 } @else {
                     div class="avis avis--ok" { (t!("import.reussi", n = r.ecrit)) }
