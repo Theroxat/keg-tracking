@@ -99,9 +99,9 @@ jobs:
           DOMAINE_PUBLIC: ci.local
         run: |
           cargo run --bin webqr -- provisionner-brasserie \
-            --nom "Brasserie CI" --slug ci --prefixe-qr CI \
+            --nom "Brasserie CI" --slug ci-test --prefixe-qr CI \
             --admin-email ci@exemple.fr --admin-mot-de-passe 'Integration-Continue-2026!'
-          cargo run --bin webqr -- semer-demonstration --locataire ci --futs 400
+          cargo run --bin webqr -- semer-demonstration --locataire ci-test --futs 400
           cargo run --bin webqr -- reconstruire-projections --verifier
 
       - name: Les étiquettes générées sont décodables
