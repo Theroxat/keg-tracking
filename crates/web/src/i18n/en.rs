@@ -151,6 +151,7 @@ pub static CATALOGUE: &[(&str, &str)] = &[
     ("champ.date_brassage", "Brew date"),
     ("champ.nom", "Last name"),
     ("champ.prenom", "First name"),
+    ("champ.nom_complet", "Name"),
     ("champ.societe", "Company"),
     ("champ.contact", "Contact"),
     ("champ.telephone", "Phone"),

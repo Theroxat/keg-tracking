@@ -265,7 +265,7 @@ pub async fn utilisateurs(
         div class="tableau-cadre" {
             table class="tableau" {
                 thead { tr {
-                    th { (t!("champ.nom")) } th { (t!("champ.email")) } th { (t!("champ.role")) }
+                    th { (t!("champ.nom_complet")) } th { (t!("champ.email")) } th { (t!("champ.role")) }
                     th { (t!("champ.pin")) } th { (t!("util.derniere_connexion")) } th { (t!("champ.actif")) } th {}
                 } }
                 tbody {
