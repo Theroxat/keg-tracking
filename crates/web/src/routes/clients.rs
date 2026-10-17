@@ -386,8 +386,16 @@ pub async fn fiche(
         }
     };
 
+    let actions = html! {
+        @if peut && !cl.archive {
+            a class="bouton bouton--vif" href=(format!("/operations/nouvelle?prereglage=livraison&client={id}")) {
+                (t!("client.livrer_futs"))
+            }
+        }
+    };
     let cadre = Cadre::new(&s, &ctx.chemin, cl.societe.clone())
         .sous_titre(format!("{} {}", cl.contact_prenom, cl.contact_nom))
+        .actions(actions)
         .avis(ctx.avis);
     Ok(page_avec_avis(
         page(cadre, corps),

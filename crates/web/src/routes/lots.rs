@@ -357,6 +357,11 @@ pub async fn fiche(
         }
     };
     let actions = html! {
+        @if s.role.peut_ecrire() {
+            a class="bouton bouton--vif" href=(format!("/operations/nouvelle?prereglage=remplissage&lot={id}")) {
+                (t!("lot.remplir_futs"))
+            }
+        }
         a class="bouton" href=(format!("/lots/{id}/rappel")) { (t!("rappel.titre")) }
     };
     let cadre = Cadre::new(&s, &ctx.chemin, t!("lot.fiche"))

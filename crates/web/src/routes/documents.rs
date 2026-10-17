@@ -202,6 +202,16 @@ impl Prereglage {
 pub struct RequetePrereglage {
     #[serde(default)]
     prereglage: Option<String>,
+    /// Client / lot à présélectionner (liens « Livrer… », « Remplir… »).
+    #[serde(default, deserialize_with = "uuid_ou_vide")]
+    client: Option<Uuid>,
+    #[serde(default, deserialize_with = "uuid_ou_vide")]
+    lot: Option<Uuid>,
+}
+
+fn uuid_ou_vide<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<Uuid>, D::Error> {
+    let texte = Option::<String>::deserialize(d)?;
+    Ok(texte.and_then(|t| t.parse().ok()))
 }
 
 /// Listes de référence nécessaires au formulaire de configuration.
@@ -211,6 +221,8 @@ struct Referentiels {
     emplacements: Vec<persistance::referentiel::Entree>,
     clients: Vec<persistance::client::Client>,
     lots: Vec<persistance::lot::Lot>,
+    client_choisi: Option<Uuid>,
+    lot_choisi: Option<Uuid>,
 }
 
 fn champ_op(champ: ChampOp, r: &Referentiels, requis: bool) -> Markup {
@@ -230,7 +242,7 @@ fn champ_op(champ: ChampOp, r: &Referentiels, requis: bool) -> Markup {
                 .iter()
                 .map(|l| (l.id.to_string(), format!("{} — {}", l.numero, l.biere)))
                 .collect::<Vec<_>>(),
-            None,
+            r.lot_choisi.map(|l| l.to_string()).as_deref(),
             Some("—"),
             requis,
         ),
@@ -258,9 +270,12 @@ fn champ_op(champ: ChampOp, r: &Referentiels, requis: bool) -> Markup {
                 }
                 select id="champ-client_id" name="client_id" required[requis]
                        hx-get="/clients/adresses" hx-target="#choix-adresse"
-                       hx-trigger="change" hx-include="this" {
+                       hx-trigger=(if r.client_choisi.is_some() { "change, load" } else { "change" })
+                       hx-include="this" {
                     option value="" { "—" }
-                    @for cl in &r.clients { option value=(cl.id) { (cl.societe) } }
+                    @for cl in &r.clients {
+                        option value=(cl.id) selected[r.client_choisi == Some(cl.id)] { (cl.societe) }
+                    }
                 }
             }
             div id="choix-adresse" {
@@ -302,6 +317,8 @@ pub async fn nouvelle(
         emplacements: persistance::referentiel::lister_emplacements(tx.conn(), true).await?,
         clients: persistance::client::lister(tx.conn(), false, None).await?,
         lots: persistance::lot::lister(tx.conn(), None, None, None).await?,
+        client_choisi: q.client,
+        lot_choisi: q.lot,
     };
     tx.valider().await?;
 

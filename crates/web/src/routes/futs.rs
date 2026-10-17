@@ -34,10 +34,13 @@ pub async fn fiche(
     let emplacements = persistance::referentiel::lister_emplacements(tx.conn(), true).await?;
     let clients = persistance::client::lister(tx.conn(), false, None).await?;
     let lots = persistance::lot::lister(tx.conn(), None, None, None).await?;
-    let voisins = match f.client_id {
+    let autres_futs: Vec<_> = match f.client_id {
         Some(cid) => persistance::fut::detenus_par_client(tx.conn(), cid).await?,
         None => vec![],
-    };
+    }
+    .into_iter()
+    .filter(|v| v.id != id)
+    .collect();
     let adresses = match f.client_id {
         Some(cid) => persistance::client::lister_adresses(tx.conn(), cid, false).await?,
         None => vec![],
@@ -76,8 +79,18 @@ pub async fn fiche(
                 (carte_etat(&f))
             }
 
-            div class="fiche__chrono" {
+            div class="fiche__details" {
                 (carte_details(&f, &loc, &tz))
+            }
+
+            // --------------------------------------------- autres fûts du client
+            @if !autres_futs.is_empty() {
+                div class="fiche__autres" {
+                    (carte_autres_futs(&autres_futs, f.client_id))
+                }
+            }
+
+            div class="fiche__chrono" {
                 // --------------------------------------------- chronologie
                 (carte_chronologie(&chronologie, &tz))
             }
@@ -117,18 +130,20 @@ pub async fn fiche(
                         }
                     }
                     section class="carte" {
-                        div class="carte__tete" { h2 { (t!("fut.identification")) } }
-                        div class="carte__corps" {
-                            form method="post" action=(format!("/futs/{}/identite", f.id)) {
-                                (csrf(&s.jeton_csrf))
-                                (c::selection("contenance_litres", t!("champ.contenance"),
-                                    &loc.contenances_autorisees.iter()
-                                        .map(|l| (l.to_string(), format!("{l} L"))).collect::<Vec<_>>(),
-                                    Some(&f.contenance_litres.to_string()), None, true))
-                                (c::Champ::texte("date_mise_en_service", t!("champ.date_mise_en_service"),
-                                    f.date_mise_en_service.to_string()).de_type("date").rendre())
-                                (c::zone_texte("commentaire", t!("champ.commentaire"), &f.commentaire, None))
-                                button type="submit" class="bouton bouton--large" { (t!("action.enregistrer")) }
+                        details class="fiche-details" {
+                            summary class="fiche__resume" { (t!("fut.modifier_infos")) }
+                            div class="carte__corps" {
+                                form method="post" action=(format!("/futs/{}/identite", f.id)) {
+                                    (csrf(&s.jeton_csrf))
+                                    (c::selection("contenance_litres", t!("champ.contenance"),
+                                        &loc.contenances_autorisees.iter()
+                                            .map(|l| (l.to_string(), format!("{l} L"))).collect::<Vec<_>>(),
+                                        Some(&f.contenance_litres.to_string()), None, true))
+                                    (c::Champ::texte("date_mise_en_service", t!("champ.date_mise_en_service"),
+                                        f.date_mise_en_service.to_string()).de_type("date").rendre())
+                                    (c::zone_texte("commentaire", t!("champ.commentaire"), &f.commentaire, None))
+                                    button type="submit" class="bouton bouton--large" { (t!("action.enregistrer")) }
+                                }
                             }
                         }
                     }
@@ -136,23 +151,6 @@ pub async fn fiche(
                 @if let (true, Some(n)) = (est_admin, numero_etiquette(&f.code_qr, &loc.prefixe_qr)) {
                     a class="bouton bouton--large" href=(format!("/administration/etiquettes/planche?de={n}&a={n}")) {
                         (t!("fut.reimprimer_etiquette"))
-                    }
-                }
-                @if !voisins.is_empty() {
-                    section class="carte" {
-                        div class="carte__tete" { h2 { (t!("fut.autres_futs_client")) } }
-                        div class="carte__corps carte__corps--serre" {
-                            div class="tableau-cadre" style="border:0" {
-                                table class="tableau tableau--cartes" { tbody {
-                                    @for v in voisins.iter().filter(|v| v.id != f.id).take(12) {
-                                        tr {
-                                            td class="cel-titre" { a class="lien-ligne" href=(format!("/futs/{}", v.id)) { (v.code_qr) } }
-                                            td class="cel-marque serre petit discret num" { (v.jours) " " (t!("tdb.jours")) }
-                                        }
-                                    }
-                                } }
-                            }
-                        }
                     }
                 }
             }
@@ -262,6 +260,39 @@ fn carte_details(
     }
 }
 
+/// Autres fûts du même client : cinq au plus, le reste via le parc filtré.
+fn carte_autres_futs(
+    voisins: &[persistance::fut::FutImmobilise],
+    client_id: Option<Uuid>,
+) -> Markup {
+    html! {
+        section class="carte" {
+            details class="fiche-details fiche-voisins" open {
+                summary class="fiche__resume" { (t!("fut.autres_futs_client")) }
+                div class="carte__corps carte__corps--serre" {
+                    div class="tableau-cadre" style="border:0" {
+                        table class="tableau tableau--cartes" { tbody {
+                            @for v in voisins.iter().take(5) {
+                                tr {
+                                    td class="cel-titre" { a class="lien-ligne" href=(format!("/futs/{}", v.id)) { (v.code_qr) } }
+                                    td class="cel-marque serre petit discret num" { (v.jours) " " (t!("tdb.jours")) }
+                                }
+                            }
+                        } }
+                    }
+                    @if let (true, Some(cid)) = (voisins.len() > 5, client_id) {
+                        p class="carte__corps" style="margin:0" {
+                            a href=(format!("/parc?client={cid}")) {
+                                (t!("fut.voir_futs_client", n = voisins.len()))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Carte « chronologie » de la fiche fût.
 fn carte_chronologie(
     chronologie: &[persistance::evenement::EntreeChronologie],
@@ -278,7 +309,24 @@ fn carte_chronologie(
                 p class="discret" { (t!("fut.aucun_evenement")) }
             } @else {
                 ul class="chrono" {
-                    @for e in chronologie {
+                    @for e in chronologie.iter().take(10) { (evenement(e, tz)) }
+                }
+                @if chronologie.len() > 10 {
+                    details class="fiche-historique" {
+                        summary class="fiche__resume" { (t!("fut.historique_complet", n = chronologie.len())) }
+                        ul class="chrono" {
+                            @for e in chronologie.iter().skip(10) { (evenement(e, tz)) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    }
+}
+
+fn evenement(e: &persistance::evenement::EntreeChronologie, tz: &str) -> Markup {
+    html! {
                         li {
                             div class="chrono__point"
                                 style=[e.statut_apres.map(|st| format!("background:var(--st-{})", st.code()))] {}
@@ -308,11 +356,6 @@ fn carte_chronologie(
                                 }
                             }
                         }
-                    }
-                }
-            }
-        }
-    }
     }
 }
 
@@ -483,13 +526,13 @@ fn action_transition(
                      class="fiche-action" {
                     (csrf(&s.jeton_csrf))
                     input type="hidden" name="statut" value=(st.code());
+                    button class=(classe_bouton) { (libelle) }
                     @if st == Statut::Recu || st == Statut::Propre {
-                        select name="emplacement_id" class="fiche__resume" style="margin-bottom:6px" {
+                        select name="emplacement_id" class="fiche__resume" style="margin-top:6px" {
                             option value="" { (t!("champ.emplacement")) " — " (t!("app.aucun")) }
                             @for (v, n) in emplacements { option value=(v) { (n) } }
                         }
                     }
-                    button class=(classe_bouton) { (libelle) }
                 }
             },
         }

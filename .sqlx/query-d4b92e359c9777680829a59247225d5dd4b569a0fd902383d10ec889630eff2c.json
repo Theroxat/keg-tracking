@@ -1,0 +1,61 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select j.id, (u.prenom || ' ' || u.nom) as \"utilisateur?\", j.action,\n                  j.cible_type, j.cible_id, j.details, j.survenu_le\n             from journal_audit j\n             left join utilisateur u on u.id = j.utilisateur_id\n            where ($1::uuid is null or j.utilisateur_id = $1)\n              and ($2::text is null or j.action = $2)\n            order by j.survenu_le desc, j.id desc\n            limit $3 offset $4",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "utilisateur?",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "action",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "cible_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "cible_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "details",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 6,
+        "name": "survenu_le",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      false,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "d4b92e359c9777680829a59247225d5dd4b569a0fd902383d10ec889630eff2c"
+}
