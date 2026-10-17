@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select c.id as client_id, c.societe, count(*) as \"futs!\"\n             from fut f join client c on c.id = f.client_id\n            where f.lot_id = $1 and f.statut = 'livre'\n            group by c.id, c.societe order by c.societe",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "client_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "societe",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "futs!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "19be09b299b00ef479319a27255d0a44108441135f33666b499d008bc4641236"
+}

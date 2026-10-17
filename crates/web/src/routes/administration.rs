@@ -417,7 +417,8 @@ pub async fn fiche_utilisateur(
 
     let corps = html! {
         form method="post" action=(format!("/administration/utilisateurs/{id}")) style="max-width:600px"
-              onsubmit=(confirmation_fiche(u.role, u.actif)) {
+              data-role-initial=(u.role.code()) data-actif-initial=[u.actif.then_some("1")]
+              data-confirmer-modif=(t!("util.modifier_confirmation")) {
             (csrf(&s.jeton_csrf))
             @if soi_meme {
                 div class="avis avis--alerte" { (t!("util.pas_soi_meme")) }
@@ -433,7 +434,8 @@ pub async fn fiche_utilisateur(
             (c::case_a_cocher("actif", t!("champ.actif"), u.actif))
             div class="boutons" {
                 button class="bouton bouton--vif" { (t!("action.enregistrer")) }
-                button class="bouton bouton--grave" name="reinitialiser" value="1" {
+                button class="bouton bouton--grave" name="reinitialiser" value="1"
+                        data-confirmer=(t!("util.reinitialiser_confirmation")) {
                     (t!("util.reinitialiser_mdp"))
                 }
                 a class="bouton bouton--nu" href="/administration/utilisateurs" { (t!("app.retour")) }
@@ -727,24 +729,6 @@ pub async fn journal(
         avait,
         etat.config.cookies_securises,
     ))
-}
-
-/// Confirmation côté navigateur, uniquement si l'enregistrement change le
-/// rôle, désactive le compte ou réinitialise le mot de passe : un simple
-/// changement de nom ne demande rien. Le serveur revérifie tout.
-fn confirmation_fiche(role: Role, actif: bool) -> String {
-    let js = |m: &str| serde_json::to_string(m).unwrap_or_default();
-    format!(
-        "var f=this;var b=event.submitter;\
-         if(b&&b.name==='reinitialiser'){{return confirm({reinit});}}\
-         var r=f.elements['role'];var a=f.elements['actif'];\
-         if((r&&r.value!=={role})||({actif}&&a&&!a.checked)){{return confirm({modif});}}\
-         return true;",
-        reinit = js(t!("util.reinitialiser_confirmation")),
-        modif = js(t!("util.modifier_confirmation")),
-        role = js(role.code()),
-        actif = actif,
-    )
 }
 
 pub fn _m() -> Markup {

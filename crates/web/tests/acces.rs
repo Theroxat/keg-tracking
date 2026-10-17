@@ -305,3 +305,74 @@ async fn une_ecriture_sans_jeton_csrf_est_refusee() {
 
     bac.detruire().await;
 }
+
+/// La recherche globale ne voit que la brasserie de l'utilisateur, et une
+/// saisie ne sert jamais de joker SQL.
+#[tokio::test]
+async fn la_recherche_ne_traverse_pas_les_brasseries() {
+    let bac = Bac::nouveau().await;
+    let alpha = bac.creer_locataire("alpha", "ALPHA").await;
+    let beta = bac.creer_locataire("beta", "BETA").await;
+    for (t, code, societe) in [
+        (alpha, "ALPHA00001", "Bar Alpha"),
+        (beta, "BETA00001", "Bar Beta"),
+    ] {
+        let mut tx = bac.depot.ouvrir(t, None).await.unwrap();
+        persistance::fut::creer_en_masse(tx.conn(), &[code.into()], 30, None, None)
+            .await
+            .unwrap();
+        persistance::client::creer(
+            tx.conn(),
+            &persistance::client::DonneesClient {
+                societe,
+                contact_nom: "",
+                contact_prenom: "",
+                telephone: "",
+                email: "",
+                commentaire: "",
+            },
+        )
+        .await
+        .unwrap();
+        tx.valider().await.unwrap();
+    }
+    let u = bac
+        .creer_utilisateur(alpha, Role::Lecture, "lecture@alpha.fr")
+        .await;
+    let (cookie, _) = Serveur::session(&bac, alpha, u).await;
+    let serveur = lancer(&bac).await;
+    let chercher = |q: &'static str| {
+        let req = serveur
+            .client
+            .get(format!("{}/recherche", serveur.base))
+            .query(&[("q", q)])
+            .header("Cookie", format!("wq_session={cookie}"));
+        async move {
+            let r = req.send().await.unwrap();
+            (r.status().as_u16(), r.text().await.unwrap())
+        }
+    };
+
+    let (code, corps) = chercher("beta").await;
+    assert_eq!(code, 200);
+    assert!(!corps.contains("BETA00001") && !corps.contains("Bar Beta"));
+    let (_, corps) = chercher("bar").await;
+    assert!(corps.contains("Bar Alpha") && !corps.contains("Bar Beta"));
+    // Le joker « % » est pris littéralement : aucun résultat.
+    let (_, corps) = chercher("%").await;
+    assert!(!corps.contains("ALPHA00001"));
+    // Un code exact mène directement à la fiche.
+    let r = serveur
+        .client
+        .get(format!("{}/recherche", serveur.base))
+        .query(&[("q", "alpha00001")])
+        .header("Cookie", format!("wq_session={cookie}"))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(r.status().as_u16(), 303);
+    assert!(r.headers()["location"]
+        .to_str()
+        .unwrap()
+        .starts_with("/futs/"));
+}

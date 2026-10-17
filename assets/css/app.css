@@ -121,12 +121,15 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .flanc__marque b { display:block; font-size: 17px; font-weight: 700; }
 .flanc__marque span { display:block; font-size: 12px; color: var(--encre-3); margin-top:2px; }
 .flanc__nav { padding: 8px 12px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.flanc__recherche { padding: 4px 12px 8px; }
+.flanc__recherche input { width: 100%; min-height: 40px; box-sizing: border-box; }
 .flanc__groupe { margin: 14px 8px 4px; }
 .flanc a {
   display: flex; align-items: center; gap: 10px; padding: 0 12px; min-height: 48px;
   border-radius: var(--r-2); color: var(--encre-2); text-decoration: none;
   font-size: 15px; font-weight: 500;
 }
+.flanc a svg { width: 22px; height: 22px; flex: none; }
 .flanc a:hover { background: var(--surface-2); color: var(--encre); }
 .flanc a[aria-current="page"] { background: var(--accent-fond); color: var(--accent); font-weight: 600; }
 .flanc__pied { padding: 12px 16px 16px; }
@@ -186,12 +189,12 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 .bouton:active { transform: scale(.98); }
 .bouton:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; box-shadow: 0 0 0 5px var(--accent-fond); }
 .bouton[disabled], .bouton[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
-.bouton--vif { background: var(--accent); color: var(--sur-accent); box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--accent) 55%, transparent); }
-.bouton--vif:hover { background: var(--accent-2); }
-.bouton--grave { color: var(--grave); background: var(--grave-fond); }
-.bouton--grave:hover { background: var(--grave-fond); filter: brightness(.96); }
-.bouton--nu { box-shadow: none; background: transparent; }
-.bouton--nu:hover { background: var(--surface-2); }
+.bouton.bouton--vif { background: var(--accent); color: var(--sur-accent); box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--accent) 55%, transparent); }
+.bouton.bouton--vif:hover { background: var(--accent-2); }
+.bouton.bouton--grave { color: var(--grave); background: var(--grave-fond); }
+.bouton.bouton--grave:hover { background: var(--grave-fond); filter: brightness(.96); }
+.bouton.bouton--nu { box-shadow: none; background: transparent; }
+.bouton.bouton--nu:hover { background: var(--surface-2); }
 .bouton--petit { min-height: 40px; padding: 0 14px; font-size: 14px; }
 .bouton--large { width: 100%; }
 /* Cibles d'atelier : gants mouillés, écran de téléphone. */
@@ -366,7 +369,7 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
   .tableau--cartes td { border: 0; padding: 0; min-width: 0; overflow-wrap: anywhere; }
   .tableau--cartes .cel-titre { grid-column: 1; grid-row: 1; font-size: 16px; }
   .tableau--cartes .cel-titre a { display: inline-block; padding: 6px 0; }
-  .tableau--cartes .cel-marque { grid-column: 2; grid-row: 1; justify-self: end; }
+  .tableau--cartes td.cel-marque { grid-column: 2; grid-row: 1; justify-self: end; width: auto; white-space: nowrap; overflow-wrap: normal; }
   .tableau--cartes .cel-action { grid-column: 1 / -1; justify-self: start; margin-top: 6px; }
   .tableau--cartes .cel-action .bouton { min-height: 44px; }
   .tableau--cartes td[data-libelle] {

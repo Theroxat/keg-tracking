@@ -8,6 +8,7 @@ pub mod futs;
 pub mod import;
 pub mod lots;
 pub mod parc;
+pub mod recherche;
 pub mod sante;
 pub mod scan;
 pub mod tableau;
@@ -111,6 +112,7 @@ pub const INVENTAIRE: &[(&str, &str, Role)] = &[
     ("POST", "/compte/pin", Role::Lecture),
     ("POST", "/compte/sessions/revoquer", Role::Lecture),
     ("GET", "/parc", Role::Lecture),
+    ("GET", "/recherche", Role::Lecture),
     ("GET", "/parc/export", Role::Lecture),
     ("GET", "/futs/{id}", Role::Lecture),
     ("GET", "/clients/adresses", Role::Lecture),
@@ -144,6 +146,8 @@ pub const INVENTAIRE: &[(&str, &str, Role)] = &[
     ("GET", "/operations/{id}/valider", Role::Production),
     ("POST", "/operations/{id}/valider", Role::Production),
     ("GET", "/lots", Role::Lecture),
+    ("GET", "/lots/{id}", Role::Lecture),
+    ("POST", "/lots/{id}", Role::Production),
     ("GET", "/lots/{id}/rappel", Role::Lecture),
     ("GET", "/lots/{id}/rappel/export", Role::Lecture),
     ("POST", "/lots", Role::Production),
@@ -205,6 +209,7 @@ pub fn routeur(etat: Etat) -> Router {
         .route("/compte/pin", post(auth::definir_pin))
         .route("/compte/sessions/revoquer", post(auth::revoquer_session))
         .route("/parc", get(parc::afficher))
+        .route("/recherche", get(recherche::afficher))
         .route("/parc/export", get(parc::exporter))
         .route("/futs/{id}", get(futs::fiche))
         .route("/clients/adresses", get(futs::adresses_du_client))
@@ -217,6 +222,7 @@ pub fn routeur(etat: Etat) -> Router {
             get(documents::bon_de_livraison),
         )
         .route("/lots", get(lots::liste))
+        .route("/lots/{id}", get(lots::fiche))
         .route("/lots/{id}/rappel", get(lots::rappel))
         .route("/lots/{id}/rappel/export", get(lots::rappel_export))
         .layer(from_fn_with_state(Role::Lecture, inter::garde_role));
@@ -251,6 +257,7 @@ pub fn routeur(etat: Etat) -> Router {
             get(documents::recapitulatif).post(documents::valider),
         )
         .route("/lots", post(lots::creer))
+        .route("/lots/{id}", post(lots::modifier))
         .layer(from_fn_with_state(Role::Production, inter::garde_role));
 
     let administration = Router::new()
@@ -322,6 +329,7 @@ pub fn routeur(etat: Etat) -> Router {
         .route("/statique/app.css", get(crate::statique::css))
         .route("/statique/htmx.js", get(crate::statique::htmx))
         .route("/statique/scan.js", get(crate::statique::scan_js))
+        .route("/statique/commun.js", get(crate::statique::commun_js))
         .route("/statique/pin.js", get(crate::statique::pin_js))
         .route("/statique/zxing-reader.js", get(crate::statique::zxing_js))
         .route(

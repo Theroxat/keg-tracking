@@ -150,7 +150,7 @@ pub async fn planche(
 
     let corps = html! {
         div class="sans-impression" style="padding:14px;display:flex;gap:10px;align-items:center" {
-            button class="bouton bouton--vif" onclick="window.print()" { (t!("app.imprimer")) }
+            button class="bouton bouton--vif" data-imprimer { (t!("app.imprimer")) }
             span class="petit discret" { (t!("etiq.planche_note")) }
         }
         div class="planche" {

@@ -6,6 +6,8 @@ use maud::html;
 use serde::Deserialize;
 use uuid::Uuid;
 
+use domaine::statut::Statut;
+
 use crate::gabarits::composants as c;
 use crate::gabarits::csrf;
 use crate::gabarits::socle::{page, Cadre};
@@ -16,6 +18,9 @@ use crate::{t, ErreurWeb, Etat};
 #[derive(Deserialize, Default)]
 pub struct Requete {
     q: Option<String>,
+    biere: Option<String>,
+    dluo: Option<u8>,
+    nouveau: Option<u8>,
 }
 
 pub async fn liste(
@@ -29,29 +34,70 @@ pub async fn liste(
         .depot
         .ouvrir(s.tenant_id, Some(s.utilisateur_id))
         .await?;
-    let lots = persistance::lot::lister(tx.conn(), r.q.as_deref().filter(|x| !x.trim().is_empty()))
-        .await?;
+    let loc = persistance::locataire::lire(tx.conn(), s.tenant_id).await?;
+    let biere_filtre = r.biere.as_deref().and_then(|b| Uuid::parse_str(b).ok());
+    let dluo_alerte = r.dluo == Some(1);
+    let lots = persistance::lot::lister(
+        tx.conn(),
+        r.q.as_deref().filter(|x| !x.trim().is_empty()),
+        biere_filtre,
+        dluo_alerte.then_some(loc.seuil_alerte_dluo_jours),
+    )
+    .await?;
     let bieres = persistance::referentiel::lister_bieres(tx.conn(), true).await?;
     let cuves = persistance::referentiel::lister_cuves(tx.conn(), true).await?;
-    let loc = persistance::locataire::lire(tx.conn(), s.tenant_id).await?;
     tx.valider().await?;
 
     let aujourdhui = chrono::Utc::now().date_naive();
     let peut = s.role.peut_ecrire();
+    let formulaire_ouvert = peut && r.nouveau == Some(1);
     let corps = html! {
+        @if formulaire_ouvert {
+            section class="carte" id="nouveau-lot" style="margin-bottom:14px;max-width:700px" {
+                div class="carte__tete" { h2 { (t!("lot.nouveau")) } }
+                div class="carte__corps" {
+                    form method="post" action="/lots" {
+                        (csrf(&s.jeton_csrf))
+                        div class="grille" {
+                            (c::Champ::texte("numero", t!("champ.numero"), "").requis().rendre())
+                            (c::Champ::texte("date_brassage", t!("champ.date_brassage"),
+                                aujourdhui.to_string()).de_type("date").requis().rendre())
+                            (c::selection("type_biere_id", t!("champ.type_biere"),
+                                &c::options(&bieres, |x| x.id, |x| x.nom.clone()),
+                                None, Some("—"), true))
+                            (c::selection("cuve_id", t!("champ.cuve"),
+                                &c::options(&cuves, |x| x.id, |x| x.nom.clone()),
+                                None, Some("—"), true))
+                            (c::Champ::texte("dluo", t!("champ.dluo"), "").de_type("date").rendre())
+                        }
+                        (c::zone_texte("commentaire", t!("champ.commentaire"), "", None))
+                        button class="bouton bouton--vif" { (t!("action.creer")) }
+                    }
+                }
+            }
+        }
         form class="filtres" method="get" action="/lots" {
             div class="champ champ--large" {
                 label for="champ-q" { (t!("action.rechercher")) }
                 input id="champ-q" type="search" name="q" value=[r.q.as_deref()]
                       placeholder=(t!("champ.numero"));
             }
+            (c::selection("biere", t!("champ.biere"),
+                &c::options(&bieres, |x| x.id, |x| x.nom.clone()),
+                biere_filtre.map(|b| b.to_string()).as_deref(), Some(t!("lot.toutes_bieres")), false))
+            div class="champ" {
+                label class="coche" {
+                    input type="checkbox" name="dluo" value="1" checked[dluo_alerte];
+                    span { (t!("lot.dluo_alerte")) }
+                }
+            }
             button class="bouton" { (t!("action.filtrer")) }
         }
         @if lots.is_empty() {
             (c::vide(
-                if peut { t!("lot.aucun_formulaire") } else { t!("lot.aucun") },
+                t!("lot.aucun"),
                 peut.then(|| html! {
-                    a class="bouton bouton--vif" href="#nouveau-lot" { (t!("lot.nouveau")) }
+                    a class="bouton bouton--vif" href="/lots?nouveau=1#nouveau-lot" { (t!("lot.nouveau")) }
                 }),
             ))
         } @else {
@@ -65,7 +111,9 @@ pub async fn liste(
                     tbody {
                         @for l in &lots {
                             tr {
-                                td class="cel-titre mono" style="font-weight:600" { (l.numero) }
+                                td class="cel-titre mono" style="font-weight:600" {
+                                    a href=(format!("/lots/{}", l.id)) { (l.numero) }
+                                }
                                 td data-libelle=(t!("champ.biere")) { span style="display:inline-flex;align-items:center;gap:6px" {
                                     span class="pastille" style=(format!("background:{}", l.couleur_biere)) {}
                                     (l.biere) } }
@@ -99,32 +147,15 @@ pub async fn liste(
                 }
             }
         }
+    };
+    let actions = html! {
         @if peut {
-            section class="carte" id="nouveau-lot" style="margin-top:14px;max-width:700px" {
-                div class="carte__tete" { h2 { (t!("lot.nouveau")) } }
-                div class="carte__corps" {
-                    form method="post" action="/lots" {
-                        (csrf(&s.jeton_csrf))
-                        div class="grille" {
-                            (c::Champ::texte("numero", t!("champ.numero"), "").requis().rendre())
-                            (c::Champ::texte("date_brassage", t!("champ.date_brassage"),
-                                aujourdhui.to_string()).de_type("date").requis().rendre())
-                            (c::selection("type_biere_id", t!("champ.type_biere"),
-                                &c::options(&bieres, |x| x.id, |x| x.nom.clone()),
-                                None, Some("—"), true))
-                            (c::selection("cuve_id", t!("champ.cuve"),
-                                &c::options(&cuves, |x| x.id, |x| x.nom.clone()),
-                                None, Some("—"), true))
-                            (c::Champ::texte("dluo", t!("champ.dluo"), "").de_type("date").rendre())
-                        }
-                        (c::zone_texte("commentaire", t!("champ.commentaire"), "", None))
-                        button class="bouton bouton--vif" { (t!("action.creer")) }
-                    }
-                }
-            }
+            a class="bouton bouton--vif" href="/lots?nouveau=1#nouveau-lot" { (t!("lot.nouveau")) }
         }
     };
-    let cadre = Cadre::new(&s, &ctx.chemin, t!("lot.titre")).avis(ctx.avis);
+    let cadre = Cadre::new(&s, &ctx.chemin, t!("lot.titre"))
+        .actions(actions)
+        .avis(ctx.avis);
     Ok(page_avec_avis(
         page(cadre, corps),
         avait,
@@ -177,12 +208,231 @@ pub async fn creer(
     )
     .await;
     match resultat {
-        Ok(_) => {
+        Ok(id) => {
             tx.valider().await?;
-            Ok(rediriger("/lots", "ok", t!("lot.enregistre"), securise))
+            Ok(rediriger(
+                &format!("/lots/{id}"),
+                "ok",
+                t!("lot.enregistre"),
+                securise,
+            ))
         }
         Err(persistance::Erreur::Conflit(_)) => Ok(rediriger(
             "/lots",
+            "grave",
+            t!("erreur.deja_utilise"),
+            securise,
+        )),
+        Err(e) => Err(e.into()),
+    }
+}
+
+pub async fn fiche(
+    State(etat): State<Etat>,
+    ctx: Contexte,
+    Session(s): Session,
+    Path(id): Path<Uuid>,
+) -> Result<Response, ErreurWeb> {
+    let avait = ctx.avis_present();
+    let mut tx = etat
+        .depot
+        .ouvrir(s.tenant_id, Some(s.utilisateur_id))
+        .await?;
+    let lot = persistance::lot::lire(tx.conn(), id).await?;
+    let par_statut = persistance::lot::futs_par_statut(tx.conn(), id).await?;
+    let detenteurs = persistance::lot::detenteurs(tx.conn(), id).await?;
+    let loc = persistance::locataire::lire(tx.conn(), s.tenant_id).await?;
+    let bieres = persistance::referentiel::lister_bieres(tx.conn(), true).await?;
+    tx.valider().await?;
+
+    let aujourdhui = chrono::Utc::now().date_naive();
+    let peut = s.role.peut_ecrire();
+    let verrouille = lot.futs > 0;
+    let dluo_txt = lot.dluo.map(|d| d.to_string()).unwrap_or_default();
+
+    let corps = html! {
+        div class="cartes" style="margin-bottom:14px" {
+            div class="tuile" {
+                span class="tuile__valeur num" { (lot.futs) }
+                span class="tuile__nom" { (t!("lot.futs_rattaches")) }
+            }
+            div class="tuile" {
+                span class="tuile__nom" { (t!("champ.dluo")) }
+                span class="tuile__valeur num" {
+                    @match lot.dluo {
+                        Some(d) => {
+                            @let reste = (d - aujourdhui).num_days();
+                            @if reste < 0 {
+                                (c::badge("grave", &format!("{} — {}", c::jour(d), t!("lot.dluo_depassee"))))
+                            } @else if reste < loc.seuil_alerte_dluo_jours as i64 {
+                                (c::badge("alerte", &format!("{} — {}", c::jour(d), t!("lot.dluo_proche", n = reste))))
+                            } @else { (c::jour(d)) }
+                        },
+                        None => span class="discret" { "—" },
+                    }
+                }
+            }
+        }
+        section class="carte" style="margin-bottom:14px;max-width:700px" {
+            div class="carte__tete" { h2 { (t!("lot.fiche")) } }
+            div class="carte__corps" {
+                form method="post" action=(format!("/lots/{id}")) {
+                    (csrf(&s.jeton_csrf))
+                    @if verrouille {
+                        p class="petit discret" { (t!("lot.verrouille")) }
+                    }
+                    div class="grille" {
+                        @if verrouille || !peut {
+                            div class="champ" {
+                                label { (t!("champ.numero")) }
+                                input class="mono" value=(lot.numero) readonly;
+                            }
+                            div class="champ" {
+                                label { (t!("champ.biere")) }
+                                input value=(lot.biere) readonly;
+                            }
+                        } @else {
+                            (c::Champ::texte("numero", t!("champ.numero"), lot.numero.clone()).requis().rendre())
+                            (c::selection("type_biere_id", t!("champ.type_biere"),
+                                &c::options(&bieres, |x| x.id, |x| x.nom.clone()),
+                                Some(lot.type_biere_id.to_string().as_str()), Some("—"), true))
+                        }
+                        div class="champ" {
+                            label { (t!("champ.cuve")) }
+                            input value=(lot.cuve) readonly;
+                        }
+                        div class="champ" {
+                            label { (t!("champ.date_brassage")) }
+                            input value=(c::jour(lot.date_brassage)) readonly;
+                        }
+                        @if peut {
+                            (c::Champ::texte("dluo", t!("champ.dluo"), dluo_txt).de_type("date").rendre())
+                        }
+                    }
+                    @if peut {
+                        (c::zone_texte("commentaire", t!("champ.commentaire"), &lot.commentaire, None))
+                        button class="bouton bouton--vif" { (t!("action.enregistrer")) }
+                    } @else if !lot.commentaire.is_empty() {
+                        p { (lot.commentaire) }
+                    }
+                }
+            }
+        }
+        h2 { (t!("lot.futs_par_statut")) }
+        @if par_statut.is_empty() {
+            (c::vide(t!("lot.aucun_fut"), None))
+        } @else {
+            div class="cartes" style="margin-bottom:14px" {
+                @for st in Statut::TOUS {
+                    @if let Some((_, n)) = par_statut.iter().find(|(x, _)| *x == st) {
+                        div class="tuile" {
+                            span class="tuile__valeur num" {
+                                a href=(format!("/parc?lot={id}&statut={}", st.code())) { (n) }
+                            }
+                            span class="tuile__nom" { (c::badge_statut(st)) }
+                        }
+                    }
+                }
+            }
+        }
+        h2 { (t!("lot.detenteurs")) }
+        @if detenteurs.is_empty() {
+            (c::vide(t!("lot.aucun_detenteur"), None))
+        } @else {
+            div class="tableau-cadre" {
+                table class="tableau" {
+                    thead { tr { th { (t!("champ.societe")) } th { (t!("rappel.futs")) } } }
+                    tbody {
+                        @for d in &detenteurs {
+                            tr {
+                                td style="font-weight:600" {
+                                    a href=(format!("/clients/{}", d.client_id)) { (d.societe) }
+                                }
+                                td class="num" { (d.futs) }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
+    let actions = html! {
+        a class="bouton" href=(format!("/lots/{id}/rappel")) { (t!("rappel.titre")) }
+    };
+    let cadre = Cadre::new(&s, &ctx.chemin, t!("lot.fiche"))
+        .sous_titre(format!("{} — {}", lot.numero, lot.biere))
+        .actions(actions)
+        .avis(ctx.avis);
+    Ok(page_avec_avis(
+        page(cadre, corps),
+        avait,
+        etat.config.cookies_securises,
+    ))
+}
+
+#[derive(Deserialize)]
+pub struct FormModif {
+    numero: Option<String>,
+    type_biere_id: Option<Uuid>,
+    #[serde(default)]
+    dluo: String,
+    #[serde(default)]
+    commentaire: String,
+}
+
+pub async fn modifier(
+    State(etat): State<Etat>,
+    Session(s): Session,
+    Path(id): Path<Uuid>,
+    Form(f): Form<FormModif>,
+) -> Result<Response, ErreurWeb> {
+    let securise = etat.config.cookies_securises;
+    let dluo = if f.dluo.trim().is_empty() {
+        None
+    } else {
+        Some(
+            chrono::NaiveDate::parse_from_str(f.dluo.trim(), "%Y-%m-%d")
+                .map_err(|_| ErreurWeb::champ("dluo", t!("erreur.date_invalide")))?,
+        )
+    };
+    let mut tx = etat
+        .depot
+        .ouvrir(s.tenant_id, Some(s.utilisateur_id))
+        .await?;
+    let lot = persistance::lot::lire(tx.conn(), id).await?;
+    // Numéro et bière : figés dès qu'un fût est rattaché, quoi que dise le formulaire.
+    let (numero, biere) = if lot.futs > 0 {
+        (lot.numero.clone(), lot.type_biere_id)
+    } else {
+        (
+            f.numero.unwrap_or_else(|| lot.numero.clone()),
+            f.type_biere_id.unwrap_or(lot.type_biere_id),
+        )
+    };
+    if numero.trim().is_empty() {
+        return Err(ErreurWeb::champ("numero", t!("erreur.champ_requis")));
+    }
+    let resultat = persistance::lot::modifier(
+        tx.conn(),
+        id,
+        &persistance::lot::DonneesLot {
+            numero: &numero,
+            date_brassage: lot.date_brassage,
+            type_biere_id: biere,
+            cuve_id: lot.cuve_id,
+            dluo,
+            commentaire: &f.commentaire,
+        },
+    )
+    .await;
+    let url = format!("/lots/{id}");
+    match resultat {
+        Ok(()) => {
+            tx.valider().await?;
+            Ok(rediriger(&url, "ok", t!("lot.modifie"), securise))
+        }
+        Err(persistance::Erreur::Conflit(_)) => Ok(rediriger(
+            &url,
             "grave",
             t!("erreur.deja_utilise"),
             securise,
@@ -269,7 +519,7 @@ pub async fn rappel(
     };
     let actions = html! {
         a class="bouton" href=(format!("/lots/{id}/rappel/export")) { (t!("rappel.exporter")) }
-        button class="bouton sans-impression" onclick="window.print()" { (t!("app.imprimer")) }
+        button class="bouton sans-impression" data-imprimer { (t!("app.imprimer")) }
     };
     let cadre = Cadre::new(&s, &ctx.chemin, t!("rappel.titre"))
         .sous_titre(format!(

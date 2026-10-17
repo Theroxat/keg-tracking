@@ -12,6 +12,7 @@ pub mod fut;
 pub mod garde;
 pub mod locataire;
 pub mod lot;
+pub mod recherche;
 pub mod reconstruction;
 pub mod referentiel;
 pub mod session;
