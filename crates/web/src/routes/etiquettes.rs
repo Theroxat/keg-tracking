@@ -95,7 +95,7 @@ pub async fn afficher(
                     }
                     hr;
                     form method="post" action="/administration/etiquettes"
-                          onsubmit=(c::confirmer_soumission(&confirmation)) {
+                          data-confirmer=(c::confirmer_soumission(&confirmation)) {
                         (csrf(&s.jeton_csrf))
                         input type="hidden" name="de" value=(de);
                         input type="hidden" name="a" value=(a);
@@ -164,6 +164,7 @@ pub async fn planche(
                 }
             }
         }
+        script src={ "/statique/commun.js?v=" (crate::statique::version()) } defer {}
     };
     Ok(page_nue(t!("etiq.planche"), corps).into_response())
 }

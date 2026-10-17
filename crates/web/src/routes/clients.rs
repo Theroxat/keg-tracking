@@ -371,7 +371,7 @@ pub async fn fiche(
                                 }
                             } @else {
                                 form method="post" action=(format!("/clients/{id}/archiver"))
-                                      onsubmit=[(!cl.archive).then(|| c::confirmer_soumission(t!("client.archiver_confirmation")))] {
+                                      data-confirmer=[(!cl.archive).then(|| c::confirmer_soumission(t!("client.archiver_confirmation")))] {
                                     (csrf(&s.jeton_csrf))
                                     input type="hidden" name="archive" value=(if cl.archive { "0" } else { "1" });
                                     button class={ "bouton bouton--large " @if cl.archive { "" } @else { "bouton--grave" } } {

@@ -59,7 +59,7 @@ pub async fn afficher(
                 @if !res.futs.is_empty() {
                     section class="carte" style="margin-bottom:14px" {
                         div class="carte__tete" { h2 { (t!("recherche.futs")) } }
-                        div class="carte__corps" { ul {
+                        div class="carte__corps" { ul class="liste-simple" {
                             @for f in &res.futs {
                                 li { a href=(format!("/futs/{}", f.id)) { (f.code_qr) } }
                             }
@@ -69,7 +69,7 @@ pub async fn afficher(
                 @if !res.clients.is_empty() {
                     section class="carte" style="margin-bottom:14px" {
                         div class="carte__tete" { h2 { (t!("recherche.clients")) } }
-                        div class="carte__corps" { ul {
+                        div class="carte__corps" { ul class="liste-simple" {
                             @for cl in &res.clients {
                                 li { a href=(format!("/clients/{}", cl.id)) { (cl.societe) } }
                             }
@@ -79,7 +79,7 @@ pub async fn afficher(
                 @if !res.lots.is_empty() {
                     section class="carte" style="margin-bottom:14px" {
                         div class="carte__tete" { h2 { (t!("recherche.lots")) } }
-                        div class="carte__corps" { ul {
+                        div class="carte__corps" { ul class="liste-simple" {
                             @for l in &res.lots {
                                 li { a href=(format!("/lots/{}", l.id)) { (l.numero) } }
                             }

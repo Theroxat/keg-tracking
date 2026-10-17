@@ -217,7 +217,7 @@ summary.bouton { min-height: var(--cible); }
 .champ__aide { font-size: 13px; color: var(--encre-3); }
 .champ__erreur { font-size: 13px; color: var(--grave); font-weight: 600; }
 input[type=color] { min-height: var(--cible); padding: 4px; border-radius: var(--r-2); }
-input[type=text], input[type=email], input[type=password], input[type=number],
+input:not([type]), input[type=text], input[type=email], input[type=password], input[type=number],
 input[type=date], input[type=search], input[type=tel], input[type=file],
 select, textarea {
   font: inherit; font-size: 16px; /* 16 px empêche le zoom automatique iOS */
@@ -234,6 +234,7 @@ select { appearance: none; padding-right: 36px;
   background-position: right 18px center, right 13px center;
   background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
 textarea { min-height: 96px; resize: vertical; }
+input[readonly] { color: var(--encre-2); cursor: default; }
 input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--grave); }
 .grille { display: grid; gap: 0 16px;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); }
@@ -307,6 +308,8 @@ a.tuile:hover { box-shadow: var(--ombre-3); }
 .tuile--grave .tuile__valeur { color: var(--grave); }
 .tuile--ok .tuile__valeur { color: var(--ok); }
 @media (max-width: 720px) {
+  /* Une date entière (« 11/01/2027 ») doit tenir dans une demi-largeur. */
+  .tuile__valeur { font-size: clamp(20px, 6.2vw, 32px); overflow-wrap: anywhere; }
   /* Deux compteurs par ligne plutôt qu'un : le tableau de bord tient
      alors sur un écran au lieu de trois. */
   .cartes { grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -710,3 +713,7 @@ select.fiche__resume { width: 100%; }
 .fiche-autres > summary { justify-content: center; }
 .fiche-autres > .fiche-action { margin-top: 10px; }
 .carte--forcage summary { justify-content: center; }
+
+/* Résultats de recherche : liste sobre, cibles tactiles confortables. */
+.liste-simple { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.liste-simple a { display: inline-block; padding: 8px 0; }

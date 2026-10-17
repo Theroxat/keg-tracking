@@ -52,8 +52,8 @@ chronologie du fût.
 
 | Écran | Ce qu'il fait |
 |---|---|
-| **Scanner** | Accepte une douchette Bluetooth (vue comme un clavier), la caméra arrière avec torche, ou la saisie manuelle. Chaque lecture donne trois retours à la fois : couleur plein écran, son et vibration. |
-| **Opération par lot** | On configure une fois, puis on scanne des dizaines de fûts à la suite. Un fût incompatible avec l'opération est refusé au moment du scan, pendant qu'on l'a en main. La capture est enregistrée côté serveur et survit à un rafraîchissement ou à une batterie à plat. La validation est transactionnelle : tout passe, ou rien n'est écrit. |
+| **Scanner** | Accepte une douchette Bluetooth (vue comme un clavier), la caméra arrière avec lampe, ou la saisie manuelle (repliée). Chaque lecture donne trois retours à la fois : couleur plein écran, son et vibration. Le vert est bref ; le rouge et l'ambre restent jusqu'au toucher. |
+| **Plusieurs fûts d'un coup** | Opération par lot en trois étapes (choisir, scanner, confirmer), avec préréglages : lavage, remplissage, livraison, retour client. On configure une fois, puis on scanne des dizaines de fûts à la suite. Un fût incompatible avec l'opération est refusé au moment du scan, pendant qu'on l'a en main. La capture est enregistrée côté serveur et survit à un rafraîchissement ou à une batterie à plat. La validation est transactionnelle : tout passe, ou rien n'est écrit. |
 | **Bon de livraison** | Généré dès la validation d'une livraison, imprimable, avec deux emplacements de signature. |
 
 ### Au bureau
@@ -61,11 +61,12 @@ chronologie du fût.
 | Écran | Ce qu'il fait |
 |---|---|
 | **Tableau de bord** | Différent selon le rôle. Le bureau voit les compteurs par statut, les fûts non revenus, les alertes DLUO et l'activité récente. L'atelier voit deux grands boutons et les deux chiffres qui comptent. |
-| **Parc** | Recherche plein texte, filtres combinables, tri par colonne. L'export CSV ou Excel reprend exactement les filtres actifs. |
-| **Fiche d'un fût** | État courant, chronologie complète, et uniquement les actions réellement autorisées depuis son statut. |
+| **Recherche globale** | Fûts, clients et lots depuis un seul champ, accessible par la touche « / ». |
+| **Parc** | Recherche plein texte, filtres combinables, tri par colonne (dont l'emplacement), ancienneté dans le statut et dernier mouvement. L'export CSV ou Excel reprend exactement les filtres actifs. |
+| **Fiche d'un fût** | Centrée sur l'action suivante, les autres actions autorisées sous « Autre action… », chronologie complète, réimpression de l'étiquette. |
 | **Clients** | Fûts détenus par chaque client, avec leur ancienneté, en rouge au-delà du seuil. Un client qui détient des fûts ne peut pas être archivé, et un client n'est jamais supprimé. |
-| **Lots et rappel produit** | Tous les clients concernés par un lot, avec leurs coordonnées, les quantités et les codes QR exacts. Exportable et imprimable. |
-| **Administration** | Référentiels (bières, emplacements, cuves), utilisateurs, planches d'étiquettes QR (3 × 8, 70 × 37 mm), import de reprise depuis un tableur (entièrement validé avant toute écriture), paramètres et journal d'audit. |
+| **Lots et rappel produit** | Fiche lot modifiable, filtres par bière et DLUO, raccourcis vers « Remplir des fûts avec ce lot ». Rappel : tous les clients concernés par un lot, avec leurs coordonnées, les quantités et les codes QR exacts. Exportable et imprimable. |
+| **Administration** | Référentiels (bières, emplacements, cuves), utilisateurs, planches d'étiquettes QR (3 × 8, 70 × 37 mm), import de reprise depuis un tableur (modèle CSV fourni, entièrement validé avant toute écriture), paramètres et journal d'audit filtrable et paginé. |
 
 ### Rôles
 
@@ -83,8 +84,10 @@ chiffres**, pour rester utilisable avec des gants.
 ### Sur téléphone
 
 Sous 720 px, l'interface change de forme : les listes deviennent des cartes,
-les actions passent avant la chronologie, les cibles tactiles font au moins
-44 px, et une barre de navigation basse reprend les écrans de l'atelier.
+les cibles tactiles font au moins 44 px, et une barre de navigation basse
+dépend du rôle (Production : Accueil, grand bouton Scanner, Plusieurs fûts).
+Le PIN se tape sur un pavé tactile. Design « Atelier clair », avec thème
+sombre.
 
 ---
 
@@ -204,6 +207,7 @@ Les mots de passe doivent être ceux du `.env`.
 | ajoutez une table métier | lui donner une colonne `tenant_id` et terminer la migration par `select appliquer_rls();` |
 | ajoutez une variante de `Statut`, `Role`, `TypeEvenement` ou `TypeDocument` | mettre à jour `TOUS`, `cle_i18n()` et `crates/web/src/i18n/fr.rs` |
 | ajoutez un texte visible | passer par `t!("cle")` (une clé absente est une erreur de compilation) |
+| ajoutez un comportement JavaScript | pas de `onclick` ni de `<script>` inline (la CSP les bloque) : attribut `data-*` géré par `assets/js/commun.js` |
 | ajoutez une ressource statique | la placer dans `assets/` et l'embarquer dans `crates/web/src/statique.rs`. Pas de CDN : la CSP est `default-src 'self'`. |
 
 ---
@@ -211,9 +215,11 @@ Les mots de passe doivent être ceux du `.env`.
 ## Architecture
 
 **Rust** (Axum + SQLx) sur **PostgreSQL 17**, rendu serveur en **Maud**,
-**htmx** pour les écrans de gestion, et un unique fichier JavaScript
-autonome pour le scan. Il n'y a ni SPA, ni chaîne de construction front,
-ni CDN.
+**htmx** pour les écrans de gestion, et trois fichiers JavaScript
+autonomes : `scan/scan.js` (scan), `pin.js` (pavé PIN) et `commun.js`
+(confirmations, impression, raccourci « / », redirection htmx sur 401/403).
+La CSP n'autorise aucun JavaScript inline. Il n'y a ni SPA, ni chaîne de
+construction front, ni CDN.
 
 ```
 Navigateur ──https──> (tunnel / proxy TLS) ──> Caddy :6666 ──> app (webqr serve) ──> PostgreSQL
@@ -273,7 +279,7 @@ réels de production. Sans cela, les tests de RLS ne prouveraient rien.
 | Binaire | Ce qu'il prouve |
 |---|---|
 | `isolation` | six scénarios d'attaque du cloisonnement, sur des tables énumérées depuis le catalogue |
-| `acces` | chaque route avec chaque rôle, plus le CSRF et l'absence de session |
+| `acces` | chaque route avec chaque rôle, plus le CSRF, l'absence de session et une recherche globale cloisonnée par brasserie |
 | `documents` | atomicité, dédoublonnage, refus anticipé, survie du brouillon |
 | `coherence` | une adresse d'un autre client est refusée par le serveur **et** par la base |
 | `reconstruction` | le rejeu redonne l'état courant, et une projection corrompue est détectée |
