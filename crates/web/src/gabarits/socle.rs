@@ -257,6 +257,15 @@ fn actif(chemin: &str, href: &str) -> bool {
 pub fn page(cadre: Cadre<'_>, corps: Markup) -> Markup {
     let role = cadre.session.role;
     let v = statique::version();
+    // Un nom vide, ou qui répète le rôle, n'identifie personne : on
+    // retombe alors sur l'adresse e-mail.
+    let libelle_role = traduire(role.cle_i18n());
+    let nom = cadre.session.nom_complet();
+    let nom_affiche = if nom.is_empty() || nom == libelle_role {
+        cadre.session.email.clone()
+    } else {
+        nom
+    };
     html! {
         (DOCTYPE)
         html lang="fr" {
@@ -297,13 +306,13 @@ pub fn page(cadre: Cadre<'_>, corps: Markup) -> Markup {
                         }
                         div class="flanc__pied" {
                             div class="flanc__moi" {
-                                b { (cadre.session.nom_complet()) }
-                                span { (traduire(role.cle_i18n())) }
+                                b { (nom_affiche) }
+                                span { (libelle_role) }
                             }
-                            a href="/compte" { (t!("nav.mon_compte")) }
+                            a class="flanc__lien" href="/compte" { (t!("nav.mon_compte")) }
                             form method="post" action="/deconnexion" {
                                 input type="hidden" name="csrf" value=(cadre.session.jeton_csrf);
-                                button type="submit" class="bouton bouton--nu bouton--petit bouton--large" {
+                                button type="submit" class="flanc__lien" {
                                     (t!("nav.deconnexion"))
                                 }
                             }

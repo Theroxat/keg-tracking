@@ -1,4 +1,4 @@
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::response::Response;
 use axum::Form;
 use domaine::Role;
@@ -677,22 +677,83 @@ pub async fn enregistrer_parametres(
 }
 
 // ------------------------------------------------------------------ journal
+#[derive(Deserialize, Default)]
+pub struct RequeteJournal {
+    #[serde(default)]
+    utilisateur: String,
+    #[serde(default)]
+    action: String,
+    page: Option<i64>,
+}
+
+const JOURNAL_PAR_PAGE: i64 = 50;
+
 pub async fn journal(
     State(etat): State<Etat>,
     ctx: Contexte,
     Session(s): Session,
+    Query(q): Query<RequeteJournal>,
 ) -> Result<Response, ErreurWeb> {
     let avait = ctx.avis_present();
     let mut tx = etat
         .depot
         .ouvrir(s.tenant_id, Some(s.utilisateur_id))
         .await?;
-    let entrees = persistance::audit::lister(tx.conn(), 300).await?;
+    let utilisateur = q.utilisateur.parse::<Uuid>().ok();
+    let action = Some(q.action.trim()).filter(|a| !a.is_empty());
+    let page_courante = q.page.unwrap_or(1).max(1);
+    let total = persistance::audit::compter_filtre(tx.conn(), utilisateur, action).await?;
+    let entrees = persistance::audit::lister_filtre(
+        tx.conn(),
+        utilisateur,
+        action,
+        JOURNAL_PAR_PAGE,
+        (page_courante - 1) * JOURNAL_PAR_PAGE,
+    )
+    .await?;
+    let utilisateurs = persistance::utilisateur::lister(tx.conn()).await?;
+    let actions = persistance::audit::actions_distinctes(tx.conn()).await?;
     tx.valider().await?;
+    let total_pages = (total + JOURNAL_PAR_PAGE - 1) / JOURNAL_PAR_PAGE;
+    let mut base = String::from("/administration/journal?");
+    if utilisateur.is_some() {
+        base.push_str(&format!("utilisateur={}&", q.utilisateur));
+    }
+    if let Some(a) = action {
+        base.push_str(&format!("action={}&", urlencoding::encode(a)));
+    }
     let tz = s.fuseau_horaire.clone();
 
     let corps = html! {
         (c::retour_administration())
+        form class="filtres" method="get" action="/administration/journal" {
+            div class="champ" {
+                label for="champ-utilisateur" { (t!("journal.qui")) }
+                select id="champ-utilisateur" name="utilisateur" {
+                    option value="" { (t!("app.tous")) }
+                    @for u in &utilisateurs {
+                        option value=(u.id) selected[utilisateur == Some(u.id)] {
+                            (format!("{} {}", u.prenom, u.nom).trim())
+                        }
+                    }
+                }
+            }
+            div class="champ" {
+                label for="champ-action" { (t!("journal.action")) }
+                select id="champ-action" name="action" {
+                    option value="" { (t!("app.toutes")) }
+                    @for a in &actions {
+                        option value=(a) selected[action == Some(a.as_str())] { (a) }
+                    }
+                }
+            }
+            div class="boutons" {
+                button type="submit" class="bouton bouton--vif" { (t!("action.filtrer")) }
+                @if utilisateur.is_some() || action.is_some() {
+                    a class="bouton bouton--nu" href="/administration/journal" { (t!("action.reinitialiser")) }
+                }
+            }
+        }
         @if entrees.is_empty() {
             (c::vide(t!("journal.aucune_entree"), None))
         } @else {
@@ -721,6 +782,7 @@ pub async fn journal(
                     }
                 }
             }
+            (c::pagination(page_courante, total_pages, &base))
         }
     };
     let cadre = Cadre::new(&s, &ctx.chemin, t!("journal.titre")).avis(ctx.avis);

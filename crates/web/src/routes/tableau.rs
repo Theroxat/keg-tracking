@@ -122,6 +122,14 @@ fn bureau(
 ) -> Markup {
     let total: i64 = compteurs.iter().map(|x| x.nombre).sum();
     html! {
+        @if s.role.peut_ecrire() {
+            div class="actions-rapides sans-impression" {
+                a class="bouton bouton--vif" href="/scan" { (t!("scan.titre")) }
+                a class="bouton" href="/operations/nouvelle" { (t!("op.titre")) }
+                a class="bouton" href="/clients/nouveau" { (t!("client.nouveau")) }
+                a class="bouton" href="/lots?nouveau=1#nouveau-lot" { (t!("lot.nouveau")) }
+            }
+        }
         // Compteurs cliquables : chacun mène à la liste filtrée.
         div class="cartes" {
             a class="tuile tuile--ok" href="/parc?statut=propre" {

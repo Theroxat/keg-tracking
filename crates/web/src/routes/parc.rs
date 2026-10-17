@@ -306,7 +306,7 @@ pub async fn afficher(
                                         }
                                     } @else { span class="discret" { "—" } }
                                 }
-                                td class="mono petit" data-libelle=(t!("champ.lot")) {
+                                td class="mono petit sans-coupure" data-libelle=(t!("champ.lot")) {
                                     (c::texte_ou_tiret(f.lot.as_ref()))
                                 }
                                 td class="petit" data-libelle=(t!("champ.cuve")) {
@@ -320,10 +320,10 @@ pub async fn afficher(
                                         a href=(format!("/clients/{id}")) { (cl) }
                                     } @else { span class="discret" { "—" } }
                                 }
-                                td class="petit num" data-libelle=(t!("champ.anciennete")) {
+                                td class="petit num sans-coupure" data-libelle=(t!("champ.anciennete")) {
                                     (c::depuis(f.statut_depuis_le))
                                 }
-                                td class="petit discret num" data-libelle=(t!("champ.derniere_activite")) {
+                                td class="petit discret num sans-coupure" data-libelle=(t!("champ.derniere_activite")) {
                                     @match f.dernier_evenement_le {
                                         Some(d) => (c::depuis(d)),
                                         None => span class="discret" { "—" },

@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select count(*) as \"n!\" from journal_audit j\n            where ($1::uuid is null or j.utilisateur_id = $1)\n              and ($2::text is null or j.action = $2)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "n!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "aed39c51736e38515db6c21add93fa4656a6f52187c27d9876041aa0a322e5cb"
+}
