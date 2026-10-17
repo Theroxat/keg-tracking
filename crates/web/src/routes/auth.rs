@@ -9,9 +9,9 @@ use persistance::session::{self, ContexteSession};
 use serde::Deserialize;
 use std::time::Duration;
 
-use crate::gabarits::socle::{page, page_nue, Avis, Cadre};
+use crate::gabarits::socle::{page, page_nue, selecteur_langue, Avis, Cadre};
 use crate::gabarits::{composants as c, csrf};
-use crate::i18n::traduire;
+use crate::i18n::{avec_langue_sync, langue_courante, traduire, Langue};
 use crate::middleware::{Session, SessionBrute};
 use crate::routes::{page_avec_avis, rediriger, rediriger_nu, Contexte};
 use crate::{t, ErreurWeb, Etat};
@@ -61,6 +61,7 @@ fn page_connexion(erreur: Option<&str>, email: &str) -> Markup {
                     p class="petit discret" style="margin-top:14px;margin-bottom:0" {
                         (t!("connexion.se_souvenir"))
                     }
+                    (selecteur_langue("/connexion"))
                 }
             }
         },
@@ -266,6 +267,7 @@ fn page_verrouillage(s: &ContexteSession, erreur: Option<&str>) -> Markup {
                         (t!("verrouillage.autre_compte"))
                     }
                 }
+                (selecteur_langue("/verrouillage"))
                 script src={ "/statique/pin.js?v=" (crate::statique::version()) } defer {}
             } }
         },
@@ -359,7 +361,7 @@ pub async fn afficher_compte(
                         (c::Champ::texte("mot_de_passe", t!("compte.mot_de_passe_actuel"), "")
                             .de_type("password").requis().rendre())
                         (c::Champ::texte("pin", t!("champ.pin"), "")
-                            .aide("6 chiffres").rendre())
+                            .aide(t!("compte.pin_aide")).rendre())
                         div class="boutons" {
                             button type="submit" class="bouton bouton--vif" { (t!("action.enregistrer")) }
                             button type="submit" name="supprimer" value="1" class="bouton" {
@@ -371,12 +373,27 @@ pub async fn afficher_compte(
             }
         }
         section class="carte" style="margin-top:12px" {
+            div class="carte__tete" { h2 { (t!("compte.langue")) } }
+            div class="carte__corps" {
+                form method="post" action="/compte/langue" class="boutons" {
+                    (csrf(&s.jeton_csrf))
+                    @for l in Langue::TOUS {
+                        button type="submit" name="langue" value=(l.code()) lang=(l.code())
+                            class={ "bouton" @if *l == langue_courante() { " bouton--vif" } }
+                            aria-pressed=(if *l == langue_courante() { "true" } else { "false" }) {
+                            (l.libelle_natif())
+                        }
+                    }
+                }
+            }
+        }
+        section class="carte" style="margin-top:12px" {
             div class="carte__tete" { h2 { (t!("compte.sessions")) } }
             div class="carte__corps carte__corps--serre" {
                 div class="tableau-cadre" style="border:0" {
                     table class="tableau" {
                         thead { tr {
-                            th { "Appareil" } th { (t!("champ.derniere_activite")) }
+                            th { (t!("compte.appareil")) } th { (t!("champ.derniere_activite")) }
                             th { (t!("champ.expire")) } th {}
                         } }
                         tbody {
@@ -469,14 +486,14 @@ pub async fn changer_mot_de_passe(
         session::ouvrir(etat.depot.auth(), s.tenant_id, s.utilisateur_id, None, None).await?;
     Ok((
         StatusCode::SEE_OTHER,
-        [
+        axum::response::AppendHeaders([
             (header::LOCATION, "/compte".to_string()),
             (header::SET_COOKIE, cookie_session(&jeton, securise)),
             (
                 header::SET_COOKIE,
                 crate::middleware::cookie_avis("ok", t!("compte.mot_de_passe_change"), securise),
             ),
-        ],
+        ]),
     )
         .into_response())
 }
@@ -547,7 +564,121 @@ pub async fn revoquer_session(
     Ok(rediriger_nu("/compte"))
 }
 
+// ------------------------------------------------------------------ langue
+#[derive(Deserialize)]
+pub struct FormLangue {
+    langue: String,
+}
+
+/// Enregistre la préférence de l'utilisateur et pose aussi le cookie, pour
+/// que l'écran de connexion reste dans sa langue après la déconnexion.
+pub async fn enregistrer_langue(
+    State(etat): State<Etat>,
+    Session(s): Session,
+    Form(f): Form<FormLangue>,
+) -> Result<Response, ErreurWeb> {
+    let securise = etat.config.cookies_securises;
+    let langue = Langue::depuis_code(&f.langue)
+        .ok_or_else(|| ErreurWeb::champ("langue", t!("compte.langue_inconnue")))?;
+    let mut tx = etat
+        .depot
+        .ouvrir(s.tenant_id, Some(s.utilisateur_id))
+        .await?;
+    persistance::utilisateur::definir_langue(tx.conn(), s.utilisateur_id, langue.code()).await?;
+    tx.valider().await?;
+    // L'avis s'affiche sur la page suivante, déjà dans la nouvelle langue.
+    let avis = avec_langue_sync(langue, || t!("compte.langue_enregistree"));
+    // `AppendHeaders` et non un tableau : un tableau *remplace* l'en-tête,
+    // et le second cookie effacerait le premier.
+    Ok((
+        StatusCode::SEE_OTHER,
+        axum::response::AppendHeaders([
+            (header::LOCATION, "/compte".to_string()),
+            (
+                header::SET_COOKIE,
+                crate::middleware::cookie_langue(langue, securise),
+            ),
+            (
+                header::SET_COOKIE,
+                crate::middleware::cookie_avis("ok", avis, securise),
+            ),
+        ]),
+    )
+        .into_response())
+}
+
+#[derive(Deserialize)]
+pub struct RequeteLangue {
+    retour: Option<String>,
+}
+
+/// Seules les adresses internes sont acceptées comme retour : un chemin
+/// absolu, sans `//` (adresse sans schéma) ni `\` (que certains
+/// navigateurs lisent comme `/`), sans caractère de contrôle. Tout le reste
+/// ramène à l'accueil — pas de redirection ouverte.
+pub fn retour_sur(retour: Option<&str>) -> &str {
+    match retour {
+        Some(r)
+            if r.starts_with('/')
+                && !r.starts_with("//")
+                && !r.contains('\\')
+                && !r.chars().any(char::is_control) =>
+        {
+            r
+        }
+        _ => "/",
+    }
+}
+
+/// Choix de langue sans session : pose le cookie et revient. Une requête
+/// GET sans effet en base, d'où sa place parmi les routes publiques. Un
+/// utilisateur connecté qui l'emprunterait garde sa préférence enregistrée,
+/// qui prime sur le cookie.
+pub async fn choisir_langue(
+    State(etat): State<Etat>,
+    axum::extract::Path(code): axum::extract::Path<String>,
+    axum::extract::Query(q): axum::extract::Query<RequeteLangue>,
+) -> Result<Response, ErreurWeb> {
+    let langue = Langue::depuis_code(&code).ok_or(ErreurWeb::Introuvable)?;
+    Ok((
+        StatusCode::SEE_OTHER,
+        [
+            (
+                header::LOCATION,
+                retour_sur(q.retour.as_deref()).to_string(),
+            ),
+            (
+                header::SET_COOKIE,
+                crate::middleware::cookie_langue(langue, etat.config.cookies_securises),
+            ),
+        ],
+    )
+        .into_response())
+}
+
 /// Utilisé par les écrans qui veulent afficher un avis une seule fois.
 pub fn avis_ok(texte: &str) -> Avis {
     Avis::ok(texte)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::retour_sur;
+
+    #[test]
+    fn le_retour_reste_interne() {
+        assert_eq!(retour_sur(Some("/connexion")), "/connexion");
+        assert_eq!(retour_sur(Some("/parc?statut=plein")), "/parc?statut=plein");
+        for mauvais in [
+            "//exemple.org",
+            "https://exemple.org",
+            "/\\exemple.org",
+            "exemple.org",
+            "/\nLocation: x",
+            "",
+        ] {
+            assert_eq!(retour_sur(Some(mauvais)), "/", "{mauvais:?}");
+        }
+        assert_eq!(retour_sur(None), "/");
+    }
 }

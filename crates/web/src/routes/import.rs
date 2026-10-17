@@ -254,10 +254,7 @@ pub async fn traiter(
             if statut != Statut::Livre {
                 rapport.erreurs.push((
                     n,
-                    format!(
-                        "un client n'a de sens que pour un fût {}",
-                        t!("statut.livre")
-                    ),
+                    t!("import.client_hors_livraison", statut = t!("statut.livre")),
                 ));
                 continue;
             }
@@ -349,7 +346,7 @@ pub async fn traiter(
                 persistance::evenement::DemandeEvenement::nouvelle(id, domaine::Origine::Import);
             d.statut_cible = Some(l.statut);
             d.type_impose = Some(domaine::TypeEvenement::Import);
-            d.commentaire = "Reprise du parc existant".into();
+            d.commentaire = t!("import.commentaire_reprise").into();
             d.ctx.emplacement_id = emplacement_id;
             if let Some((cid, aid)) = adresse {
                 d.ctx.client_id = Some(cid);
@@ -471,7 +468,7 @@ fn lire_tableur(octets: &[u8]) -> Result<Lignes, String> {
     let mut classeur: Xlsx<_> =
         Xlsx::new(Cursor::new(octets.to_vec())).map_err(|e| e.to_string())?;
     let noms = classeur.sheet_names().to_vec();
-    let premiere = noms.first().ok_or("classeur vide")?;
+    let premiere = noms.first().ok_or(t!("import.classeur_vide"))?;
     let plage = classeur
         .worksheet_range(premiere)
         .map_err(|e| e.to_string())?;
@@ -479,7 +476,7 @@ fn lire_tableur(octets: &[u8]) -> Result<Lignes, String> {
     let mut iter = plage.rows();
     let entetes: Vec<String> = iter
         .next()
-        .ok_or("feuille vide")?
+        .ok_or(t!("import.feuille_vide"))?
         .iter()
         .map(|c| normaliser(&cellule(c)))
         .collect();

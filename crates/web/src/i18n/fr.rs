@@ -1,5 +1,6 @@
-//! Catalogue français. Unique source des chaînes visibles.
-//! Ajouter une langue = ajouter un fichier de même forme.
+//! Catalogue français : catalogue de référence, contre lequel `t!` vérifie
+//! les clés à la compilation. Toute clé ajoutée ici doit l'être aussi, à la
+//! même place, dans `en.rs` (un test compare les catalogues).
 
 pub static CATALOGUE: &[(&str, &str)] = &[
     // ---------------------------------------------------------- application
@@ -522,4 +523,33 @@ pub static CATALOGUE: &[(&str, &str)] = &[
     ("temps.date", "%d/%m/%Y"),
     ("unite.litres", "L"),
     ("unite.jours_court", "j"),
+
+    // ---------------------------------------------------------- langue
+    ("langue.choisir", "Langue"),
+    ("compte.langue", "Langue de l'interface"),
+    ("compte.langue_enregistree", "Langue enregistrée."),
+    ("compte.langue_inconnue", "Langue non proposée."),
+    ("compte.appareil", "Appareil"),
+    ("compte.pin_aide", "6 chiffres"),
+
+    // ---------------------------------------------------------- libellés repris des gabarits
+    ("doc.type", "Type"),
+    ("doc.futs", "Fûts"),
+    ("doc.cree", "Créé"),
+    ("doc.valide_le", "Validé"),
+    ("doc.contenu", "Contenu"),
+    ("fut.nb_evenements", "{n} événements"),
+    ("editeur.brasseries_actives", "Brasseries actives"),
+    ("editeur.futs_suivis", "Fûts suivis"),
+    ("editeur.evenements", "Événements"),
+    ("editeur.identifiant", "Identifiant"),
+    ("editeur.creee_le", "Créée"),
+    ("editeur.identifiant_court", "Identifiant court"),
+    ("editeur.identifiant_court_aide", "minuscules, chiffres et tirets"),
+    ("editeur.prefixe_aide", "majuscules, unique sur l'installation"),
+    ("editeur.brasserie", "Brasserie"),
+    ("import.client_hors_livraison", "un client n'a de sens que pour un fût {statut}"),
+    ("import.commentaire_reprise", "Reprise du parc existant"),
+    ("import.classeur_vide", "classeur vide"),
+    ("import.feuille_vide", "feuille vide"),
 ];

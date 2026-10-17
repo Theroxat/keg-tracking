@@ -302,7 +302,7 @@ fn carte_chronologie(
     section class="carte" {
         div class="carte__tete" {
             h2 { (t!("fut.chronologie")) }
-            span class="petit discret" { (chronologie.len()) " événements" }
+            span class="petit discret" { (t!("fut.nb_evenements", n = chronologie.len())) }
         }
         div class="carte__corps" {
             @if chronologie.is_empty() {

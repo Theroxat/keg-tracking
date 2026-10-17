@@ -158,7 +158,7 @@ fn bureau(
             section class="carte" {
                 div class="carte__tete" {
                     h2 { (t!("tdb.repartition")) }
-                    span class="petit discret" { (total) " " "fûts" }
+                    span class="petit discret" { (t!("tdb.futs", n = total)) }
                 }
                 div class="carte__corps carte__corps--serre" {
                     div class="tableau-cadre" style="border:0" {

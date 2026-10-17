@@ -4,6 +4,7 @@ use axum::middleware::Next;
 use axum::response::{IntoResponse, Redirect, Response};
 use persistance::session::{self, ContexteSession};
 
+use crate::i18n::{self, Langue};
 use crate::{ErreurWeb, Etat};
 
 /// Adresse réelle du client. Derrière le tunnel Cloudflare puis Caddy,
@@ -77,6 +78,53 @@ pub async fn session_courante(State(etat): State<Etat>, mut req: Request, next: 
         }
     }
     next.run(req).await
+}
+
+/// Nom du cookie qui retient la langue choisie, avec ou sans session.
+pub const COOKIE_LANGUE: &str = "wq_langue";
+
+/// Langue de la requête : préférence de l'utilisateur connecté, puis cookie
+/// `wq_langue`, puis en-tête `Accept-Language`, enfin le français.
+pub fn resoudre_langue(req: &Request) -> Langue {
+    req.extensions()
+        .get::<ContexteSession>()
+        .and_then(|c| Langue::depuis_code(&c.langue))
+        .or_else(|| cookie(req.headers(), COOKIE_LANGUE).and_then(|c| Langue::depuis_code(&c)))
+        .or_else(|| {
+            req.headers()
+                .get(header::ACCEPT_LANGUAGE)
+                .and_then(|v| v.to_str().ok())
+                .and_then(Langue::depuis_accept_language)
+        })
+        .unwrap_or_default()
+}
+
+/// Positionne la langue courante pour toute la suite du traitement, gardes
+/// de rôle, refus CSRF et pages d'erreur compris. Doit donc s'exécuter
+/// après la résolution de session et avant tout le reste.
+pub async fn langue(req: Request, next: Next) -> Response {
+    let l = resoudre_langue(&req);
+    let mut reponse = i18n::avec_langue(l, next.run(req)).await;
+    // Le contenu dépend de la langue : un cache intermédiaire ne doit pas
+    // servir à l'un la page rendue pour l'autre.
+    reponse.headers_mut().append(
+        header::VARY,
+        HeaderValue::from_static("accept-language, cookie"),
+    );
+    if !reponse.headers().contains_key(header::CONTENT_LANGUAGE) {
+        reponse
+            .headers_mut()
+            .insert(header::CONTENT_LANGUAGE, HeaderValue::from_static(l.code()));
+    }
+    reponse
+}
+
+pub fn cookie_langue(l: Langue, securise: bool) -> String {
+    format!(
+        "{COOKIE_LANGUE}={}; Path=/; Max-Age=31536000; SameSite=Lax; HttpOnly{}",
+        l.code(),
+        if securise { "; Secure" } else { "" }
+    )
 }
 
 /// En-têtes de sécurité, y compris une politique de sécurité de contenu
