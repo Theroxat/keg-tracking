@@ -33,7 +33,7 @@ pub async fn fiche(
     let cuves = persistance::referentiel::lister_cuves(tx.conn(), true).await?;
     let emplacements = persistance::referentiel::lister_emplacements(tx.conn(), true).await?;
     let clients = persistance::client::lister(tx.conn(), false, None).await?;
-    let lots = persistance::lot::lister(tx.conn(), None).await?;
+    let lots = persistance::lot::lister(tx.conn(), None, None, None).await?;
     let voisins = match f.client_id {
         Some(cid) => persistance::fut::detenus_par_client(tx.conn(), cid).await?,
         None => vec![],

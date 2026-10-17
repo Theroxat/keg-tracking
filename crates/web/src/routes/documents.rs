@@ -301,7 +301,7 @@ pub async fn nouvelle(
         cuves: persistance::referentiel::lister_cuves(tx.conn(), true).await?,
         emplacements: persistance::referentiel::lister_emplacements(tx.conn(), true).await?,
         clients: persistance::client::lister(tx.conn(), false, None).await?,
-        lots: persistance::lot::lister(tx.conn(), None).await?,
+        lots: persistance::lot::lister(tx.conn(), None, None, None).await?,
     };
     tx.valider().await?;
 
@@ -1132,7 +1132,7 @@ pub async fn bon_de_livraison(
                 div class="bon__signature" { (t!("op.signature_client")) }
             }
             p class="sans-impression" style="margin-top:20px" {
-                button class="bouton bouton--vif" onclick="window.print()" { (t!("app.imprimer")) }
+                button class="bouton bouton--vif" data-imprimer { (t!("app.imprimer")) }
             }
         }
     };

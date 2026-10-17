@@ -77,8 +77,8 @@ pub fn message_erreur(e: &domaine::ErreurMetier) -> String {
     let gabarit = traduire(e.cle_i18n());
     match e {
         E::TransitionInterdite { avant, apres } => gabarit
-            .replace("{avant}", traduire(avant.cle_i18n()))
-            .replace("{apres}", traduire(apres.cle_i18n())),
+            .replace("{avant}", &traduire(avant.cle_i18n()).to_lowercase())
+            .replace("{apres}", &traduire(apres.cle_i18n()).to_lowercase()),
         E::DejaDansCeStatut { statut } => gabarit.replace("{statut}", traduire(statut.cle_i18n())),
         E::PreconditionManquante { statut, champ } => gabarit
             .replace("{statut}", traduire(statut.cle_i18n()))

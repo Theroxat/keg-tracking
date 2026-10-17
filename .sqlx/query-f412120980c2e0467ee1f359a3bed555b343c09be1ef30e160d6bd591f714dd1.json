@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select l.id, l.numero, l.date_brassage, l.type_biere_id,\n                  b.nom as biere, b.couleur as couleur_biere,\n                  l.cuve_id, c.nom as cuve, l.dluo, l.commentaire, l.cree_le,\n                  (select count(*) from fut f where f.lot_id = l.id) as \"futs!\"\n             from lot l\n             join type_biere b on b.id = l.type_biere_id\n             join cuve c on c.id = l.cuve_id\n            where ($1::text is null or l.numero ilike '%' || $1 || '%')\n            order by l.date_brassage desc, l.numero desc",
+  "query": "select l.id, l.numero, l.date_brassage, l.type_biere_id,\n                  b.nom as biere, b.couleur as couleur_biere,\n                  l.cuve_id, c.nom as cuve, l.dluo, l.commentaire, l.cree_le,\n                  (select count(*) from fut f where f.lot_id = l.id) as \"futs!\"\n             from lot l\n             join type_biere b on b.id = l.type_biere_id\n             join cuve c on c.id = l.cuve_id\n            where ($1::text is null or l.numero ilike '%' || $1 || '%')\n              and ($2::uuid is null or l.type_biere_id = $2)\n              and ($3::int is null\n                   or (l.dluo is not null and l.dluo <= current_date + make_interval(days => $3)))\n            order by l.date_brassage desc, l.numero desc",
   "describe": {
     "columns": [
       {
@@ -66,7 +66,9 @@
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Text",
+        "Uuid",
+        "Int4"
       ]
     },
     "nullable": [
@@ -84,5 +86,5 @@
       null
     ]
   },
-  "hash": "3ae37f33927ed201916785cc7ed14bbfe6e9bbe1634bb331a7b2ad36f368d3f8"
+  "hash": "f412120980c2e0467ee1f359a3bed555b343c09be1ef30e160d6bd591f714dd1"
 }

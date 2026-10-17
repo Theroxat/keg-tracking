@@ -85,7 +85,7 @@ pub async fn en_tetes_securite(req: Request, next: Next) -> Response {
     let mut reponse = next.run(req).await;
     let h = reponse.headers_mut();
     let csp = "default-src 'self'; \
-               script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline'; \
+               script-src 'self' 'wasm-unsafe-eval'; \
                style-src 'self' 'unsafe-inline'; \
                img-src 'self' data: blob:; \
                media-src 'self' blob:; \

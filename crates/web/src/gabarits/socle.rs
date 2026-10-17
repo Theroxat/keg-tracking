@@ -1,4 +1,4 @@
-use maud::{html, Markup, PreEscaped, DOCTYPE};
+use maud::{html, Markup, DOCTYPE};
 use persistance::session::ContexteSession;
 
 use crate::i18n::traduire;
@@ -280,6 +280,11 @@ pub fn page(cadre: Cadre<'_>, corps: Markup) -> Markup {
                             b { (cadre.session.locataire_nom) }
                             span { (t!("app.baseline")) }
                         }
+                        form class="flanc__recherche" method="get" action="/recherche" role="search" {
+                            input type="search" name="q" id="recherche-globale"
+                                placeholder=(t!("recherche.placeholder"))
+                                aria-label=(t!("action.rechercher")) autocomplete="off";
+                        }
                         div class="flanc__nav" {
                             @for l in LIENS {
                                 @if role.permet(l.role_min) {
@@ -330,7 +335,7 @@ pub fn page(cadre: Cadre<'_>, corps: Markup) -> Markup {
                     }
                 }
                 script src={ "/statique/htmx.js?v=" (v) } defer {}
-                (PreEscaped(r#"<script>document.body.addEventListener('htmx:responseError',e=>{if(e.detail.xhr.status===401||e.detail.xhr.status===403){window.location='/connexion'}});</script>"#))
+                script src={ "/statique/commun.js?v=" (v) } defer {}
             }
         }
     }

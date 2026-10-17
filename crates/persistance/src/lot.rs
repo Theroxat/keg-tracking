@@ -2,6 +2,8 @@ use chrono::{DateTime, NaiveDate, Utc};
 use sqlx::PgExecutor;
 use uuid::Uuid;
 
+use domaine::statut::Statut;
+
 use crate::{Erreur, Resultat};
 
 #[derive(Debug, Clone)]
@@ -22,7 +24,14 @@ pub struct Lot {
 
 const SELECT: &str = "";
 
-pub async fn lister<'e, E: PgExecutor<'e>>(ex: E, recherche: Option<&str>) -> Resultat<Vec<Lot>> {
+/// `dluo_seuil_jours` : si présent, ne garde que les lots dont la DLUO est
+/// dépassée ou tombe dans ce nombre de jours.
+pub async fn lister<'e, E: PgExecutor<'e>>(
+    ex: E,
+    recherche: Option<&str>,
+    type_biere_id: Option<Uuid>,
+    dluo_seuil_jours: Option<i32>,
+) -> Resultat<Vec<Lot>> {
     let _ = SELECT;
     Ok(sqlx::query_as!(
         Lot,
@@ -34,8 +43,13 @@ pub async fn lister<'e, E: PgExecutor<'e>>(ex: E, recherche: Option<&str>) -> Re
              join type_biere b on b.id = l.type_biere_id
              join cuve c on c.id = l.cuve_id
             where ($1::text is null or l.numero ilike '%' || $1 || '%')
+              and ($2::uuid is null or l.type_biere_id = $2)
+              and ($3::int is null
+                   or (l.dluo is not null and l.dluo <= current_date + make_interval(days => $3)))
             order by l.date_brassage desc, l.numero desc"#,
-        recherche
+        recherche,
+        type_biere_id,
+        dluo_seuil_jours
     )
     .fetch_all(ex)
     .await?)
@@ -57,6 +71,42 @@ pub async fn lire<'e, E: PgExecutor<'e>>(ex: E, id: Uuid) -> Resultat<Lot> {
     .fetch_optional(ex)
     .await?
     .ok_or(Erreur::Introuvable)
+}
+
+/// Nombre de fûts rattachés au lot, par statut (statuts non vides seulement).
+pub async fn futs_par_statut<'e, E: PgExecutor<'e>>(
+    ex: E,
+    lot_id: Uuid,
+) -> Resultat<Vec<(Statut, i64)>> {
+    let lignes = sqlx::query!(
+        r#"select statut as "statut: Statut", count(*) as "n!"
+             from fut where lot_id = $1 group by statut"#,
+        lot_id
+    )
+    .fetch_all(ex)
+    .await?;
+    Ok(lignes.into_iter().map(|l| (l.statut, l.n)).collect())
+}
+
+/// Clients qui détiennent actuellement des fûts de ce lot.
+#[derive(Debug, Clone)]
+pub struct Detenteur {
+    pub client_id: Uuid,
+    pub societe: String,
+    pub futs: i64,
+}
+
+pub async fn detenteurs<'e, E: PgExecutor<'e>>(ex: E, lot_id: Uuid) -> Resultat<Vec<Detenteur>> {
+    Ok(sqlx::query_as!(
+        Detenteur,
+        r#"select c.id as client_id, c.societe, count(*) as "futs!"
+             from fut f join client c on c.id = f.client_id
+            where f.lot_id = $1 and f.statut = 'livre'
+            group by c.id, c.societe order by c.societe"#,
+        lot_id
+    )
+    .fetch_all(ex)
+    .await?)
 }
 
 pub struct DonneesLot<'a> {
