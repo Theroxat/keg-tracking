@@ -9,7 +9,7 @@ The project is written in French: domain identifiers, code comments, documentati
 Everything builds in a container, so no Rust toolchain is needed on the host. `./dev.sh` loads `.env`, mounts the repository in the `webqr/dev:latest` image and connects it to the development database.
 
 ```bash
-git clone https://github.com/Theroxat/keg-tracking.git && cd WebQr_brasserie
+git clone https://github.com/Theroxat/keg-tracking.git && cd keg-tracking
 cp .env.exemple .env   # fill every password
 docker build -f docker/Dockerfile.dev -t webqr/dev:latest .
 docker network create webqr_dev
