@@ -77,6 +77,8 @@ fn tete(titre: &str) -> Markup {
         meta charset="utf-8";
         meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover";
         meta name="color-scheme" content="light dark";
+        meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)";
+        meta name="theme-color" content="#0f1214" media="(prefers-color-scheme: dark)";
         meta name="robots" content="noindex, nofollow";
         title { (titre) " — " (t!("app.nom")) }
         link rel="stylesheet" href={ "/statique/app.css?v=" (v) };
