@@ -4,13 +4,13 @@
 
 **QR-code traceability for returnable beer kegs, offered as SaaS to breweries.**
 
-[**Live demo**](https://theroxat.github.io/WebQr_brasserie/demo/) · [Project page](https://theroxat.github.io/WebQr_brasserie/) · [Releases](https://github.com/Theroxat/WebQr_brasserie/releases) · [Changelog](CHANGELOG.md) · [User guide (FR)](docs/guide-utilisateur.md)
+[**Live demo**](https://theroxat.github.io/keg-tracking/demo/) · [Project page](https://theroxat.github.io/keg-tracking/) · [Releases](https://github.com/Theroxat/keg-tracking/releases) · [Changelog](CHANGELOG.md) · [User guide (FR)](docs/guide-utilisateur.md)
 
-[![CI](https://img.shields.io/github/actions/workflow/status/Theroxat/WebQr_brasserie/integration.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/Theroxat/WebQr_brasserie/actions/workflows/integration.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/Theroxat/keg-tracking/integration.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/Theroxat/keg-tracking/actions/workflows/integration.yml)
 ![Rust 1.85+](https://img.shields.io/badge/rust-1.85%2B-dea584?logo=rust&logoColor=white)
 ![PostgreSQL 17](https://img.shields.io/badge/postgresql-17-336791?logo=postgresql&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-62%20passing-2ea44f)
-[![Release](https://img.shields.io/github/v/release/Theroxat/WebQr_brasserie)](https://github.com/Theroxat/WebQr_brasserie/releases)
+[![Release](https://img.shields.io/github/v/release/Theroxat/keg-tracking)](https://github.com/Theroxat/keg-tracking/releases)
 ![Languages](https://img.shields.io/badge/languages-FR%20%7C%20EN-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 

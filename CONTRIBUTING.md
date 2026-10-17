@@ -1,6 +1,6 @@
 # Contributing
 
-Issues and pull requests are welcome on [GitHub](https://github.com/Theroxat/WebQr_brasserie). For an architecture overview and the rules the code relies on, read [CLAUDE.md](CLAUDE.md) and the Architecture section of the [README](README.md).
+Issues and pull requests are welcome on [GitHub](https://github.com/Theroxat/keg-tracking). For an architecture overview and the rules the code relies on, read [CLAUDE.md](CLAUDE.md) and the Architecture section of the [README](README.md).
 
 The project is written in French: domain identifiers, code comments, documentation and **commit messages** stay in French. Only infrastructure (Docker, CI) and third-party names are in English. GitHub-facing files (README, issues, pull requests) are in English.
 
@@ -9,7 +9,7 @@ The project is written in French: domain identifiers, code comments, documentati
 Everything builds in a container, so no Rust toolchain is needed on the host. `./dev.sh` loads `.env`, mounts the repository in the `webqr/dev:latest` image and connects it to the development database.
 
 ```bash
-git clone https://github.com/Theroxat/WebQr_brasserie.git && cd WebQr_brasserie
+git clone https://github.com/Theroxat/keg-tracking.git && cd WebQr_brasserie
 cp .env.exemple .env   # fill every password
 docker build -f docker/Dockerfile.dev -t webqr/dev:latest .
 docker network create webqr_dev
