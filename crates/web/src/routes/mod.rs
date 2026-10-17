@@ -23,6 +23,13 @@ use domaine::Role;
 use crate::gabarits::socle::Avis;
 use crate::{middleware as inter, Etat};
 
+/// Identifiant optionnel d'un formulaire : vide ou invalide donne `None`.
+pub(crate) fn uuid_opt(v: &Option<String>) -> Option<uuid::Uuid> {
+    v.as_deref()
+        .filter(|s| !s.trim().is_empty())
+        .and_then(|s| uuid::Uuid::parse_str(s).ok())
+}
+
 /// Adresse du client et avis en attente, extraits ensemble parce que toute
 /// page en a besoin.
 pub struct Contexte {

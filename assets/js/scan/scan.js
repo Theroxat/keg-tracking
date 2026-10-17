@@ -161,7 +161,7 @@
 
   let tampon = '';
   let horodatages = [];
-  let debutSaisie = 0;
+  let derniereTouche = 0;  // heure de la dernière touche retenue
 
   function mediane(xs) {
     if (!xs.length) return Infinity;
@@ -187,8 +187,8 @@
     if (dansUnChamp) return;
 
     const maintenant = performance.now();
-    if (maintenant - debutSaisie > DELAI_MAX_SAISIE) {
-      tampon = ''; horodatages = []; debutSaisie = maintenant;
+    if (maintenant - derniereTouche > DELAI_MAX_SAISIE) {
+      tampon = ''; horodatages = []; derniereTouche = maintenant;
     }
 
     if (e.key === 'Enter') {
@@ -204,7 +204,7 @@
     if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
       tampon += e.key;
       horodatages.push(maintenant);
-      debutSaisie = maintenant;
+      derniereTouche = maintenant;
     }
   }
 
@@ -382,9 +382,7 @@
       if (maintenant - dernierDecodage < 120) return; // ~8 lectures/seconde
       dernierDecodage = maintenant;
       try {
-        const valeur = detecteurNatif
-          ? await decodeur(elVideo)
-          : await decodeur(elVideo);
+        const valeur = await decodeur(elVideo);
         if (valeur) envoyer(valeur);
       } catch (_) { /* une image ratée n'est pas un incident */ }
     };
