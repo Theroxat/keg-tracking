@@ -206,19 +206,19 @@ pub async fn accueil(State(etat): State<Etat>, Editeur(e): Editeur) -> Result<Re
     let corps = html! {
         div class="cartes" style="margin-bottom:14px" {
             div class="tuile" { span class="tuile__valeur num" { (systeme.locataires_actifs) }
-                                span class="tuile__nom" { "Brasseries actives" } }
+                                span class="tuile__nom" { (t!("editeur.brasseries_actives")) } }
             div class="tuile" { span class="tuile__valeur num" { (systeme.utilisateurs) }
                                 span class="tuile__nom" { (t!("util.titre")) } }
             div class="tuile" { span class="tuile__valeur num" { (systeme.futs) }
-                                span class="tuile__nom" { "Fûts suivis" } }
+                                span class="tuile__nom" { (t!("editeur.futs_suivis")) } }
             div class="tuile" { span class="tuile__valeur num" { (systeme.evenements) }
-                                span class="tuile__nom" { "Événements" } }
+                                span class="tuile__nom" { (t!("editeur.evenements")) } }
         }
         div class="tableau-cadre" {
             table class="tableau" {
                 thead { tr {
-                    th { (t!("champ.nom")) } th { "Identifiant" } th { (t!("etiq.prefixe")) }
-                    th { (t!("champ.statut")) } th { "Créée" } th {}
+                    th { (t!("champ.nom")) } th { (t!("editeur.identifiant")) } th { (t!("etiq.prefixe")) }
+                    th { (t!("champ.statut")) } th { (t!("editeur.creee_le")) } th {}
                 } }
                 tbody {
                     @for l in &locataires {
@@ -260,14 +260,14 @@ pub async fn accueil(State(etat): State<Etat>, Editeur(e): Editeur) -> Result<Re
                     (csrf(&e.jeton_csrf))
                     div class="grille" {
                         (c::Champ::texte("nom", t!("champ.nom"), "").requis().rendre())
-                        (c::Champ::texte("slug", "Identifiant court", "")
-                            .requis().aide("minuscules, chiffres et tirets").rendre())
+                        (c::Champ::texte("slug", t!("editeur.identifiant_court"), "")
+                            .requis().aide(t!("editeur.identifiant_court_aide")).rendre())
                         (c::Champ::texte("prefixe_qr", t!("etiq.prefixe"), "")
-                            .requis().aide("majuscules, unique sur l'installation").rendre())
+                            .requis().aide(t!("editeur.prefixe_aide")).rendre())
                         (c::Champ::texte("admin_email", t!("champ.email"), "")
                             .de_type("email").requis().rendre())
                         (c::Champ::texte("admin_prenom", t!("champ.prenom"), "").rendre())
-                        (c::Champ::texte("admin_nom", t!("champ.nom"), "Administrateur").requis().rendre())
+                        (c::Champ::texte("admin_nom", t!("champ.nom"), t!("role.administrateur")).requis().rendre())
                     }
                     p class="champ__aide" { (t!("util.mot_de_passe_temporaire_note")) }
                     button class="bouton bouton--vif" { (t!("action.creer")) }
@@ -534,7 +534,7 @@ pub async fn journal(State(etat): State<Etat>, Editeur(e): Editeur) -> Result<Re
             table class="tableau" {
                 thead { tr {
                     th { (t!("journal.quand")) } th { (t!("journal.qui")) }
-                    th { (t!("journal.action")) } th { "Brasserie" } th { "Détails" }
+                    th { (t!("journal.action")) } th { (t!("editeur.brasserie")) } th { (t!("journal.details")) }
                 } }
                 tbody {
                     @for x in &entrees {

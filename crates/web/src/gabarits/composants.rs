@@ -24,7 +24,7 @@ pub fn date(d: DateTime<Utc>, tz: &str) -> String {
 }
 
 pub fn jour(d: NaiveDate) -> String {
-    d.format("%d/%m/%Y").to_string()
+    d.format(t!("temps.date")).to_string()
 }
 
 /// « il y a 3 j » — plus lisible qu'une date absolue pour de l'activité.

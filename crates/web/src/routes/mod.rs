@@ -111,6 +111,7 @@ pub const INVENTAIRE: &[(&str, &str, Role)] = &[
     ("POST", "/compte/mot-de-passe", Role::Lecture),
     ("POST", "/compte/pin", Role::Lecture),
     ("POST", "/compte/sessions/revoquer", Role::Lecture),
+    ("POST", "/compte/langue", Role::Lecture),
     ("GET", "/parc", Role::Lecture),
     ("GET", "/recherche", Role::Lecture),
     ("GET", "/parc/export", Role::Lecture),
@@ -200,7 +201,10 @@ pub fn routeur(etat: Etat) -> Router {
             "/verrouillage",
             get(auth::afficher_verrouillage).post(auth::traiter_pin),
         )
-        .route("/deconnexion", post(auth::deconnexion));
+        .route("/deconnexion", post(auth::deconnexion))
+        // Choix de langue sans session (connexion, verrouillage, erreurs) :
+        // un lien GET qui ne fait que poser un cookie et revenir.
+        .route("/langue/{code}", get(auth::choisir_langue));
 
     let lecture = Router::new()
         .route("/", get(tableau::afficher))
@@ -208,6 +212,7 @@ pub fn routeur(etat: Etat) -> Router {
         .route("/compte/mot-de-passe", post(auth::changer_mot_de_passe))
         .route("/compte/pin", post(auth::definir_pin))
         .route("/compte/sessions/revoquer", post(auth::revoquer_session))
+        .route("/compte/langue", post(auth::enregistrer_langue))
         .route("/parc", get(parc::afficher))
         .route("/recherche", get(recherche::afficher))
         .route("/parc/export", get(parc::exporter))
@@ -352,6 +357,7 @@ pub fn routeur(etat: Etat) -> Router {
         .merge(technique)
         .fallback(sante::introuvable)
         .layer(from_fn_with_state(etat.clone(), inter::csrf))
+        .layer(from_fn(inter::langue))
         .layer(from_fn_with_state(etat.clone(), inter::session_courante))
         .layer(from_fn(inter::en_tetes_securite))
         .layer(tower_http::compression::CompressionLayer::new())

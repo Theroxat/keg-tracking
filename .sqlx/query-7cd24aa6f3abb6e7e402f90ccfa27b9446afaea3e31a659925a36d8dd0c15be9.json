@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update utilisateur set langue = $2, modifie_le = now() where id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7cd24aa6f3abb6e7e402f90ccfa27b9446afaea3e31a659925a36d8dd0c15be9"
+}

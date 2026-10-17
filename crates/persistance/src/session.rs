@@ -42,6 +42,8 @@ pub struct ContexteSession {
     pub fuseau_horaire: String,
     /// Session ouverte par l'éditeur en assistance : bandeau permanent.
     pub usurpee_par: Option<Uuid>,
+    /// Langue d'interface préférée (code ISO 639-1).
+    pub langue: String,
 }
 
 impl ContexteSession {
@@ -173,7 +175,7 @@ pub async fn resoudre(pool: &PgPool, jeton: &str) -> Resultat<Option<ContexteSes
                   s.verrouillee, (u.pin_hash is not null) as "a_un_pin!",
                   s.jeton_csrf, s.derniere_activite_le,
                   l.nom as locataire_nom, l.etat as "locataire_etat: EtatLocataire",
-                  l.fuseau_horaire, s.usurpee_par
+                  l.fuseau_horaire, s.usurpee_par, u.langue
              from session s
              join utilisateur u on u.id = s.utilisateur_id
              join locataire  l on l.id = s.tenant_id

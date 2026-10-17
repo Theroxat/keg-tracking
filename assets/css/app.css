@@ -725,3 +725,8 @@ select.fiche__resume { width: 100%; }
 /* Résultats de recherche : liste sobre, cibles tactiles confortables. */
 .liste-simple { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .liste-simple a { display: inline-block; padding: 8px 0; }
+
+/* ------------------------------------------------------------ langue */
+.selecteur-langue { margin-top: 16px; text-align: center; color: var(--encre-3); }
+.selecteur-langue a { color: inherit; }
+.selecteur-langue b { color: var(--encre); font-weight: 600; }

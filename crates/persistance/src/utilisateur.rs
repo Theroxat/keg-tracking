@@ -126,6 +126,19 @@ pub async fn definir_pin<'e, E: PgExecutor<'e>>(
     Ok(())
 }
 
+/// Langue d'interface préférée (code ISO 639-1 ; la base n'accepte que
+/// les langues livrées).
+pub async fn definir_langue<'e, E: PgExecutor<'e>>(ex: E, id: Uuid, langue: &str) -> Resultat<()> {
+    sqlx::query!(
+        "update utilisateur set langue = $2, modifie_le = now() where id = $1",
+        id,
+        langue
+    )
+    .execute(ex)
+    .await?;
+    Ok(())
+}
+
 /// Nombre d'administrateurs actifs : une brasserie doit toujours en garder un.
 pub async fn compter_administrateurs_actifs<'e, E: PgExecutor<'e>>(ex: E) -> Resultat<i64> {
     Ok(sqlx::query_scalar!(

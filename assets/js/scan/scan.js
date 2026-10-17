@@ -197,7 +197,7 @@
         setTimeout(() => { window.location.href = rep.rediriger; }, 320);
       }
     }).catch(() => {
-      montrer('echec', t('libelleErreurReseau') || 'Erreur réseau', '');
+      montrer('echec', t('libelleErreurReseau'), '');
     }));
   }
 

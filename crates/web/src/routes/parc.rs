@@ -421,7 +421,7 @@ pub async fn exporter(
     if r.format == "xlsx" {
         let mut classeur = rust_xlsxwriter::Workbook::new();
         let feuille = classeur.add_worksheet();
-        feuille.set_name("Parc").ok();
+        feuille.set_name(t!("nav.parc")).ok();
         let gras = rust_xlsxwriter::Format::new().set_bold();
         for (i, e) in entetes.iter().enumerate() {
             feuille

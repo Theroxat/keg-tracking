@@ -48,14 +48,14 @@ pub async fn liste(
             div class="tableau-cadre" {
                 table class="tableau tableau--cartes" {
                     thead { tr {
-                        th { (t!("champ.numero")) } th { "Type" } th { (t!("champ.statut")) }
-                        th { "Fûts" } th { (t!("champ.client")) } th { "Créé" } th {}
+                        th { (t!("champ.numero")) } th { (t!("doc.type")) } th { (t!("champ.statut")) }
+                        th { (t!("doc.futs")) } th { (t!("champ.client")) } th { (t!("doc.cree")) } th {}
                     } }
                     tbody {
                         @for d in &docs {
                             tr {
                                 td class="cel-titre mono" style="font-weight:600" { (d.reference) }
-                                td data-libelle="Type" { (traduire(d.type_document.cle_i18n())) }
+                                td data-libelle=(t!("doc.type")) { (traduire(d.type_document.cle_i18n())) }
                                 td class="cel-marque" {
                                     @match d.etat {
                                         EtatDocument::Brouillon => (c::badge("alerte", traduire(d.etat.cle_i18n()))),
@@ -63,9 +63,9 @@ pub async fn liste(
                                         EtatDocument::Abandonne => (c::badge("neutre", traduire(d.etat.cle_i18n()))),
                                     }
                                 }
-                                td class="num" data-libelle="Fûts" { (d.lignes) }
+                                td class="num" data-libelle=(t!("doc.futs")) { (d.lignes) }
                                 td class="petit" data-libelle=(t!("champ.client")) { (c::texte_ou_tiret(d.client.as_ref())) }
-                                td class="petit discret num" data-libelle="Créé" { (c::date_heure(d.cree_le, &tz)) }
+                                td class="petit discret num" data-libelle=(t!("doc.cree")) { (c::date_heure(d.cree_le, &tz)) }
                                 td class="cel-action serre" {
                                     @if d.etat == EtatDocument::Brouillon {
                                         a class="bouton bouton--petit bouton--vif"
@@ -1031,7 +1031,7 @@ pub async fn fiche(
         div class="duo duo--etroit" {
             section class="carte" {
                 div class="carte__tete" {
-                    h2 { (lignes.len()) " fûts" }
+                    h2 { (t!("tdb.futs", n = lignes.len())) }
                     @match doc.etat {
                         EtatDocument::Valide => (c::badge("ok", traduire(doc.etat.cle_i18n()))),
                         EtatDocument::Brouillon => (c::badge("alerte", traduire(doc.etat.cle_i18n()))),
@@ -1045,10 +1045,10 @@ pub async fn fiche(
             div class="duo__col" {
                 (resume_configuration(&doc))
                 div class="carte" { div class="carte__corps" style="font-size:13.5px;display:flex;flex-direction:column;gap:5px" {
-                    div { span class="minus" { "Créé" } " " (c::date_heure(doc.cree_le, &tz))
+                    div { span class="minus" { (t!("doc.cree")) } " " (c::date_heure(doc.cree_le, &tz))
                           @if let Some(q) = &doc.cree_par_nom { span class="discret" { " — " (q) } } }
                     @if let Some(v) = doc.valide_le {
-                        div { span class="minus" { "Validé" } " " (c::date_heure(v, &tz))
+                        div { span class="minus" { (t!("doc.valide_le")) } " " (c::date_heure(v, &tz))
                               @if let Some(q) = &doc.valide_par_nom { span class="discret" { " — " (q) } } }
                     }
                 } }
@@ -1115,7 +1115,7 @@ pub async fn bon_de_livraison(
                     div { (doc.adresse.clone().unwrap_or_default()) }
                 }
                 div {
-                    div class="minus" { "Contenu" }
+                    div class="minus" { (t!("doc.contenu")) }
                     @if let Some(b) = &doc.biere { div { (b) } }
                     @if let Some(l) = &doc.lot { div { (t!("champ.lot")) " " (l) } }
                 }
@@ -1137,7 +1137,7 @@ pub async fn bon_de_livraison(
                     }
                 }
                 tfoot { tr {
-                    td colspan="2" { b { (lignes.len()) " fûts" } }
+                    td colspan="2" { b { (t!("tdb.futs", n = lignes.len())) } }
                     td colspan="3" { b { (total_litres) " L" } }
                 } }
             }

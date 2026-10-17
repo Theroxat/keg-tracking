@@ -1,7 +1,7 @@
 use maud::{html, Markup, DOCTYPE};
 use persistance::session::ContexteSession;
 
-use crate::i18n::traduire;
+use crate::i18n::{langue_courante, traduire, Langue};
 use crate::statique;
 use crate::t;
 
@@ -90,9 +90,31 @@ fn tete(titre: &str) -> Markup {
 pub fn page_nue(titre: &str, corps: Markup) -> Markup {
     html! {
         (DOCTYPE)
-        html lang="fr" {
+        html lang=(langue_courante().code()) {
             head { (tete(titre)) }
             body { (corps) }
+        }
+    }
+}
+
+/// Petit sélecteur « Français | English » pour les pages sans session :
+/// de simples liens GET qui posent le cookie de langue puis reviennent à
+/// `retour`. Chaque libellé est dans sa propre langue.
+pub fn selecteur_langue(retour: &str) -> Markup {
+    let courante = langue_courante();
+    html! {
+        nav class="selecteur-langue petit" aria-label=(t!("langue.choisir")) {
+            @for (i, l) in Langue::TOUS.iter().enumerate() {
+                @if i > 0 { span aria-hidden="true" { " | " } }
+                @if *l == courante {
+                    b lang=(l.code()) aria-current="true" { (l.libelle_natif()) }
+                } @else {
+                    a lang=(l.code()) hreflang=(l.code())
+                      href={ "/langue/" (l.code()) "?retour=" (urlencoding::encode(retour)) } {
+                        (l.libelle_natif())
+                    }
+                }
+            }
         }
     }
 }
@@ -268,7 +290,7 @@ pub fn page(cadre: Cadre<'_>, corps: Markup) -> Markup {
     };
     html! {
         (DOCTYPE)
-        html lang="fr" {
+        html lang=(langue_courante().code()) {
             head { (tete(&cadre.titre)) }
             body hx-headers=(format!(r#"{{"X-CSRF":"{}"}}"#, cadre.session.jeton_csrf)) {
                 @if let Some(brasserie) = &cadre.assistance {
