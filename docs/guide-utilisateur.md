@@ -1,5 +1,7 @@
 # Guide d'utilisation
 
+Keg Tracking suit des fûts consignés réutilisables par QR code : chaque fût porte une étiquette et chaque opération de terrain est un scan. Une brasserie en est l'exemple typique, mais le suivi n'a rien de propre à la bière.
+
 ## Les trois rôles
 
 | Rôle | Ce qu'il peut faire |
