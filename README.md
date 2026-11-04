@@ -2,9 +2,9 @@
 
 # Keg Tracking
 
-**QR-code traceability for returnable beer kegs, offered as SaaS to breweries.**
+**QR-code tracking for returnable kegs.**
 
-[**Live demo**](https://selfhostr.github.io/kegtrack/demo/) · [Project page](https://selfhostr.github.io/kegtrack/) · [Releases](https://github.com/selfhostr/kegtrack/releases) · [Changelog](CHANGELOG.md) · [User guide (FR)](docs/guide-utilisateur.md)
+[**Live demo**](https://selfhostr.github.io/kegtrack/demo/) · [Project page](https://kegtrack.selfhostr.io) · [Documentation](https://kegtrack.selfhostr.io/docs/) · [Releases](https://github.com/selfhostr/kegtrack/releases) · [Changelog](CHANGELOG.md) · [User guide (FR)](docs/guide-utilisateur.md)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/selfhostr/kegtrack/integration.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/selfhostr/kegtrack/actions/workflows/integration.yml)
 ![Rust 1.85+](https://img.shields.io/badge/rust-1.85%2B-dea584?logo=rust&logoColor=white)
@@ -21,8 +21,10 @@
   <img src="docs/images/hero-light.png" alt="The keg fleet on desktop, with the scan screen on a phone" width="100%">
 </picture>
 
-> **A self-hosted, multi-tenant SaaS for breweries.** Every keg carries a QR
-> label and every field operation is a scan. The interface is available in French
+> **A self-hosted, multi-tenant app to track returnable kegs.** Every keg carries
+> a QR label and every field operation is a scan. A brewery is the typical user,
+> but nothing is specific to beer: any organisation that lends out deposit kegs
+> can use it. The interface is available in French
 > and English. The phone camera needs HTTPS: browsers block it on plain `http://`
 > addresses (see the warning in [Quick start](#quick-start)).
 
