@@ -4,11 +4,6 @@
 
 <h3>A self-hosted, multi-tenant app to track returnable kegs with QR codes.</h3>
 
-<a href="https://kegtrack.selfhostr.io"><img src="https://raw.githubusercontent.com/selfhostr/.github/main/profile/assets/btn-site.svg" alt="Website" height="40"></a>
-<a href="https://kegtrack.selfhostr.io/docs/"><img src="https://raw.githubusercontent.com/selfhostr/.github/main/profile/assets/btn-docs.svg" alt="Documentation" height="40"></a>
-<a href="https://kegtrack.selfhostr.io/demo/"><img src="https://raw.githubusercontent.com/selfhostr/.github/main/profile/assets/btn-demo.svg" alt="Live demo" height="40"></a>
-<a href="https://github.com/selfhostr/kegtrack/releases"><img src="https://raw.githubusercontent.com/selfhostr/.github/main/profile/assets/btn-releases.svg" alt="Releases" height="40"></a>
-
 <br><br>
 
 [![CI](https://img.shields.io/github/actions/workflow/status/selfhostr/kegtrack/integration.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/selfhostr/kegtrack/actions/workflows/integration.yml)
@@ -31,6 +26,8 @@
 - **Free, for good.** MIT licence, no paid edition.
 
 ## Quick start
+
+Try the [live demo](https://kegtrack.selfhostr.io/demo/) first.
 
 You need Docker with the `compose` plugin. No Rust, Node or PostgreSQL on the machine.
 
