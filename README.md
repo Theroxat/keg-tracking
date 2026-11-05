@@ -13,6 +13,7 @@
 [![Release](https://img.shields.io/github/v/release/selfhostr/kegtrack)](https://github.com/selfhostr/kegtrack/releases)
 ![Languages](https://img.shields.io/badge/languages-FR%20%7C%20EN-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/selfhostr/kegtrack/badge)](https://scorecard.dev/viewer/?uri=github.com/selfhostr/kegtrack)
 
 </div>
 
