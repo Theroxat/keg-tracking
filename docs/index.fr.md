@@ -4,8 +4,6 @@
 
 kegtrack suit des fûts consignés réutilisables par QR code. Chaque fût porte une étiquette et chaque opération de terrain est un scan. L'application est auto-hébergée, multi-locataire, et tourne en quatre services Docker. Une brasserie en est l'exemple typique, mais rien n'est propre à la bière.
 
-![Le parc de fûts sur ordinateur, avec l'écran de scan sur un téléphone](images/hero-light.png)
-
 À tout moment, elle répond à ces questions : où est ce fût et depuis combien de temps, que contient-il (bière, lot, cuve), combien de fûts propres sont disponibles, lesquels ne sont pas revenus après N jours, et qui a reçu le lot 2026-017. L'historique des opérations est la source de vérité, pas la fiche du fût.
 
 ## Pour commencer

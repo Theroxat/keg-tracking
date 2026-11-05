@@ -4,8 +4,6 @@ By the end of this page you know what kegtrack does and where to go next.
 
 kegtrack tracks returnable kegs with QR codes. Every keg carries a label and every field operation is a scan. It is self-hosted, multi-tenant, and runs as four Docker services. A brewery is the typical user, but nothing is specific to beer.
 
-![The keg fleet on desktop, with the scan screen on a phone](images/hero-light.png)
-
 At any moment it answers: where is this keg and for how long, what is in it (beer, lot, tank), how many clean kegs are available, which ones have not come back after N days, and who received lot 2026-017. The history of operations is the source of truth, not the keg record.
 
 ## Start here
