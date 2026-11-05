@@ -70,7 +70,7 @@ for (const [i, svg] of svgs.entries()) {
   const ok = lu === attendu;
   if (!ok) echecs++;
   console.log(
-    `  ${ok ? '✓' : '✗'} ${attendu ?? '?'}` +
+    `  ${ok ? 'OK' : 'ECHEC'} ${attendu ?? '?'}` +
       (ok ? `   (${resultats[0].format}, correction ${resultats[0].eccLevel})`
           : `   lu : ${lu ?? 'RIEN'}`)
   );
