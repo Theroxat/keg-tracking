@@ -11,7 +11,7 @@ use crate::{Erreur, Resultat};
 /// Argon2id aux paramètres recommandés par l'OWASP, **poivré** avec un secret
 /// d'application : une base volée ne suffit pas à attaquer les mots de passe
 /// hors ligne. Changer le secret invalide tous les mots de passe — c'est
-/// documenté dans `docs/exploitation.md`.
+/// documenté dans `docs/operations.md`.
 #[derive(Clone)]
 pub struct Hacheur {
     secret: Vec<u8>,
