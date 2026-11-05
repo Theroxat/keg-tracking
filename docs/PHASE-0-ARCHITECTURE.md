@@ -978,20 +978,20 @@ démonstration (3 000 fûts, 190 155 événements) :
 
 | Critère d'acceptation | Résultat |
 |---|---|
-| `docker compose up` sert l'application sans étape manuelle | ✅ port 6666, quatre services `healthy` |
-| Une commande crée une brasserie et son administrateur | ✅ mot de passe fort imposé ou généré |
-| **Le test d'isolation multi-locataire passe** | ✅ 6 tests, tables énumérées depuis le catalogue |
-| Accès refusé côté serveur sans le rôle requis | ✅ inventaire complet × 3 rôles |
-| Chaîne d'intégration : compilation, clippy, format, tests | ✅ 53 tests, clippy `-D warnings` |
-| 3 000 fûts se chargent et se filtrent sans latence | ✅ 13–25 ms par page |
-| Transitions invalides refusées avec un message clair | ✅ matrice 7 × 7 testée exhaustivement |
-| La reconstruction redonne un état identique | ✅ 0 divergence sur 190 155 événements |
-| L'export reflète exactement les filtres actifs | ✅ 3 000 lignes brutes, 564 filtrées sur « Propre » |
-| Un client détenteur de fûts ne peut pas être supprimé | ✅ vérifié côté serveur |
-| Une adresse d'un autre client est rejetée même forgée | ✅ refusée par l'application **et** par la base |
-| Une capture de 30 fûts survit à un rechargement | ✅ et à un redémarrage du processus |
-| Validation atomique : une ligne en erreur n'écrit rien | ✅ testé avec un conflit injecté sur la 17ᵉ ligne |
-| Une restauration de sauvegarde est effectuée et vérifiée | ✅ 3 000 fûts / 190 155 événements restaurés, 0 erreur |
+| `docker compose up` sert l'application sans étape manuelle | Done: port 6666, quatre services `healthy` |
+| Une commande crée une brasserie et son administrateur | Done: mot de passe fort imposé ou généré |
+| **Le test d'isolation multi-locataire passe** | Done: 6 tests, tables énumérées depuis le catalogue |
+| Accès refusé côté serveur sans le rôle requis | Done: inventaire complet × 3 rôles |
+| Chaîne d'intégration : compilation, clippy, format, tests | Done: 53 tests, clippy `-D warnings` |
+| 3 000 fûts se chargent et se filtrent sans latence | Done: 13–25 ms par page |
+| Transitions invalides refusées avec un message clair | Done: matrice 7 × 7 testée exhaustivement |
+| La reconstruction redonne un état identique | Done: 0 divergence sur 190 155 événements |
+| L'export reflète exactement les filtres actifs | Done: 3 000 lignes brutes, 564 filtrées sur « Propre » |
+| Un client détenteur de fûts ne peut pas être supprimé | Done: vérifié côté serveur |
+| Une adresse d'un autre client est rejetée même forgée | Done: refusée par l'application **et** par la base |
+| Une capture de 30 fûts survit à un rechargement | Done: et à un redémarrage du processus |
+| Validation atomique : une ligne en erreur n'écrit rien | Done: testé avec un conflit injecté sur la 17ᵉ ligne |
+| Une restauration de sauvegarde est effectuée et vérifiée | Done: 3 000 fûts / 190 155 événements restaurés, 0 erreur |
 
 Reste à faire à la main, parce que cela demande du matériel réel :
 
