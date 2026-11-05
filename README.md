@@ -4,20 +4,13 @@
 
 <h3>A self-hosted, multi-tenant app to track returnable kegs with QR codes.</h3>
 
-<br><br>
-
 [![CI](https://img.shields.io/github/actions/workflow/status/selfhostr/kegtrack/integration.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/selfhostr/kegtrack/actions/workflows/integration.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/selfhostr/kegtrack/badge)](https://scorecard.dev/viewer/?uri=github.com/selfhostr/kegtrack)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-<br><br>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.png">
-  <img src="docs/images/hero-light.png" alt="The keg fleet on desktop, with the scan screen on a phone" width="100%">
-</picture>
-
 </div>
+
+Screenshots: [screenshots/](screenshots/)
 
 ## Overview
 
