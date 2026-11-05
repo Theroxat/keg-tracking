@@ -72,7 +72,7 @@ pub async fn liste(
                         @for cl in &clients {
                             tr {
                                 td class="cel-titre" {
-                                    a href=(format!("/clients/{}", cl.id)) style="font-weight:600" { (cl.societe) }
+                                    a class="fort" href=(format!("/clients/{}", cl.id)) { (cl.societe) }
                                     @if cl.archive { " " (c::badge("neutre", t!("app.archive"))) }
                                 }
                                 td class="petit" data-libelle=(t!("champ.contact")) {
@@ -82,7 +82,7 @@ pub async fn liste(
                                 td class="num petit discret" data-libelle=(t!("client.adresses")) { (cl.adresses) }
                                 td class="cel-marque num" {
                                     @if cl.futs_detenus > 0 {
-                                        a href=(format!("/parc?client={}&statut=livre", cl.id)) {
+                                        a class="lien-badge" href=(format!("/parc?client={}&statut=livre", cl.id)) {
                                             (c::badge("livre", &cl.futs_detenus.to_string()))
                                         }
                                     } @else { span class="discret" { "0" } }
@@ -277,7 +277,7 @@ pub async fn fiche(
                         @if futs.is_empty() {
                             div class="vide" { (t!("client.aucun_fut")) }
                         } @else {
-                            div class="tableau-cadre" style="border:0" {
+                            div class="tableau-cadre" {
                                 table class="tableau tableau--cartes" {
                                     thead { tr {
                                         th { (t!("champ.code_qr")) } th { (t!("champ.lot")) }

@@ -112,7 +112,7 @@ pub async fn fiche(
                                     summary class="bouton bouton--grave bouton--large fiche__resume" {
                                         (t!("action.forcer"))
                                     }
-                                    p class="petit discret" style="margin-top:12px" { (t!("fut.forcage_avertissement")) }
+                                    p class="petit discret fiche-note" { (t!("fut.forcage_avertissement")) }
                                     form method="post" action=(format!("/futs/{}/transition", f.id)) {
                                         (csrf(&s.jeton_csrf))
                                         input type="hidden" name="forcer" value="1";
@@ -202,12 +202,12 @@ fn carte_details(
         details class="fiche-details" {
             summary class="fiche__resume" { (t!("fut.details")) }
             div class="carte__corps" {
-            dl style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:12px;margin:0" {
+            dl class="paires" {
                 (paire(t!("champ.contenance"), html! { (f.contenance_litres) " " (t!("unite.litres")) }))
                 (paire(t!("champ.depuis"), html! { (c::depuis(f.statut_depuis_le)) }))
                 (paire(t!("champ.biere"), html! {
                     @if let Some(b) = &f.biere {
-                        span style="display:inline-flex;align-items:center;gap:6px" {
+                        span class="ligne-icone" {
                             (c::pastille_biere(f.couleur_biere.as_ref())) (b) }
                     } @else { span class="discret" { "—" } }
                 }))
@@ -250,7 +250,7 @@ fn carte_details(
                 (paire(t!("champ.date_mise_en_service"), html! { span class="num" { (c::jour(f.date_mise_en_service)) } }))
             }
             @if !f.commentaire.is_empty() {
-                p class="petit" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bordure)" {
+                p class="petit fiche-commentaire" {
                     (f.commentaire)
                 }
             }
@@ -270,7 +270,7 @@ fn carte_autres_futs(
             details class="fiche-details fiche-voisins" open {
                 summary class="fiche__resume" { (t!("fut.autres_futs_client")) }
                 div class="carte__corps carte__corps--serre" {
-                    div class="tableau-cadre" style="border:0" {
+                    div class="tableau-cadre" {
                         table class="tableau tableau--cartes" { tbody {
                             @for v in voisins.iter().take(5) {
                                 tr {
@@ -281,7 +281,7 @@ fn carte_autres_futs(
                         } }
                     }
                     @if let (true, Some(cid)) = (voisins.len() > 5, client_id) {
-                        p class="carte__corps" style="margin:0" {
+                        p class="carte__corps" {
                             a href=(format!("/parc?client={cid}")) {
                                 (t!("fut.voir_futs_client", n = voisins.len()))
                             }
@@ -361,7 +361,7 @@ fn evenement(e: &persistance::evenement::EntreeChronologie, tz: &str) -> Markup 
 
 fn paire(libelle: &str, valeur: Markup) -> Markup {
     html! {
-        div { dt class="minus" { (libelle) } dd style="margin:2px 0 0;font-weight:520" { (valeur) } }
+        div { dt class="minus" { (libelle) } dd { (valeur) } }
     }
 }
 
@@ -475,7 +475,7 @@ fn action_transition(
                 details class="fiche-action" {
                     summary class=(classe_resume) { (libelle) }
                     form method="post" action=(format!("/futs/{}/transition", f.id))
-                         style="padding:10px 0 4px" {
+                         class="fiche-action__form" {
                         (csrf(&s.jeton_csrf))
                         input type="hidden" name="statut" value=(st.code());
                         (c::selection("type_biere_id", t!("champ.type_biere"), bieres, None, Some("—"), true))
@@ -489,7 +489,7 @@ fn action_transition(
                 details class="fiche-action" {
                     summary class=(classe_resume) { (libelle) }
                     form method="post" action=(format!("/futs/{}/transition", f.id))
-                         style="padding:10px 0 4px" {
+                         class="fiche-action__form" {
                         (csrf(&s.jeton_csrf))
                         input type="hidden" name="statut" value=(st.code());
                         div class="champ" {
@@ -513,7 +513,7 @@ fn action_transition(
                 details class="fiche-action" {
                     summary class=(classe_resume) { (libelle) }
                     form method="post" action=(format!("/futs/{}/transition", f.id))
-                         style="padding:10px 0 4px" {
+                         class="fiche-action__form" {
                         (csrf(&s.jeton_csrf))
                         input type="hidden" name="statut" value=(st.code());
                         (c::zone_texte("justification", t!("champ.justification"), "", None))
@@ -526,13 +526,15 @@ fn action_transition(
                      class="fiche-action" {
                     (csrf(&s.jeton_csrf))
                     input type="hidden" name="statut" value=(st.code());
-                    button class=(classe_bouton) { (libelle) }
+                    // Le réglage avant le bouton qui l'applique, jamais après.
                     @if st == Statut::Recu || st == Statut::Propre {
-                        select name="emplacement_id" class="fiche__resume" style="margin-top:6px" {
+                        select name="emplacement_id" class="fiche__resume"
+                               aria-label=(t!("champ.emplacement")) {
                             option value="" { (t!("champ.emplacement")) " — " (t!("app.aucun")) }
                             @for (v, n) in emplacements { option value=(v) { (n) } }
                         }
                     }
+                    button class=(classe_bouton) { (libelle) }
                 }
             },
         }
