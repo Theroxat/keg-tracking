@@ -76,8 +76,30 @@
     }
   });
 
+  // Échec d'un échange htmx : le message vient du serveur (data-erreur-echange
+  // sur <body>), et un toucher le referme.
+  var minuteurErreur = null;
+  function signalerEchec() {
+    var texte = document.body.dataset.erreurEchange;
+    if (!texte) return;
+    var el = document.getElementById("erreur-echange");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "erreur-echange";
+      el.className = "avis avis--grave toast";
+      el.setAttribute("role", "alert");
+      el.addEventListener("click", function () { el.remove(); });
+      document.body.appendChild(el);
+    }
+    el.textContent = texte;
+    clearTimeout(minuteurErreur);
+    minuteurErreur = setTimeout(function () { el.remove(); }, 8000);
+  }
+
   document.body.addEventListener("htmx:responseError", function (e) {
     var s = e.detail.xhr.status;
     if (s === 401 || s === 403) window.location = "/connexion";
+    else signalerEchec();
   });
+  document.body.addEventListener("htmx:sendError", signalerEchec);
 })();

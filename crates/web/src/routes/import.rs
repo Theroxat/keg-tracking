@@ -63,7 +63,7 @@ fn formulaire(
         div class="avis" { (t!("import.explication")) }
         p { a class="bouton bouton--petit" href="/administration/import/modele" { (t!("import.modele")) } }
         form method="post" action="/administration/import" enctype="multipart/form-data"
-             style="max-width:620px" {
+             class="form-moyen" {
             (csrf(&s.jeton_csrf))
             div class="champ" {
                 label for="champ-fichier" { (t!("import.fichier")) }
@@ -87,7 +87,7 @@ pub struct Rapport {
 
 fn rendu_rapport(r: &Rapport) -> maud::Markup {
     html! {
-        section class="carte" style="margin-top:16px" {
+        section class="carte marge-haut" {
             div class="carte__tete" {
                 h2 { (t!("import.lignes_lues", n = r.lignes_lues)) }
                 @if r.erreurs.is_empty() {
