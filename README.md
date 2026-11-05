@@ -317,3 +317,11 @@ Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Re
 ## License
 
 [MIT](LICENSE) © Theroxat
+
+## Support kegtrack
+
+kegtrack is free and has no company behind it. If it saves you time, you can support its development:
+
+- **Patreon** (recurring): [patreon.com/selfhostr](https://www.patreon.com/selfhostr)
+- **Bitcoin**: `bc1phcqfc46ev9ztpuxyh3fmz6aaktshnz8z4ve9jk7pxdcyu9ks37wqq2kjgd`
+- **Ethereum**: `0x67Cd93028943308B8c12782C9ad078D253278f40`
