@@ -335,6 +335,7 @@ pub fn routeur(etat: Etat) -> Router {
         .route("/statique/htmx.js", get(crate::statique::htmx))
         .route("/statique/scan.js", get(crate::statique::scan_js))
         .route("/statique/commun.js", get(crate::statique::commun_js))
+        .route("/statique/theme.js", get(crate::statique::theme_js))
         .route("/statique/pin.js", get(crate::statique::pin_js))
         .route("/statique/zxing-reader.js", get(crate::statique::zxing_js))
         .route(

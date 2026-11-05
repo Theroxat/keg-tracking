@@ -28,6 +28,11 @@ pub static CATALOGUE: &[(&str, &str)] = &[
 
     // ---------------------------------------------------------- navigation
     ("nav.tableau_de_bord", "Dashboard"),
+    ("nav.menu", "Menu"),
+    ("nav.principale", "Main navigation"),
+    ("nav.raccourcis", "Shortcuts"),
+    ("theme.vers_clair", "Switch to light theme"),
+    ("theme.vers_sombre", "Switch to dark theme"),
     // Short labels for the bottom bar: they must stay on one line and fit
     // inside the bar.
     ("nav.court.tableau_de_bord", "Home"),
