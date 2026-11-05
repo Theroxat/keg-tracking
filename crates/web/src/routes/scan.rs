@@ -67,7 +67,7 @@ pub fn ilot(
                   inputmode="none" aria-hidden="true" tabindex="-1";
 
             div class="viseur" {
-                video id="scan-video" playsinline muted autoplay {}
+                video id="scan-video" playsinline muted autoplay aria-hidden="true" {}
                 div class="viseur__cadre" {}
                 div id="scan-hors" class=(if camera { "viseur__hors" } else { "viseur__hors rien" }) {
                     p id="scan-hors-texte" { (t!("scan.camera_demarrage")) }
@@ -88,7 +88,7 @@ pub fn ilot(
             }
 
             span id="douchette-temoin" class="douchette-temoin rien" {
-                span class="pastille" style="background:var(--ok)" {}
+                span class="pastille" {}
                 (t!("scan.douchette_active"))
             }
 
@@ -98,7 +98,8 @@ pub fn ilot(
                 form id="scan-manuel" class="saisie-secours__form" {
                     input type="text" name="code_qr" placeholder=(t!("scan.saisie_placeholder"))
                           aria-label=(t!("scan.saisie_placeholder"))
-                          autocomplete="off" autocapitalize="characters" spellcheck="false";
+                          autocomplete="off" autocapitalize="characters" spellcheck="false"
+                          enterkeyhint="go";
                     button type="submit" class="bouton bouton--vif bouton--atelier" {
                         (t!("action.valider"))
                     }

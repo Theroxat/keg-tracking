@@ -376,7 +376,7 @@ pub async fn nouvelle(
                     }
                     fieldset {
                         legend { (t!("op.valeurs_a_appliquer")) }
-                        p class="champ__aide" style="margin-bottom:12px" { (t!("op.champs_vides")) }
+                        p class="champ__aide parcours__aide" { (t!("op.champs_vides")) }
                         (c::selection("statut_cible", t!("champ.statut"),
                             &Statut::TOUS.iter().map(|x| (x.code().to_string(), traduire(x.cle_i18n()).to_string())).collect::<Vec<_>>(),
                             statut_choisi, Some("—"), false))
@@ -650,7 +650,7 @@ fn resume_configuration(d: &persistance::document::Document) -> Markup {
     html! {
         div class="carte" {
             div class="carte__tete" { h2 { (t!("op.recapitulatif")) } }
-            div class="carte__corps" style="display:flex;flex-direction:column;gap:6px;font-size:13.5px" {
+            div class="carte__corps resume-reglages" {
                 @if let Some(st) = d.statut_cible {
                     div { span class="minus" { (t!("champ.statut")) } " " (c::badge_statut(st)) }
                 }
@@ -679,7 +679,7 @@ fn tableau_captures(
         @if lignes.is_empty() {
             div class="vide" { (t!("op.aucune_capture")) }
         } @else {
-            div class="tableau-cadre" style="border:0" {
+            div class="tableau-cadre tableau-cadre--nu" {
                 table class="tableau tableau--cartes tableau--captures" {
                     thead { tr {
                         th { "#" } th { (t!("champ.code_qr")) } th { (t!("op.etat_avant")) }
@@ -910,11 +910,11 @@ pub async fn recapitulatif(
 
     let corps = html! {
         (etapes(3))
-        div style="max-width:760px;display:flex;flex-direction:column;gap:12px" {
+        div class="parcours" {
             @if lignes.is_empty() {
                 div class="avis avis--alerte" { (t!("op.rien_a_valider")) }
             } @else {
-                div class="avis" style="font-size:17px" {
+                div class="avis avis--resume" {
                     b {
                         @if let Some(st) = doc.statut_cible {
                             (t!("op.validation_resume", n = lignes.len(), statut = traduire(st.cle_i18n())))
