@@ -24,7 +24,7 @@ pub async fn accueil(
     let tuile = |href: &str, titre: &str, detail: &str| {
         html! {
             a class="tuile" href=(href) {
-                span class="tuile__nom" style="font-size:15px;font-weight:620" { (titre) }
+                span class="tuile__nom tuile__titre" { (titre) }
                 span class="tuile__detail" { (detail) }
             }
         }
@@ -71,21 +71,21 @@ pub async fn referentiels(
                 div class="carte__corps" {
                     @for e in entrees {
                         form method="post" action=(format!("/administration/referentiels/{genre}/{}", e.id))
-                             style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap" {
+                             class="ref-ligne" {
                             (csrf(&jeton))
-                            input type="text" name="nom" value=(e.nom) required style="flex:1 1 140px";
-                            label class="coche" style="white-space:nowrap" {
+                            input type="text" name="nom" value=(e.nom) required aria-label=(t!("champ.nom"));
+                            label class="coche" {
                                 input type="checkbox" name="actif" value="1" checked[e.actif];
                                 span class="petit" { (t!("champ.actif")) }
                             }
-                            span class="petit discret" style="white-space:nowrap" { (t!("ref.en_usage", n = e.futs)) }
+                            span class="petit discret" { (t!("ref.en_usage", n = e.futs)) }
                             button class="bouton bouton--petit" { (t!("action.enregistrer")) }
                         }
                     }
                     form method="post" action=(format!("/administration/referentiels/{genre}"))
-                         style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--bordure)" {
+                         class="ref-ajout" {
                         (csrf(&jeton))
-                        input type="text" name="nom" placeholder=(t!("champ.nom")) required style="flex:1 1 140px";
+                        input type="text" name="nom" placeholder=(t!("champ.nom")) required aria-label=(t!("champ.nom"));
                         button class="bouton bouton--vif bouton--petit" { (t!("action.ajouter")) }
                     }
                 }
@@ -102,24 +102,23 @@ pub async fn referentiels(
                 div class="carte__corps" {
                     @for b in &bieres {
                         form method="post" action=(format!("/administration/referentiels/biere/{}", b.id))
-                             style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap" {
+                             class="ref-ligne" {
                             (csrf(&jeton))
-                            input type="color" name="couleur" value=(b.couleur)
-                                  style="width:52px;flex:none";
-                            input type="text" name="nom" value=(b.nom) required style="flex:1 1 130px";
-                            input type="number" name="ordre" value=(b.ordre) style="width:64px"
+                            input type="color" name="couleur" value=(b.couleur) aria-label=(t!("champ.couleur"));
+                            input type="text" name="nom" value=(b.nom) required aria-label=(t!("champ.nom"));
+                            input type="number" name="ordre" value=(b.ordre)
                                   aria-label=(t!("champ.ordre"));
                             label class="coche" { input type="checkbox" name="actif" value="1" checked[b.actif];
                                                   span class="petit" { (t!("champ.actif")) } }
-                            span class="petit discret" style="white-space:nowrap" { (t!("ref.en_usage", n = b.futs)) }
+                            span class="petit discret" { (t!("ref.en_usage", n = b.futs)) }
                             button class="bouton bouton--petit" { (t!("action.enregistrer")) }
                         }
                     }
                     form method="post" action="/administration/referentiels/biere"
-                         style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--bordure)" {
+                         class="ref-ajout" {
                         (csrf(&jeton))
-                        input type="color" name="couleur" value="#c08a3e" style="width:52px;flex:none";
-                        input type="text" name="nom" placeholder=(t!("champ.nom")) required style="flex:1 1 140px";
+                        input type="color" name="couleur" value="#c08a3e" aria-label=(t!("champ.couleur"));
+                        input type="text" name="nom" placeholder=(t!("champ.nom")) required aria-label=(t!("champ.nom"));
                         button class="bouton bouton--vif bouton--petit" { (t!("action.ajouter")) }
                     }
                 }
@@ -295,7 +294,7 @@ pub async fn utilisateurs(
                 }
             }
         }
-        section class="carte" style="margin-top:14px;max-width:640px" {
+        section class="carte marge-haut form-moyen" {
             div class="carte__tete" { h2 { (t!("util.nouveau")) } }
             div class="carte__corps" {
                 form method="post" action="/administration/utilisateurs" {
@@ -416,7 +415,7 @@ pub async fn fiche_utilisateur(
     let soi_meme = u.id == s.utilisateur_id;
 
     let corps = html! {
-        form method="post" action=(format!("/administration/utilisateurs/{id}")) style="max-width:600px"
+        form method="post" action=(format!("/administration/utilisateurs/{id}")) class="form-moyen"
               data-role-initial=(u.role.code()) data-actif-initial=[u.actif.then_some("1")]
               data-confirmer-modif=(t!("util.modifier_confirmation")) {
             (csrf(&s.jeton_csrf))
@@ -562,7 +561,7 @@ pub async fn parametres(
 
     let corps = html! {
         (c::retour_administration())
-        form method="post" action="/administration/parametres" style="max-width:640px" {
+        form method="post" action="/administration/parametres" class="form-moyen" {
             (csrf(&s.jeton_csrf))
             (c::Champ::texte("nom", t!("champ.nom"), &loc.nom).requis().rendre())
             (c::Champ::texte("prefixe_qr", t!("etiq.prefixe"), &loc.prefixe_qr)
@@ -582,7 +581,7 @@ pub async fn parametres(
             (c::Champ::texte("fuseau_horaire", t!("param.fuseau"), &loc.fuseau_horaire).requis().rendre())
             button class="bouton bouton--vif" { (t!("action.enregistrer")) }
         }
-        section class="carte" style="margin-top:16px;max-width:640px" {
+        section class="carte marge-haut form-moyen" {
             div class="carte__tete" { h2 { (t!("param.export_donnees")) } }
             div class="carte__corps" {
                 p class="petit discret" { (t!("param.export_donnees_aide")) }

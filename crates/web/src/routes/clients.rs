@@ -129,7 +129,7 @@ pub async fn formulaire_nouveau(
         return Err(ErreurWeb::Interdit);
     }
     let corps = html! {
-        form method="post" action="/clients" style="max-width:720px" {
+        form method="post" action="/clients" class="form-moyen" {
             (csrf(&s.jeton_csrf))
             fieldset {
                 legend { (t!("client.fiche")) }
@@ -306,7 +306,7 @@ pub async fn fiche(
                     div class="carte__corps" {
                         @for a in &adresses {
                             form method="post" action=(format!("/clients/{}/adresses/{}", id, a.id))
-                                 style="border-bottom:1px solid var(--bordure);padding-bottom:12px;margin-bottom:12px" {
+                                 class="adresse-ligne" {
                                 (csrf(&s.jeton_csrf))
                                 div class="grille" {
                                     (c::Champ::texte("libelle", t!("champ.libelle"), &a.libelle).rendre())
@@ -329,7 +329,7 @@ pub async fn fiche(
                         @if peut {
                             details {
                                 summary class="bouton bouton--petit" { (t!("client.nouvelle_adresse")) }
-                                form method="post" action=(format!("/clients/{id}/adresses")) style="padding-top:12px" {
+                                form method="post" action=(format!("/clients/{id}/adresses")) class="marge-haut" {
                                     (csrf(&s.jeton_csrf))
                                     div class="grille" {
                                         (c::Champ::texte("libelle", t!("champ.libelle"), "").rendre())
@@ -366,7 +366,7 @@ pub async fn fiche(
                         div class="carte__corps" {
                             p class="petit discret" { (t!("client.suppression_impossible")) }
                             @if cl.futs_detenus > 0 && !cl.archive {
-                                div class="avis avis--alerte" style="margin:0" {
+                                div class="avis avis--alerte avis--sans-marge" {
                                     (t!("client.archive_impossible", n = cl.futs_detenus))
                                 }
                             } @else {
