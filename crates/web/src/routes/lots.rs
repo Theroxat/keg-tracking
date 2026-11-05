@@ -53,7 +53,7 @@ pub async fn liste(
     let formulaire_ouvert = peut && r.nouveau == Some(1);
     let corps = html! {
         @if formulaire_ouvert {
-            section class="carte" id="nouveau-lot" style="margin-bottom:14px;max-width:700px" {
+            section class="carte carte--espacee formulaire-large" id="nouveau-lot" {
                 div class="carte__tete" { h2 { (t!("lot.nouveau")) } }
                 div class="carte__corps" {
                     form method="post" action="/lots" {
@@ -111,15 +111,15 @@ pub async fn liste(
                     tbody {
                         @for l in &lots {
                             tr {
-                                td class="cel-titre mono" style="font-weight:600" {
+                                td class="cel-titre mono fort" {
                                     a href=(format!("/lots/{}", l.id)) { (l.numero) }
                                 }
-                                td data-libelle=(t!("champ.biere")) { span style="display:inline-flex;align-items:center;gap:6px" {
+                                td data-libelle=(t!("champ.biere")) { span class="ligne-icone" {
                                     span class="pastille" style=(format!("background:{}", l.couleur_biere)) {}
                                     (l.biere) } }
                                 td class="petit" data-libelle=(t!("champ.cuve")) { (l.cuve) }
                                 td class="num petit" data-libelle=(t!("champ.date_brassage")) { (c::jour(l.date_brassage)) }
-                                td class="cel-marque num" {
+                                td class="num" data-libelle=(t!("champ.dluo")) {
                                     @match l.dluo {
                                         Some(d) => {
                                             @let reste = (d - aujourdhui).num_days();
@@ -251,7 +251,7 @@ pub async fn fiche(
     let dluo_txt = lot.dluo.map(|d| d.to_string()).unwrap_or_default();
 
     let corps = html! {
-        div class="cartes" style="margin-bottom:14px" {
+        div class="cartes cartes--marge-bas" {
             div class="tuile" {
                 span class="tuile__valeur num" { (lot.futs) }
                 span class="tuile__nom" { (t!("lot.futs_rattaches")) }
@@ -273,7 +273,7 @@ pub async fn fiche(
                 }
             }
         }
-        section class="carte" style="margin-bottom:14px;max-width:700px" {
+        section class="carte carte--espacee formulaire-large" {
             div class="carte__tete" { h2 { (t!("lot.fiche")) } }
             div class="carte__corps" {
                 form method="post" action=(format!("/lots/{id}")) {
@@ -322,7 +322,7 @@ pub async fn fiche(
         @if par_statut.is_empty() {
             (c::vide(t!("lot.aucun_fut"), None))
         } @else {
-            div class="cartes" style="margin-bottom:14px" {
+            div class="cartes cartes--marge-bas" {
                 @for st in Statut::TOUS {
                     @if let Some((_, n)) = par_statut.iter().find(|(x, _)| *x == st) {
                         div class="tuile" {
@@ -340,15 +340,15 @@ pub async fn fiche(
             (c::vide(t!("lot.aucun_detenteur"), None))
         } @else {
             div class="tableau-cadre" {
-                table class="tableau" {
+                table class="tableau tableau--cartes" {
                     thead { tr { th { (t!("champ.societe")) } th { (t!("rappel.futs")) } } }
                     tbody {
                         @for d in &detenteurs {
                             tr {
-                                td style="font-weight:600" {
+                                td class="cel-titre fort" {
                                     a href=(format!("/clients/{}", d.client_id)) { (d.societe) }
                                 }
-                                td class="num" { (d.futs) }
+                                td class="cel-marque num" { (d.futs) }
                             }
                         }
                     }
@@ -470,7 +470,7 @@ pub async fn rappel(
     let total_detenus: i64 = destinataires.iter().map(|d| d.futs_encore_detenus).sum();
 
     let corps = html! {
-        div class="cartes" style="margin-bottom:14px" {
+        div class="cartes cartes--marge-bas" {
             div class="tuile" {
                 span class="tuile__valeur num" { (destinataires.len()) }
                 span class="tuile__nom" { (t!("rappel.clients_concernes")) }
@@ -489,7 +489,7 @@ pub async fn rappel(
         } @else {
             p { (t!("rappel.resultat", n = destinataires.len(), lot = &lot.numero)) }
             div class="tableau-cadre" {
-                table class="tableau" {
+                table class="tableau tableau--cartes" {
                     thead { tr {
                         th { (t!("champ.societe")) } th { (t!("champ.contact")) }
                         th { (t!("champ.telephone")) } th { (t!("champ.adresse")) }
@@ -499,20 +499,20 @@ pub async fn rappel(
                     tbody {
                         @for d in &destinataires {
                             tr {
-                                td style="font-weight:600" {
+                                td class="cel-titre fort" {
                                     a href=(format!("/clients/{}", d.client_id)) { (d.societe) }
                                 }
-                                td class="petit" { (d.contact_nom) }
-                                td class="petit mono" { (d.telephone) }
-                                td class="petit discret" { (d.adresse) }
-                                td class="num" { (d.futs) }
-                                td class="num" {
+                                td class="petit" data-libelle=(t!("champ.contact")) { (d.contact_nom) }
+                                td class="petit mono" data-libelle=(t!("champ.telephone")) { (d.telephone) }
+                                td class="petit discret" data-libelle=(t!("champ.adresse")) { (d.adresse) }
+                                td class="num" data-libelle=(t!("rappel.futs")) { (d.futs) }
+                                td class="num" data-libelle=(t!("rappel.encore_detenus")) {
                                     @if d.futs_encore_detenus > 0 {
                                         (c::badge("grave", &d.futs_encore_detenus.to_string()))
                                     } @else { span class="discret" { "0" } }
                                 }
-                                td class="petit num discret" { (c::date_heure(d.derniere_livraison, &tz)) }
-                                td class="petit mono discret" style="max-width:280px" {
+                                td class="petit num discret" data-libelle=(t!("rappel.derniere_livraison")) { (c::date_heure(d.derniere_livraison, &tz)) }
+                                td class="petit mono discret codes-rappel" data-libelle=(t!("champ.code_qr")) {
                                     (d.codes_qr.join(" "))
                                 }
                             }

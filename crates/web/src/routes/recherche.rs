@@ -57,7 +57,7 @@ pub async fn afficher(
             }
             Some(res) => {
                 @if !res.futs.is_empty() {
-                    section class="carte" style="margin-bottom:14px" {
+                    section class="carte carte--espacee" {
                         div class="carte__tete" { h2 { (t!("recherche.futs")) } }
                         div class="carte__corps" { ul class="liste-simple" {
                             @for f in &res.futs {
@@ -67,7 +67,7 @@ pub async fn afficher(
                     }
                 }
                 @if !res.clients.is_empty() {
-                    section class="carte" style="margin-bottom:14px" {
+                    section class="carte carte--espacee" {
                         div class="carte__tete" { h2 { (t!("recherche.clients")) } }
                         div class="carte__corps" { ul class="liste-simple" {
                             @for cl in &res.clients {
@@ -77,7 +77,7 @@ pub async fn afficher(
                     }
                 }
                 @if !res.lots.is_empty() {
-                    section class="carte" style="margin-bottom:14px" {
+                    section class="carte carte--espacee" {
                         div class="carte__tete" { h2 { (t!("recherche.lots")) } }
                         div class="carte__corps" { ul class="liste-simple" {
                             @for l in &res.lots {

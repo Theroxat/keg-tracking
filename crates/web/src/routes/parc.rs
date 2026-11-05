@@ -177,7 +177,7 @@ pub async fn afficher(
             // ils occupent tout le premier écran avant la moindre donnée.
             // Bascule en CSS pure, sans JavaScript, et sans `name` pour que
             // la case ne parte pas dans la requête.
-            input type="checkbox" id="filtres-plus" class="bascule-filtres";
+            input type="checkbox" id="filtres-plus" class="bascule-filtres" aria-label=(t!("parc.plus_de_filtres"));
             div class="filtres__avances" {
             div class="champ" {
                 label for="champ-statut" { (t!("champ.statut")) }
@@ -235,24 +235,24 @@ pub async fn afficher(
                 @if r.non_revenus == Some(1) {
                     span class="jeton" {
                         (t!("tdb.non_revenus_detail", jours = loc.seuil_alerte_non_revenu_jours))
-                        a href=(r.base("/parc", &["non_revenus", "page"]).trim_end_matches('&')) { "×" }
+                        a aria-label=(t!("action.retirer")) href=(r.base("/parc", &["non_revenus", "page"]).trim_end_matches('&')) { "×" }
                     }
                 }
                 @if r.dluo == Some(1) {
                     span class="jeton" {
                         (t!("tdb.alertes_dluo"))
-                        a href=(r.base("/parc", &["dluo", "page"]).trim_end_matches('&')) { "×" }
+                        a aria-label=(t!("action.retirer")) href=(r.base("/parc", &["dluo", "page"]).trim_end_matches('&')) { "×" }
                     }
                 }
                 @if let Some(l) = r.lot {
                     span class="jeton" { (t!("champ.lot")) " " (l)
-                        a href=(r.base("/parc", &["lot", "page"]).trim_end_matches('&')) { "×" } }
+                        a aria-label=(t!("action.retirer")) href=(r.base("/parc", &["lot", "page"]).trim_end_matches('&')) { "×" } }
                 }
             }
         }
 
-        div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap" {
-            p class="minus" style="margin:0" {
+        div class="barre-liste" {
+            p class="minus" {
                 @if total == 1 { (t!("parc.resultat")) } @else { (t!("parc.resultats", n = total)) }
             }
             div class="boutons sans-impression" {
@@ -301,7 +301,7 @@ pub async fn afficher(
                                 td class="cel-marque" { (c::badge_statut(f.statut)) }
                                 td data-libelle=(t!("champ.biere")) {
                                     @if let Some(b) = &f.biere {
-                                        span style="display:inline-flex;align-items:center;gap:6px" {
+                                        span class="ligne-icone" {
                                             (c::pastille_biere(f.couleur_biere.as_ref())) (b)
                                         }
                                     } @else { span class="discret" { "—" } }
@@ -309,7 +309,7 @@ pub async fn afficher(
                                 td class="mono petit sans-coupure" data-libelle=(t!("champ.lot")) {
                                     (c::texte_ou_tiret(f.lot.as_ref()))
                                 }
-                                td class="petit" data-libelle=(t!("champ.cuve")) {
+                                td class="petit cel-secondaire" data-libelle=(t!("champ.cuve")) {
                                     (c::texte_ou_tiret(f.cuve.as_ref()))
                                 }
                                 td class="petit" data-libelle=(t!("champ.emplacement")) {
@@ -323,7 +323,7 @@ pub async fn afficher(
                                 td class="petit num sans-coupure" data-libelle=(t!("champ.anciennete")) {
                                     (c::depuis(f.statut_depuis_le))
                                 }
-                                td class="petit discret num sans-coupure" data-libelle=(t!("champ.derniere_activite")) {
+                                td class="petit discret num sans-coupure cel-secondaire" data-libelle=(t!("champ.derniere_activite")) {
                                     @match f.dernier_evenement_le {
                                         Some(d) => (c::depuis(d)),
                                         None => span class="discret" { "—" },

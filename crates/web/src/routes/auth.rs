@@ -390,8 +390,8 @@ pub async fn afficher_compte(
         section class="carte" style="margin-top:12px" {
             div class="carte__tete" { h2 { (t!("compte.sessions")) } }
             div class="carte__corps carte__corps--serre" {
-                div class="tableau-cadre" style="border:0" {
-                    table class="tableau" {
+                div class="tableau-cadre" {
+                    table class="tableau tableau--cartes" {
                         thead { tr {
                             th { (t!("compte.appareil")) } th { (t!("champ.derniere_activite")) }
                             th { (t!("champ.expire")) } th {}
@@ -399,18 +399,18 @@ pub async fn afficher_compte(
                         tbody {
                             @for sess in &sessions {
                                 tr {
-                                    td {
+                                    td class="cel-titre" {
                                         @if sess.id == s.session_id {
                                             (c::badge("ok", t!("compte.session_courante")))
                                         } @else {
                                             (c::texte_ou_tiret(sess.appareil_libelle.as_ref()))
                                         }
                                     }
-                                    td class="num" { (c::depuis(sess.derniere_activite_le)) }
-                                    td class="num petit discret" {
+                                    td class="num" data-libelle=(t!("champ.derniere_activite")) { (c::depuis(sess.derniere_activite_le)) }
+                                    td class="num petit discret" data-libelle=(t!("champ.expire")) {
                                         (c::date(sess.expire_le, &s.fuseau_horaire))
                                     }
-                                    td class="serre" {
+                                    td class="cel-action serre" {
                                         @if sess.id != s.session_id {
                                             form method="post" action="/compte/sessions/revoquer" {
                                                 (csrf(&s.jeton_csrf))
