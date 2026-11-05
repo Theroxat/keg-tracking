@@ -4,6 +4,8 @@
 //  - data-role-initial / data-actif-initial / data-confirmer-modif  sur la fiche utilisateur
 //  - touche « / »  focalise #recherche-globale
 //  - data-imprimer  sur un bouton : ouvre la boîte d'impression
+//  - data-bascule-theme  sur un bouton : passe du thème sombre au clair et inversement
+//  - .menu-mobile  : se referme au toucher à côté et avec Échap
 (function () {
   "use strict";
 
@@ -32,6 +34,33 @@
   document.addEventListener("click", function (e) {
     var el = e.target.closest ? e.target.closest("[data-imprimer]") : null;
     if (el) window.print();
+
+    var bascule = e.target.closest ? e.target.closest("[data-bascule-theme]") : null;
+    if (bascule) basculerTheme();
+
+    var menu = document.querySelector(".menu-mobile[open]");
+    if (menu && !menu.contains(e.target)) menu.open = false;
+  });
+
+  function basculerTheme() {
+    var racine = document.documentElement;
+    var clair = racine.dataset.theme !== "clair";
+    if (clair) racine.dataset.theme = "clair";
+    else delete racine.dataset.theme;
+    try {
+      window.localStorage.setItem("theme", clair ? "clair" : "sombre");
+    } catch (_) {
+      /* le choix vaut alors pour cette page seulement */
+    }
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    var menu = document.querySelector(".menu-mobile[open]");
+    if (menu) {
+      menu.open = false;
+      menu.querySelector("summary").focus();
+    }
   });
 
   // « / » place le curseur dans la recherche globale (hors champ de saisie).

@@ -76,11 +76,12 @@ fn tete(titre: &str) -> Markup {
     html! {
         meta charset="utf-8";
         meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover";
-        meta name="color-scheme" content="light dark";
-        meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)";
-        meta name="theme-color" content="#0f1214" media="(prefers-color-scheme: dark)";
+        meta name="color-scheme" content="dark light";
+        meta name="theme-color" content="#07080a";
         meta name="robots" content="noindex, nofollow";
         title { (titre) " — " (t!("app.nom")) }
+        // Bloquant, et avant le premier rendu : voir `assets/js/theme.js`.
+        script src={ "/statique/theme.js?v=" (v) } {}
         link rel="stylesheet" href={ "/statique/app.css?v=" (v) };
         link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext y='14' font-size='14'%3E%F0%9F%9B%A2%3C/text%3E%3C/svg%3E";
     }
@@ -128,6 +129,7 @@ const ICONES: &[(&str, &str)] = &[
     ("admin", "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10.6 3.09V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 16.11 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"),
     ("lots", "M12 2 3 7v10l9 5 9-5V7zM3 7l9 5 9-5M12 12v10"),
     ("plusieurs", "M8 8h12v12H8zM4 16V4h12"),
+    ("menu", "M4 6h16M4 12h16M4 18h16"),
 ];
 
 fn icone(nom: &str) -> Markup {
@@ -271,6 +273,48 @@ fn actif(chemin: &str, href: &str) -> bool {
     }
 }
 
+/// Bouton de changement de thème : il annonce le thème de destination, et la
+/// feuille de style n'affiche que le libellé utile.
+fn bouton_theme(classe: Option<&str>) -> Markup {
+    html! {
+        button type="button" class=[classe] data-bascule-theme {
+            span class="theme-vers-clair" { (t!("theme.vers_clair")) }
+            span class="theme-vers-sombre" { (t!("theme.vers_sombre")) }
+        }
+    }
+}
+
+/// Menu du téléphone. La barre du bas ne porte que les gestes d'atelier ;
+/// sans ce menu, la recherche, les listes, le compte et la déconnexion
+/// seraient inaccessibles sous 860 px, le flanc y étant masqué.
+fn menu_mobile(role: domaine::Role, chemin: &str, jeton_csrf: &str) -> Markup {
+    html! {
+        details class="menu-mobile sans-impression" {
+            summary { (icone("menu")) span { (t!("nav.menu")) } }
+            nav class="menu-mobile__panneau" aria-label=(t!("nav.menu")) {
+                form method="get" action="/recherche" role="search" {
+                    input type="search" name="q" placeholder=(t!("recherche.placeholder"))
+                        aria-label=(t!("action.rechercher")) autocomplete="off";
+                }
+                @for l in LIENS {
+                    @if role.permet(l.role_min) {
+                        a href=(l.href) aria-current=[actif(chemin, l.href).then_some("page")] {
+                            (icone(l.icone)) span { (traduire(l.cle)) }
+                        }
+                    }
+                }
+                hr class="menu-mobile__filet";
+                a href="/compte" { (t!("nav.mon_compte")) }
+                (bouton_theme(None))
+                form method="post" action="/deconnexion" {
+                    input type="hidden" name="csrf" value=(jeton_csrf);
+                    button type="submit" { (t!("nav.deconnexion")) }
+                }
+            }
+        }
+    }
+}
+
 /// Ossature complète de l'application.
 ///
 /// Le bureau et l'atelier ne sont pas deux largeurs d'écran : ce sont deux
@@ -297,16 +341,16 @@ pub fn page(cadre: Cadre<'_>, corps: Markup) -> Markup {
                     div class="bandeau-assistance" {
                         (t!("editeur.usurpation_active", brasserie = brasserie))
                         " "
-                        form method="post" action="/editeur/assistance/arreter" style="display:inline" {
+                        form method="post" action="/editeur/assistance/arreter" {
                             input type="hidden" name="csrf" value=(cadre.session.jeton_csrf);
-                            button type="submit" class="bouton bouton--petit bouton--nu" style="color:#fff" {
+                            button type="submit" class="bouton bouton--petit bouton--nu" {
                                 (t!("editeur.usurpation_arreter"))
                             }
                         }
                     }
                 }
                 div class="appli" {
-                    nav class="flanc" aria-label=(t!("nav.tableau_de_bord")) {
+                    nav class="flanc" aria-label=(t!("nav.principale")) {
                         div class="flanc__marque" {
                             b { (cadre.session.locataire_nom) }
                             span { (t!("app.baseline")) }
@@ -332,6 +376,7 @@ pub fn page(cadre: Cadre<'_>, corps: Markup) -> Markup {
                                 span { (libelle_role) }
                             }
                             a class="flanc__lien" href="/compte" { (t!("nav.mon_compte")) }
+                            (bouton_theme(Some("flanc__lien")))
                             form method="post" action="/deconnexion" {
                                 input type="hidden" name="csrf" value=(cadre.session.jeton_csrf);
                                 button type="submit" class="flanc__lien" {
@@ -347,6 +392,7 @@ pub fn page(cadre: Cadre<'_>, corps: Markup) -> Markup {
                                 @if let Some(s) = &cadre.sous_titre { p { (s) } }
                             }
                             div class="boutons sans-impression" { (cadre.actions) }
+                            (menu_mobile(role, cadre.chemin, &cadre.session.jeton_csrf))
                         }
                         main class="contenu" {
                             @for a in &cadre.avis {
@@ -356,7 +402,7 @@ pub fn page(cadre: Cadre<'_>, corps: Markup) -> Markup {
                         }
                     }
                 }
-                nav class="barre-mobile" aria-label=(t!("nav.tableau_de_bord")) {
+                nav class="barre-mobile" aria-label=(t!("nav.raccourcis")) {
                     @for l in liens_mobiles(role) {
                         a href=(l.href)
                           class=[l.central.then_some("barre-mobile__central")]

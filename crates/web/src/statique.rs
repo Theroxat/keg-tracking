@@ -12,6 +12,7 @@ pub const CSS: &str = include_str!("../../../assets/css/app.css");
 pub const HTMX: &str = include_str!("../../../assets/vendor/htmx.min.js");
 pub const SCAN_JS: &str = include_str!("../../../assets/js/scan/scan.js");
 pub const COMMUN_JS: &str = include_str!("../../../assets/js/commun.js");
+pub const THEME_JS: &str = include_str!("../../../assets/js/theme.js");
 pub const PIN_JS: &str = include_str!("../../../assets/js/pin.js");
 pub const ZXING_JS: &str = include_str!("../../../assets/vendor/zxing-reader.js");
 pub const ZXING_WASM: &[u8] = include_bytes!("../../../assets/vendor/zxing_reader.wasm");
@@ -57,6 +58,9 @@ pub async fn zxing_wasm() -> Response {
 }
 pub async fn commun_js() -> Response {
     reponse("text/javascript; charset=utf-8", COMMUN_JS, true)
+}
+pub async fn theme_js() -> Response {
+    reponse("text/javascript; charset=utf-8", THEME_JS, true)
 }
 pub async fn pin_js() -> Response {
     reponse("text/javascript; charset=utf-8", PIN_JS, true)
