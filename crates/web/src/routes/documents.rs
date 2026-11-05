@@ -54,7 +54,7 @@ pub async fn liste(
                     tbody {
                         @for d in &docs {
                             tr {
-                                td class="cel-titre mono" style="font-weight:600" { (d.reference) }
+                                td class="cel-titre mono fort" { (d.reference) }
                                 td data-libelle=(t!("doc.type")) { (traduire(d.type_document.cle_i18n())) }
                                 td class="cel-marque" {
                                     @match d.etat {

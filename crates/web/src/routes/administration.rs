@@ -263,7 +263,7 @@ pub async fn utilisateurs(
     let corps = html! {
         (c::retour_administration())
         div class="tableau-cadre" {
-            table class="tableau" {
+            table class="tableau tableau--cartes" {
                 thead { tr {
                     th { (t!("champ.nom_complet")) } th { (t!("champ.email")) } th { (t!("champ.role")) }
                     th { (t!("champ.pin")) } th { (t!("util.derniere_connexion")) } th { (t!("champ.actif")) } th {}
@@ -271,21 +271,21 @@ pub async fn utilisateurs(
                 tbody {
                     @for u in &liste {
                         tr {
-                            td style="font-weight:600" {
+                            td class="cel-titre fort" {
                                 (format!("{} {}", u.prenom, u.nom).trim())
                                 @if u.id == s.utilisateur_id { " " (c::badge("neutre", t!("util.vous"))) }
                             }
-                            td class="petit" { (u.email) }
-                            td { (c::badge("neutre", traduire(u.role.cle_i18n()))) }
-                            td { @if u.a_un_pin { (c::badge("ok", "✓")) } @else { span class="discret" { "—" } } }
-                            td class="petit discret num" {
+                            td class="petit" data-libelle=(t!("champ.email")) { (u.email) }
+                            td class="cel-marque" { (c::badge("neutre", traduire(u.role.cle_i18n()))) }
+                            td data-libelle=(t!("champ.pin")) { @if u.a_un_pin { (c::badge("ok", "✓")) } @else { span class="discret" { "—" } } }
+                            td class="petit discret num" data-libelle=(t!("util.derniere_connexion")) {
                                 @match u.derniere_connexion_le {
                                     Some(d) => (c::date_heure(d, &tz)),
                                     None => (t!("app.jamais")),
                                 }
                             }
-                            td { @if u.actif { (c::badge("ok", t!("app.oui"))) } @else { (c::badge("grave", t!("app.non"))) } }
-                            td class="serre" {
+                            td data-libelle=(t!("champ.actif")) { @if u.actif { (c::badge("ok", t!("app.oui"))) } @else { (c::badge("grave", t!("app.non"))) } }
+                            td class="cel-action serre" {
                                 a class="bouton bouton--petit" href=(format!("/administration/utilisateurs/{}", u.id)) {
                                     (t!("action.modifier"))
                                 }

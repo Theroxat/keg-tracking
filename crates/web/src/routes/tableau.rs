@@ -154,28 +154,27 @@ fn bureau(
             }
         }
 
-        div class="colonnes" style="margin-top:12px" {
+        div class="colonnes colonnes--espacee" {
             section class="carte" {
                 div class="carte__tete" {
                     h2 { (t!("tdb.repartition")) }
                     span class="petit discret" { (t!("tdb.futs", n = total)) }
                 }
                 div class="carte__corps carte__corps--serre" {
-                    div class="tableau-cadre" style="border:0" {
+                    div class="tableau-cadre" {
                         table class="tableau" {
                             tbody {
                                 @for st in Statut::TOUS {
                                     @let n = compteurs.iter().find(|x| x.statut == st)
                                                  .map(|x| x.nombre).unwrap_or(0);
                                     tr {
-                                        td { a href=(format!("/parc?statut={}", st.code()))
-                                               style="text-decoration:none" {
+                                        td { a class="lien-badge" href=(format!("/parc?statut={}", st.code())) {
                                             (c::badge_statut(st)) } }
-                                        td class="num serre" style="font-weight:600" { (n) }
+                                        td class="num serre fort" { (n) }
                                         td {
                                             @let pct = if total > 0 { (n as f64 / total as f64 * 100.0) as i64 } else { 0 };
-                                            div style="height:6px;background:var(--surface-3);border-radius:3px;overflow:hidden" {
-                                                div style=(format!("height:100%;width:{}%;background:var(--st-{})", pct, st.code())) {}
+                                            div class="jauge" aria-hidden="true" {
+                                                div class="jauge__plein" style=(format!("width:{}%;background:var(--st-{})", pct, st.code())) {}
                                             }
                                         }
                                     }
@@ -195,14 +194,14 @@ fn bureau(
                     @if non_revenus.is_empty() {
                         div class="vide" { (t!("tdb.rien_a_signaler")) }
                     } @else {
-                        div class="tableau-cadre" style="border:0" {
-                            table class="tableau" {
+                        div class="tableau-cadre" {
+                            table class="tableau tableau--cartes" {
                                 tbody {
                                     @for f in non_revenus {
                                         tr {
-                                            td { a class="lien-ligne" href=(format!("/futs/{}", f.id)) { (f.code_qr) } }
+                                            td class="cel-titre" { a class="lien-ligne" href=(format!("/futs/{}", f.id)) { (f.code_qr) } }
                                             td { (c::texte_ou_tiret(f.client.as_ref())) }
-                                            td class="serre num" {
+                                            td class="cel-marque serre num" {
                                                 (c::badge("grave", &format!("{} {}", f.jours, t!("tdb.jours"))))
                                             }
                                         }
@@ -223,14 +222,14 @@ fn bureau(
                     @if dluo.is_empty() {
                         div class="vide" { (t!("tdb.rien_a_signaler")) }
                     } @else {
-                        div class="tableau-cadre" style="border:0" {
-                            table class="tableau" {
+                        div class="tableau-cadre" {
+                            table class="tableau tableau--cartes" {
                                 tbody {
                                     @for a in dluo {
                                         tr {
-                                            td { a class="lien-ligne" href=(format!("/parc?lot={}", a.lot_id)) { (a.numero) } }
+                                            td class="cel-titre" { a class="lien-ligne" href=(format!("/parc?lot={}", a.lot_id)) { (a.numero) } }
                                             td class="petit" { (a.biere) }
-                                            td class="serre" {
+                                            td class="cel-marque serre" {
                                                 @if a.jours_restants < 0 {
                                                     (c::badge("grave", t!("lot.dluo_depassee")))
                                                 } @else {
@@ -253,13 +252,13 @@ fn bureau(
                     @if activite.is_empty() {
                         div class="vide" { (t!("tdb.rien_a_signaler")) }
                     } @else {
-                        div class="tableau-cadre" style="border:0" {
-                            table class="tableau" {
+                        div class="tableau-cadre" {
+                            table class="tableau tableau--cartes" {
                                 tbody {
                                     @for e in activite {
                                         tr {
-                                            td { a class="lien-ligne" href=(format!("/futs/{}", e.fut_id)) { (e.code_qr) } }
-                                            td {
+                                            td class="cel-titre" { a class="lien-ligne" href=(format!("/futs/{}", e.fut_id)) { (e.code_qr) } }
+                                            td class="cel-marque" {
                                                 @if let Some(st) = e.statut_apres { (c::badge_statut(st)) }
                                                 @else { span class="petit discret" { (traduire(e.type_evenement.cle_i18n())) } }
                                             }
@@ -276,7 +275,7 @@ fn bureau(
         }
 
         @if let Some(d) = rotation.duree_moyenne_chez_client_jours {
-            div class="cartes" style="margin-top:12px" {
+            div class="cartes cartes--espacees" {
                 div class="tuile" {
                     span class="tuile__valeur num" { (format!("{:.0}", d)) }
                     span class="tuile__nom" { (t!("tdb.duree_chez_client")) }
