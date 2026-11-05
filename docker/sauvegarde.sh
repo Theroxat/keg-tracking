@@ -2,7 +2,7 @@
 # Sauvegarde quotidienne avec rotation.
 #
 # Une sauvegarde jamais restaurée n'est pas une sauvegarde : la procédure
-# est décrite dans docs/exploitation.md et rejouée par l'intégration
+# est décrite dans docs/operations.md et rejouée par l'intégration
 # continue. Ici, on se contente de deux garde-fous qui attrapent les deux
 # pannes silencieuses les plus courantes : dumper une base pas encore
 # migrée, et dumper une base vide sans s'en apercevoir.

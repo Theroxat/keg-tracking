@@ -1,6 +1,6 @@
 # Contributing
 
-Issues and pull requests are welcome on [GitHub](https://github.com/selfhostr/kegtrack). For an architecture overview and the rules the code relies on, read [CLAUDE.md](CLAUDE.md) and the Architecture section of the [README](README.md).
+Issues and pull requests are welcome on [GitHub](https://github.com/selfhostr/kegtrack). For an architecture overview and the rules the code relies on, read [docs/architecture.md](docs/architecture.md) and the Architecture section of the [README](README.md).
 
 The project is written in French: domain identifiers, code comments, documentation and **commit messages** stay in French. Only infrastructure (Docker, CI) and third-party names are in English. GitHub-facing files (README, issues, pull requests) are in English.
 
