@@ -2,7 +2,7 @@
 
 pub static CATALOGUE: &[(&str, &str)] = &[
     // ---------------------------------------------------------- application
-    ("app.nom", "Keg Tracking"),
+    ("app.nom", "kegtrack"),
     ("app.baseline", "Returnable keg fleet traceability"),
     ("app.chargement", "Loading…"),
     ("app.aucun_resultat", "No results"),
