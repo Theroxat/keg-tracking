@@ -30,6 +30,11 @@ pub static CATALOGUE: &[(&str, &str)] = &[
 
     // ---------------------------------------------------------- navigation
     ("nav.tableau_de_bord", "Tableau de bord"),
+    ("nav.menu", "Menu"),
+    ("nav.principale", "Navigation principale"),
+    ("nav.raccourcis", "Raccourcis"),
+    ("theme.vers_clair", "Passer au thème clair"),
+    ("theme.vers_sombre", "Passer au thème sombre"),
     // Libellés courts de la barre du bas : « Tableau de bord » passait sur
     // deux lignes et débordait de la barre.
     ("nav.court.tableau_de_bord", "Accueil"),

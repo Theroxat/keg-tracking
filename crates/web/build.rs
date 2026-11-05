@@ -9,6 +9,7 @@ fn main() {
         "../../assets/js/scan/scan.js",
         "../../assets/js/pin.js",
         "../../assets/js/commun.js",
+        "../../assets/js/theme.js",
         "../../assets/vendor/htmx.min.js",
     ];
     let mut h = DefaultHasher::new();
