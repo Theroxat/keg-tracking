@@ -10,8 +10,6 @@
 
 </div>
 
-Screenshots: [screenshots/](screenshots/)
-
 ## Overview
 
 - **Every keg has a QR label, every field operation is a scan.** At any moment you can answer: where is this keg and for how long, what is in it (beer, lot, tank), how many clean kegs are available, which ones have not come back after N days, and who received lot 2026-017.
