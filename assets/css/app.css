@@ -340,26 +340,46 @@ a.tuile:hover { box-shadow: var(--ombre-3); }
 .badge--ok{background:var(--ok-fond);color:var(--ok)}
 .badge--alerte{background:var(--alerte-fond);color:var(--alerte)}
 .badge--grave{background:var(--grave-fond);color:var(--grave)}
-.pastille { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+/* Le filet garde visible une couleur proche du fond (stout sur thème sombre). */
+.pastille { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; box-shadow: 0 0 0 1px var(--bordure-2); }
 
 /* ------------------------------------------------------------ tableaux */
 .tableau-cadre { overflow-x: auto; border: 0; border-radius: var(--r-3); background: var(--surface); box-shadow: var(--ombre-2); }
 table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 .tableau th {
   text-align: left; font-size: 12px; letter-spacing: .02em;
-  color: var(--encre-3); font-weight: 600; padding: 14px 16px 10px;
-  border-bottom: 1px solid var(--bordure); white-space: nowrap; background: var(--surface);
+  color: var(--encre-3); font-weight: 600; padding: 14px 12px 10px;
+  border-bottom: 1px solid var(--bordure); background: var(--surface);
   position: sticky; top: 0; z-index: 1;
 }
 .tableau th a { color: inherit; text-decoration: none; display: inline-flex; gap: 4px; align-items: center; }
 .tableau th a:hover { color: var(--accent); }
-.tableau td { padding: 14px 16px; border-bottom: 1px solid var(--bordure); vertical-align: middle; }
+.tableau td { padding: 14px 12px; border-bottom: 1px solid var(--bordure); vertical-align: middle; }
 .tableau tbody tr:last-child td { border-bottom: 0; }
 .tableau tbody tr:hover { background: var(--surface-2); }
 .tableau td.serre { width: 1%; white-space: nowrap; }
 @media (min-width: 721px) { .tableau td.sans-coupure { white-space: nowrap; } }
 .tableau .lien-ligne { color: inherit; text-decoration: none; font-weight: 600; font-family: var(--mono); }
 .tableau .lien-ligne:hover { color: var(--accent); text-decoration: underline; }
+/* Un code ne se coupe jamais : « 2026-\n001 » ne se lit plus d'un coup d'œil. */
+.lien-ligne, .tableau .cel-titre.mono { white-space: nowrap; }
+.tableau td.fort, .tableau .fort a, a.fort { font-weight: 600; }
+.ligne-icone { display: inline-flex; align-items: center; gap: 6px; }
+/* Dans une carte, le tableau ne redessine ni fond, ni ombre, ni filet. */
+.carte__corps--serre > .tableau-cadre { border: 0; border-radius: 0; background: none; box-shadow: none; }
+.colonnes--espacee, .cartes--espacees { margin-top: 12px; }
+.carte--espacee, .cartes--marge-bas { margin-bottom: 14px; }
+.formulaire-large { max-width: 700px; }
+.codes-rappel { max-width: 280px; }
+.barre-liste { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.barre-liste .minus { margin: 0; }
+/* Compteur seul sur sa ligne : une demi-largeur vide ne sert à rien. */
+.cartes > :only-child { grid-column: 1 / -1; }
+.jauge { height: 6px; background: var(--surface-3); border-radius: 3px; overflow: hidden; min-width: 40px; }
+.jauge__plein { height: 100%; }
+.tuile__valeur a { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; }
+.lien-badge { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; }
+@media (min-width: 721px) { .tableau .lien-badge { min-height: 0; } }
 
 .vide { padding: 40px 20px; text-align: center; color: var(--encre-3); }
 .vide p { margin-bottom: 14px; }
@@ -375,17 +395,25 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
     display: block; width: 100%;
   }
   .tableau--cartes tbody { display: flex; flex-direction: column; gap: 10px; }
+  .tableau--cartes td.serre { width: auto; }
   .tableau--cartes tr {
     /* `minmax(0, 1fr)` et non `1fr` : sinon un contenu insécable empêche la
        colonne de rétrécir et pousse la page entière vers la droite. */
     display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center;
     column-gap: 10px; row-gap: 4px; padding: 14px 16px;
-    background: var(--surface); border-radius: var(--r-3); box-shadow: var(--ombre-2);
+    background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--r-3); box-shadow: var(--ombre-2);
   }
   .tableau--cartes tr:hover { background: var(--surface); }
+  .tableau-cadre:has(.tableau--cartes) { border: 0; }
+  /* Dans une carte, les lignes restent des lignes : pas de carte dans la carte. */
+  .carte .tableau-cadre:has(.tableau--cartes) tbody { gap: 0; }
+  .carte .tableau--cartes tr { background: none; border: 0; border-bottom: 1px solid var(--bordure); border-radius: 0; box-shadow: none; }
+  .carte .tableau--cartes tr:last-child { border-bottom: 0; }
+  /* Liens de ligne : 44 px de haut au doigt. */
+  .tableau td a:not(.bouton) { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+  .tableau--cartes td:not(.cel-titre, .cel-marque, .cel-action) { grid-column: 1 / -1; }
   .tableau--cartes td { border: 0; padding: 0; min-width: 0; overflow-wrap: anywhere; }
   .tableau--cartes .cel-titre { grid-column: 1; grid-row: 1; font-size: 16px; }
-  .tableau--cartes .cel-titre a { display: inline-block; padding: 6px 0; }
   .tableau--cartes td.cel-marque { grid-column: 2; grid-row: 1; justify-self: end; width: auto; white-space: nowrap; overflow-wrap: normal; }
   .tableau--cartes .cel-action { grid-column: 1 / -1; justify-self: start; margin-top: 6px; }
   .tableau--cartes .cel-action .bouton { min-height: 44px; }
@@ -393,12 +421,14 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
     grid-column: 1 / -1; display: flex; gap: 8px; font-size: 14px; color: var(--encre-2);
   }
   .tableau--cartes td[data-libelle]::before {
-    content: attr(data-libelle); flex: none; min-width: 84px;
+    content: attr(data-libelle); flex: 0 0 112px;
     color: var(--encre-3); font-size: 12px; font-weight: 600;
     letter-spacing: .04em; padding-top: 2px;
   }
   /* Un champ vide n'apporte rien sur un petit écran. */
   .tableau--cartes td[data-libelle]:has(> .discret:only-child) { display: none; }
+  /* Une carte de parc tient en quatre lignes ; le détail est à un toucher. */
+  .tableau--cartes td.cel-secondaire { display: none; }
 }
 
 /* ------------------------------------------------------------ messages */
@@ -424,6 +454,7 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 /* La case sert uniquement de bascule CSS ; elle n'est jamais visible et
    n'a pas de `name`, donc elle n'est pas soumise avec le formulaire. */
 .bascule-filtres { position: absolute; opacity: 0; pointer-events: none; }
+.bascule-filtres:focus-visible ~ .boutons .bascule-filtres__bouton { outline: 3px solid var(--accent); outline-offset: 2px; }
 .bascule-filtres__bouton { display: none; }
 .filtres__avances { display: contents; }
 
@@ -448,7 +479,7 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
   background: var(--surface-2); border: 0;
   border-radius: var(--r-pilule); font-size: 13px;
 }
-.jeton a { color: var(--encre-3); text-decoration: none; font-weight: 700; line-height: 1; padding: 4px 6px; }
+.jeton a { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; margin: -8px -8px -8px 0; color: var(--encre-2); text-decoration: none; font-weight: 700; font-size: 18px; line-height: 1; }
 .jeton a:hover { color: var(--grave); }
 
 .pagination { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-top: 16px; flex-wrap: wrap; }
@@ -713,6 +744,20 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 .fiche__resume { min-height: 56px; display: flex; align-items: center; cursor: pointer; }
 select.fiche__resume { width: 100%; }
 .fiche-details > summary { padding: 0 20px; font-weight: 650; font-size: 17px; }
+/* Un volet doit s'annoncer comme tel : sans ce signe, rien ne le distingue d'un titre. */
+.fiche-details > summary, .fiche-historique > summary { list-style: none; justify-content: space-between; gap: 12px; }
+.fiche-details > summary::-webkit-details-marker, .fiche-historique > summary::-webkit-details-marker { display: none; }
+.fiche-details > summary::after, .fiche-historique > summary::after { content: "+"; font-size: 24px; font-weight: 500; line-height: 1; color: var(--encre-2); }
+.fiche-details[open] > summary::after, .fiche-historique[open] > summary::after { content: "\2013"; }
+.fiche-bandeau__ligne a { display: inline-flex; align-items: center; min-height: 44px; }
+.fiche-bandeau__ligne > span { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
+.fiche-action__form { padding: 10px 0 4px; }
+.fiche-action select { margin-bottom: 8px; }
+.fiche-note { margin-top: 12px; }
+.fiche-voisins p a { display: inline-flex; align-items: center; min-height: 44px; }
+.fiche-commentaire { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--bordure); }
+.paires { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr)); gap: 12px; margin: 0; }
+.paires dd { margin: 2px 0 0; font-weight: 520; }
 .fiche-action { margin-bottom: 10px; }
 .fiche-action > .bouton, .fiche-action > summary { width: 100%; justify-content: center; }
 .fiche-historique { margin-top: 12px; }
@@ -724,7 +769,7 @@ select.fiche__resume { width: 100%; }
 
 /* Résultats de recherche : liste sobre, cibles tactiles confortables. */
 .liste-simple { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-.liste-simple a { display: inline-block; padding: 8px 0; }
+.liste-simple a { display: inline-flex; align-items: center; min-height: 44px; }
 
 /* ------------------------------------------------------------ langue */
 .selecteur-langue { margin-top: 16px; text-align: center; color: var(--encre-3); }

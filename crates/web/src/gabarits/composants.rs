@@ -235,13 +235,14 @@ pub fn pagination(page: i64, total_pages: i64, base: &str) -> Markup {
 /// En-tête de colonne cliquable pour trier.
 pub fn entete_tri(libelle: &str, cle: &str, tri_actif: &str, desc: bool, base: &str) -> Markup {
     let actif = cle == tri_actif;
+    let aria_sort = actif.then_some(if desc { "descending" } else { "ascending" });
     let prochain_desc = if actif { !desc } else { false };
     let href = format!(
         "{base}tri={cle}&sens={}",
         if prochain_desc { "desc" } else { "asc" }
     );
     html! {
-        th {
+        th aria-sort=[aria_sort] {
             a href=(href) {
                 (libelle)
                 @if actif { span aria-hidden="true" { @if desc { "↓" } @else { "↑" } } }
