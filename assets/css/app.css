@@ -1,89 +1,81 @@
 /* ============================================================
-   Suivi des fûts — feuille de style unique, thème « Atelier clair ».
+   Suivi des fûts — feuille de style unique, thème sombre par défaut, clair au choix.
    Écrite à la main plutôt que générée : ~15 écrans, des composants
    d'atelier très spécifiques (cibles 48/60 px, retour plein écran),
    et aucune chaîne de construction à maintenir.
    ============================================================ */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 
-  --fond:        #f7f6f3;
-  --surface:     #ffffff;
-  --surface-2:   #f1f0ec;
-  --surface-3:   #e7e5df;
-  --encre:       #14171a;
-  --encre-2:     #3d4650;
-  --encre-3:     #667079;
-  --bordure:     #e6e4de;
-  --bordure-2:   #c9c6bd;
-  --accent:      #0b6e6e;
-  --accent-2:    #0f8a8a;
-  --accent-fond: #e2f2f1;
-  --sur-accent:  #ffffff;
-  --ok:          #1b7a4b;
-  --ok-fond:     #e3f4ea;
-  --alerte:      #8a5a00;
-  --alerte-fond: #fdf0d2;
-  --grave:       #b3261e;
-  --grave-fond:  #fde8e6;
-  --ombre-1: 0 1px 2px rgba(20,23,26,.06);
-  --ombre-2: 0 1px 2px rgba(20,23,26,.04), 0 8px 24px -8px rgba(20,23,26,.12);
-  --ombre-3: 0 12px 40px -12px rgba(20,23,26,.25);
+  /* Thème sombre par défaut : mêmes teintes que les autres applications
+     selfhostr (noir bleuté, encre claire, accent ambre #e8a317). */
+  --fond:        #07080a;
+  --surface:     #101216;
+  --surface-2:   #181b20;
+  --surface-3:   #262a31;
+  --encre:       #eceef1;
+  --encre-2:     #bcc1c9;
+  --encre-3:     #9aa1ac;
+  --bordure:     #20242a;
+  --bordure-2:   #3a4049;
+  /* Contour des champs : 3:1 au moins contre la surface (WCAG 1.4.11). */
+  --bordure-champ: #6b727d;
+  --accent:      #e8a317;
+  --accent-2:    #f2b63f;
+  --accent-fond: #2a2009;
+  --sur-accent:  #0b0a08;
+  --ok:          #5fd398;
+  --ok-fond:     #0f2a1c;
+  --alerte:      #f2b033;
+  --alerte-fond: #2b2108;
+  --grave:       #ff8f8a;
+  --grave-fond:  #351617;
+  --ombre-1: 0 1px 2px rgba(0,0,0,.45);
+  --ombre-2: 0 1px 2px rgba(0,0,0,.4);
+  --ombre-3: 0 12px 40px -12px rgba(0,0,0,.8);
 
-  --st-recu:   #2f5f9e; --st-recu-f:   #e4eefa;
-  --st-sale:   #8a5a1f; --st-sale-f:   #f6ebdc;
-  --st-propre: #0f7a6a; --st-propre-f: #dcf3ee;
-  --st-rempli: #8a6400; --st-rempli-f: #fbefc9;
-  --st-livre:  #4a4fb5; --st-livre-f:  #e8e9fb;
-  --st-hors_service: #59636b; --st-hors_service-f: #eceef0;
-  --st-perdu:  #b3261e; --st-perdu-f:  #fde8e6;
+  --st-recu:   #8db8ee; --st-recu-f:   #14202e;
+  --st-sale:   #e9a96b; --st-sale-f:   #2b1e12;
+  --st-propre: #5fd3bd; --st-propre-f: #0f2a26;
+  --st-rempli: #f0c24a; --st-rempli-f: #2c2410;
+  --st-livre:  #a9aef7; --st-livre-f:  #1b1d33;
+  --st-hors_service: #a9b3ba; --st-hors_service-f: #22282c;
+  --st-perdu:  #ff8f8a; --st-perdu-f:  #351617;
 
   --r-1: 8px; --r-2: 12px; --r-3: 18px; --r-pilule: 999px;
   --pas: 4px;
   --cible: 48px;
+  --cible-petite: 44px;
   --cible-atelier: 60px;
   --police: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --entete-h: 56px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="clair"]) {
-    --fond:#0f1214; --surface:#171b1e; --surface-2:#1e2327; --surface-3:#272d32;
-    --encre:#eef1f2; --encre-2:#b9c2c7; --encre-3:#8d98a0;
-    --bordure:#262c30; --bordure-2:#384146;
-    --accent:#4cc3c0; --accent-2:#7ad9d6; --accent-fond:#12292a; --sur-accent:#04201f;
-    --ok:#6fc3b2; --ok-fond:#132a27;
-    --alerte:#e0ac55; --alerte-fond:#2c2312;
-    --grave:#f28b82; --grave-fond:#33191a;
-    --ombre-1: 0 1px 2px rgba(0,0,0,.45);
-    --ombre-2: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -8px rgba(0,0,0,.6);
-    --ombre-3: 0 12px 40px -12px rgba(0,0,0,.8);
-    --st-recu:#8db8ee;  --st-recu-f:#16212e;
-    --st-sale:#e9a96b;  --st-sale-f:#2b2014;
-    --st-propre:#5fd3bd;--st-propre-f:#112a26;
-    --st-rempli:#f0c24a;--st-rempli-f:#2c2410;
-    --st-livre:#a3a8f5; --st-livre-f:#1b1d33;
-    --st-hors_service:#a3adb4; --st-hors_service-f:#22282c;
-    --st-perdu:#f28b82;  --st-perdu-f:#33191a;
-  }
-}
-[data-theme="sombre"] {
-  --fond:#0f1214; --surface:#171b1e; --surface-2:#1e2327; --surface-3:#272d32;
-  --encre:#eef1f2; --encre-2:#b9c2c7; --encre-3:#8d98a0;
-  --bordure:#262c30; --bordure-2:#384146;
-  --accent:#4cc3c0; --accent-2:#7ad9d6; --accent-fond:#12292a; --sur-accent:#04201f;
-  --ok:#6fc3b2; --ok-fond:#132a27; --alerte:#e0ac55; --alerte-fond:#2c2312;
-  --grave:#f28b82; --grave-fond:#33191a;
-  --ombre-1: 0 1px 2px rgba(0,0,0,.45);
-  --ombre-2: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -8px rgba(0,0,0,.6);
-  --ombre-3: 0 12px 40px -12px rgba(0,0,0,.8);
-  --st-recu:#8db8ee; --st-recu-f:#16212e; --st-sale:#e9a96b; --st-sale-f:#2b2014;
-  --st-propre:#5fd3bd; --st-propre-f:#112a26; --st-rempli:#f0c24a; --st-rempli-f:#2c2410;
-  --st-livre:#a3a8f5; --st-livre-f:#1b1d33;
-  --st-hors_service:#a3adb4; --st-hors_service-f:#22282c;
-  --st-perdu:#f28b82; --st-perdu-f:#33191a;
+/* Thème clair, choisi par l'utilisateur (voir assets/js/theme.js). Le bon de
+   livraison et la planche d'étiquettes sont du papier : ils le restent dans
+   tous les thèmes, faute de quoi le texte clair du thème sombre devient
+   illisible sur leur fond blanc. */
+:root[data-theme="clair"], .bon, .planche {
+  color-scheme: light;
+  --fond:#f7f6f3; --surface:#ffffff; --surface-2:#f1f0ec; --surface-3:#e7e5df;
+  --encre:#14171a; --encre-2:#3d4650; --encre-3:#5c6670;
+  --bordure:#e6e4de; --bordure-2:#c9c6bd; --bordure-champ:#868b93;
+  --accent:#855800; --accent-2:#6e4900; --accent-fond:#fbf0d6; --sur-accent:#ffffff;
+  --ok:#1b7a4b; --ok-fond:#e3f4ea;
+  --alerte:#7d5200; --alerte-fond:#fdf0d2;
+  --grave:#b3261e; --grave-fond:#fde8e6;
+  --ombre-1: 0 1px 2px rgba(20,23,26,.06);
+  --ombre-2: 0 1px 2px rgba(20,23,26,.04), 0 8px 24px -8px rgba(20,23,26,.12);
+  --ombre-3: 0 12px 40px -12px rgba(20,23,26,.25);
+  --st-recu:#2f5f9e; --st-recu-f:#e4eefa;
+  --st-sale:#80521a; --st-sale-f:#f6ebdc;
+  --st-propre:#0b6b5c; --st-propre-f:#dcf3ee;
+  --st-rempli:#755400; --st-rempli-f:#fbefc9;
+  --st-livre:#4a4fb5; --st-livre-f:#e8e9fb;
+  --st-hors_service:#535c64; --st-hors_service-f:#eceef0;
+  --st-perdu:#b3261e; --st-perdu-f:#fde8e6;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -100,9 +92,10 @@ h3 { font-size: 16px; font-weight: 650; }
 p { margin: 0 0 10px; }
 a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
 :focus-visible {
-  outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-1);
-  box-shadow: 0 0 0 4px var(--accent-fond);
+  outline: 3px solid var(--accent); outline-offset: 2px; border-radius: var(--r-1);
 }
+/* Le contour ne doit jamais être rogné par un conteneur à défilement. */
+.flanc__nav a:focus-visible, .barre-mobile a:focus-visible { outline-offset: -3px; }
 .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 /* Numéro de lot : un code, saisi et affiché en monospace comme le reste. */
 input[name="numero"] { font-family: var(--mono); font-variant-numeric: tabular-nums; }
@@ -116,7 +109,7 @@ input[name="numero"] { font-family: var(--mono); font-variant-numeric: tabular-n
 /* ------------------------------------------------------------ ossature */
 .appli { min-height: 100dvh; display: grid; grid-template-columns: 240px minmax(0, 1fr); }
 .flanc {
-  background: var(--fond);
+  background: var(--fond); border-right: 1px solid var(--bordure);
   display: flex; flex-direction: column; position: sticky; top: 0; height: 100dvh;
 }
 .flanc__marque { padding: 20px 18px 12px; }
@@ -124,7 +117,7 @@ input[name="numero"] { font-family: var(--mono); font-variant-numeric: tabular-n
 .flanc__marque span { display:block; font-size: 12px; color: var(--encre-3); margin-top:2px; }
 .flanc__nav { padding: 8px 12px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .flanc__recherche { padding: 4px 12px 8px; }
-.flanc__recherche input { width: 100%; min-height: 40px; box-sizing: border-box; }
+.flanc__recherche input { width: 100%; min-height: var(--cible-petite); box-sizing: border-box; }
 .flanc__groupe { margin: 14px 8px 4px; }
 .flanc a {
   display: flex; align-items: center; gap: 10px; padding: 0 12px; min-height: 48px;
@@ -140,11 +133,15 @@ input[name="numero"] { font-family: var(--mono); font-variant-numeric: tabular-n
 .flanc__pied form { margin: 0; }
 .flanc__pied .flanc__lien {
   display: flex; align-items: center; justify-content: flex-start; width: 100%; box-sizing: border-box;
-  min-height: 44px; padding: 0 4px; margin: 0; border: 0; border-radius: var(--r-1);
+  min-height: 44px; padding: 0 8px; margin: 0; border: 0; border-radius: var(--r-1);
   background: none; box-shadow: none; text-align: left; font: inherit; font-size: 14px; font-weight: 500;
   color: var(--encre-2); text-decoration: none; cursor: pointer;
 }
 .flanc__pied .flanc__lien:hover { background: var(--surface-2); color: var(--encre); }
+/* Le bouton de thème annonce le thème de destination. */
+.theme-vers-sombre { display: none; }
+:root[data-theme="clair"] .theme-vers-sombre { display: inline; }
+:root[data-theme="clair"] .theme-vers-clair { display: none; }
 .actions-rapides { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 
 .corps { min-width: 0; display: flex; flex-direction: column; }
@@ -156,20 +153,48 @@ input[name="numero"] { font-family: var(--mono); font-variant-numeric: tabular-n
 .entete__titre { flex: 1; min-width: 0; }
 .entete__titre p { margin: 4px 0 0; font-size: 14px; color: var(--encre-3); }
 .contenu { padding: 16px 28px 64px; max-width: 1400px; width: 100%; }
-.barre-mobile { display: none; }
+.barre-mobile, .menu-mobile { display: none; }
 
 @media (max-width: 860px) {
   body { overflow-x: clip; }
   .appli { grid-template-columns: minmax(0, 1fr); }
   .flanc { display: none; }
   .contenu { padding: 12px 16px calc(112px + env(safe-area-inset-bottom)); }
-  .entete { padding: 14px 16px 4px; position: static; }
+  .entete { padding: 14px 16px 4px; position: relative; }
+  /* La barre du bas ne porte que les gestes d'atelier : le menu donne accès
+     au reste (recherche, listes, compte, déconnexion). */
+  .menu-mobile { display: block; order: 1; }
+  .menu-mobile > summary {
+    display: inline-flex; align-items: center; gap: 8px; min-height: var(--cible-petite); padding: 0 14px;
+    border-radius: var(--r-pilule); background: var(--surface-2); color: var(--encre);
+    font-size: 14px; font-weight: 600; cursor: pointer; list-style: none;
+  }
+  .menu-mobile > summary::-webkit-details-marker { display: none; }
+  .menu-mobile > summary svg { width: 20px; height: 20px; }
+  .menu-mobile__panneau {
+    position: absolute; inset: calc(100% + 4px) 16px auto 16px; z-index: 50;
+    display: flex; flex-direction: column; gap: 2px; padding: 12px;
+    background: var(--surface); border: 1px solid var(--bordure-2);
+    border-radius: var(--r-3); box-shadow: var(--ombre-3);
+    max-height: calc(100dvh - 210px); overflow-y: auto;
+  }
+  .menu-mobile__panneau form { margin: 0; }
+  .menu-mobile__panneau input[type=search] { margin-bottom: 8px; }
+  .menu-mobile__panneau a, .menu-mobile__panneau button {
+    display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 10px;
+    background: none; border: 0; border-radius: var(--r-2); color: var(--encre-2);
+    font: inherit; font-size: 15px; font-weight: 500; text-align: left; text-decoration: none; cursor: pointer;
+  }
+  .menu-mobile__panneau a:hover, .menu-mobile__panneau button:hover { background: var(--surface-2); color: var(--encre); }
+  .menu-mobile__panneau a[aria-current="page"] { background: var(--accent-fond); color: var(--accent); font-weight: 600; }
+  .menu-mobile__panneau a svg { width: 22px; height: 22px; flex: none; }
+  .menu-mobile__filet { border: 0; border-top: 1px solid var(--bordure); margin: 6px 0; }
   .entete__titre h1 { font-size: 24px; }
   .entete__titre p { font-size: 13px; }
   .barre-mobile {
     display: grid; position: fixed; inset: auto 0 0 0; z-index: 40;
     margin: 8px 8px calc(8px + env(safe-area-inset-bottom));
-    background: var(--surface); border-radius: 20px; box-shadow: var(--ombre-3);
+    background: var(--surface); border: 1px solid var(--bordure-2); border-radius: 20px; box-shadow: var(--ombre-3);
     padding: 4px;
     grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
   }
@@ -198,20 +223,21 @@ input[name="numero"] { font-family: var(--mono); font-variant-numeric: tabular-n
 }
 .bouton:hover { background: var(--surface-3); }
 .bouton:active { transform: scale(.98); }
-.bouton:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; box-shadow: 0 0 0 5px var(--accent-fond); }
+.bouton:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: var(--r-pilule); }
 .bouton[disabled], .bouton[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
-.bouton.bouton--vif { background: var(--accent); color: var(--sur-accent); box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--accent) 55%, transparent); }
+.bouton.bouton--vif { background: var(--accent); color: var(--sur-accent); }
 .bouton.bouton--vif:hover { background: var(--accent-2); }
 .bouton.bouton--grave { color: var(--grave); background: var(--grave-fond); }
-.bouton.bouton--grave:hover { background: var(--grave-fond); filter: brightness(.96); }
-.bouton.bouton--nu { box-shadow: none; background: transparent; }
+.bouton.bouton--grave:hover { background: var(--grave-fond); box-shadow: inset 0 0 0 1.5px var(--grave); }
+.bouton.bouton--nu { box-shadow: inset 0 0 0 1px var(--bordure-2); background: transparent; }
 .bouton.bouton--nu:hover { background: var(--surface-2); }
-.bouton--petit { min-height: 40px; padding: 0 14px; font-size: 14px; }
+.bouton--petit { min-height: var(--cible-petite); padding: 0 14px; font-size: 14px; }
 .bouton--large { width: 100%; }
 /* Cibles d'atelier : gants mouillés, écran de téléphone. */
 .bouton--atelier { min-height: var(--cible-atelier); font-size: 18px; font-weight: 650; padding: 0 24px; border-radius: var(--r-3); }
 .boutons { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-summary.bouton { min-height: var(--cible); }
+summary.bouton { min-height: var(--cible); list-style: none; }
+summary.bouton::-webkit-details-marker { display: none; }
 
 /* ------------------------------------------------------------ formulaires */
 .champ { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; min-width: 0; }
@@ -224,12 +250,14 @@ input[type=date], input[type=search], input[type=tel], input[type=file],
 select, textarea {
   font: inherit; font-size: 16px; /* 16 px empêche le zoom automatique iOS */
   color: var(--encre); background: var(--surface-2);
-  border: 1.5px solid transparent; border-radius: var(--r-2);
+  border: 1.5px solid var(--bordure-champ); border-radius: var(--r-2);
   padding: 10px 14px; min-height: var(--cible); width: 100%;
 }
-input:focus, select:focus, textarea:focus {
-  outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-fond);
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid var(--accent); outline-offset: 1px; border-radius: var(--r-2);
 }
+::placeholder { color: var(--encre-3); opacity: 1; }
 select { appearance: none; padding-right: 36px;
   background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
                     linear-gradient(135deg, currentColor 50%, transparent 50%);
@@ -286,7 +314,7 @@ legend { font-size: 14px; font-weight: 600; color: var(--encre-2); padding: 0 6p
 }
 
 /* ------------------------------------------------------------ cartes */
-.carte { background: var(--surface); border: 0; border-radius: var(--r-3); box-shadow: var(--ombre-2); }
+.carte { background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--r-3); box-shadow: var(--ombre-2); }
 .carte__tete { padding: 16px 20px 4px; display: flex; align-items: center; gap: 10px; }
 .carte__tete h2 { flex: 1; }
 .carte__corps { padding: 16px 20px 20px; min-width: 0; }
@@ -296,10 +324,10 @@ legend { font-size: 14px; font-weight: 600; color: var(--encre-2); padding: 0 6p
 
 .tuile {
   min-width: 0;
-  background: var(--surface); border: 0; border-radius: var(--r-3); box-shadow: var(--ombre-2);
+  background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--r-3); box-shadow: var(--ombre-2);
   padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; text-decoration: none; color: inherit;
 }
-a.tuile:hover { box-shadow: var(--ombre-3); }
+a.tuile:hover { border-color: var(--bordure-2); }
 .tuile__valeur { font-size: 32px; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
 .tuile__nom { font-size: 14px; color: var(--encre-2); font-weight: 600; }
 .tuile__detail { font-size: 13px; color: var(--encre-3); }
@@ -343,7 +371,7 @@ a.tuile:hover { box-shadow: var(--ombre-3); }
 .pastille { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
 
 /* ------------------------------------------------------------ tableaux */
-.tableau-cadre { overflow-x: auto; border: 0; border-radius: var(--r-3); background: var(--surface); box-shadow: var(--ombre-2); }
+.tableau-cadre { overflow-x: auto; border: 1px solid var(--bordure); border-radius: var(--r-3); background: var(--surface); box-shadow: var(--ombre-2); }
 table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 .tableau th {
   text-align: left; font-size: 12px; letter-spacing: .02em;
@@ -415,7 +443,12 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
   background: var(--grave); color: #fff; text-align: center; padding: 8px 14px;
   font-size: 13px; font-weight: 600; position: sticky; top: 0; z-index: 60;
 }
+.bandeau-assistance { background: #9f1d16; }
 .bandeau-assistance a { color: #fff; }
+.bandeau-assistance form { display: inline; }
+.bandeau-assistance .bouton { color: #fff; box-shadow: inset 0 0 0 1px #fff; }
+.bandeau-assistance .bouton:hover { background: rgba(0,0,0,.25); }
+.bandeau-assistance :focus-visible { outline-color: #fff; }
 
 /* ------------------------------------------------------------ filtres */
 .filtres { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
@@ -529,10 +562,9 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
   .barre-mobile a.barre-mobile__central {
     min-height: 78px; margin-top: -18px; border-radius: 20px;
     background: var(--accent); color: var(--sur-accent); font-size: 15px; font-weight: 700;
-    box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--accent) 70%, transparent);
   }
   .barre-mobile a.barre-mobile__central svg { width: 32px; height: 32px; }
-  .barre-mobile a.barre-mobile__central[aria-current="page"] { background: var(--accent-2); color: var(--sur-accent); }
+  .barre-mobile a.barre-mobile__central[aria-current="page"] { background: var(--accent); color: var(--sur-accent); box-shadow: inset 0 0 0 2px var(--sur-accent); }
 }
 
 /* Accueil de l'atelier */
@@ -682,15 +714,18 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 .bon__signature { border: 1px solid #000; height: 28mm; padding: 4px 6px; font-size: 10pt; }
 
 
-/* Écran tactile : cases plus grandes encore, sans changer la mise en page. */
-@media (pointer: coarse) {
-  .bouton--petit { min-height: 44px; }
-}
-
 @media print {
   @page { margin: 8mm; }
+  :root {
+    color-scheme: light;
+    --fond:#fff; --surface:#fff; --surface-2:#fff; --surface-3:#eee;
+    --encre:#000; --encre-2:#222; --encre-3:#444;
+    --bordure:#bbb; --bordure-2:#888; --accent:#000; --accent-fond:#fff; --sur-accent:#fff;
+    --ok:#000; --ok-fond:#fff; --alerte:#000; --alerte-fond:#fff; --grave:#000; --grave-fond:#fff;
+  }
   body { background: #fff; color: #000; }
-  .flanc, .entete, .barre-mobile, .sans-impression { display: none !important; }
+  .badge { background: none !important; color: #000 !important; box-shadow: inset 0 0 0 1px #000; }
+  .flanc, .entete, .barre-mobile, .menu-mobile, .sans-impression { display: none !important; }
   .appli { display: block; }
   .contenu { padding: 0; max-width: none; }
   .carte, .tableau-cadre { border: 0; box-shadow: none; }

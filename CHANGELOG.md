@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+
+- Dark theme with an amber accent is now the default; a light theme stays available from the menu, and delivery notes and labels always print on white.
+- Small buttons and the search field are at least 44 px tall; input fields have a visible outline; focus is a 3 px amber ring.
+
+### Added
+
+- Phone menu giving access to search, lists, account, theme and sign-out, which were unreachable below 860 px.
+
 ## [1.0.0] - 2026-10-17
 
 First release: keg traceability for breweries, from the workshop floor to the office.

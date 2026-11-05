@@ -42,7 +42,7 @@ At any moment the application answers: where is this keg and for how long, what 
 - **Dashboard and global search** (`/` key), role-dependent.
 - **Administration:** beers, locations, tanks, users, QR label sheets (3 x 8, 70 x 37 mm), spreadsheet import (CSV template, fully validated before any write), settings and a filterable audit log.
 - **Roles:** Read, Production, Administrator within a brewery, plus a separate publisher back-office (`/editeur`). A session lasts 30 days on a known device, locks after 15 minutes of inactivity and asks for a six-digit PIN.
-- **Mobile first:** below 720 px, lists become cards, touch targets are at least 44 px, and the bottom navigation depends on the role. Light and dark themes.
+- **Mobile first:** below 720 px, lists become cards, touch targets are at least 44 px, and the bottom navigation depends on the role. Dark theme by default, light theme on request.
 - **Interface in French and English.**
 
 ### Keg lifecycle

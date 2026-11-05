@@ -249,8 +249,9 @@ rétrécir :
   accueil, parc, scanner, bons, clients. Lecture : accueil, parc, bons,
   clients.
 
-L'interface existe en thème **clair** et **sombre**, selon le réglage de
-l'appareil (design « Atelier clair »).
+L'interface est en thème **sombre** par défaut. Le thème **clair** s'active
+dans le menu (« Passer au thème clair ») et le choix est retenu sur l'appareil.
+Le bon de livraison et les étiquettes restent imprimés sur fond blanc.
 
 Un outil vérifie qu'aucune page ne déborde horizontalement, sur iPhone 13,
 Pixel 5 et un écran de 320 px : `outils/audit-mobile.mjs`, rejoué par
