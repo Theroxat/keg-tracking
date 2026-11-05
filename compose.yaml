@@ -43,7 +43,7 @@ services:
     restart: unless-stopped
 
   postgres:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant}"
       POSTGRES_DB: webqr
@@ -63,7 +63,7 @@ services:
     restart: unless-stopped
 
   sauvegarde:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     environment:
       PGHOST: postgres
       PGUSER: postgres
