@@ -1100,15 +1100,15 @@ pub async fn bon_de_livraison(
         div class="bon" {
             div class="bon__tete" {
                 div {
-                    h1 style="margin:0 0 4px" { (loc.nom) }
-                    p style="margin:0;font-size:11pt" { (t!("op.bon_de_livraison")) }
+                    h1 { (loc.nom) }
+                    p class="bon__type" { (t!("op.bon_de_livraison")) }
                 }
-                div style="text-align:right;font-size:11pt" {
+                div class="bon__ref" {
                     div { b { (doc.reference) } }
                     @if let Some(v) = doc.valide_le { div { (c::date_heure(v, &tz)) } }
                 }
             }
-            div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:14px;font-size:11pt" {
+            div class="bon__parties" {
                 div {
                     div class="minus" { (t!("champ.client")) }
                     div { b { (doc.client.clone().unwrap_or_default()) } }
@@ -1120,7 +1120,7 @@ pub async fn bon_de_livraison(
                     @if let Some(l) = &doc.lot { div { (t!("champ.lot")) " " (l) } }
                 }
             }
-            table class="tableau" style="width:100%;font-size:10.5pt" {
+            table class="tableau bon__table" {
                 thead { tr {
                     th { "#" } th { (t!("champ.code_qr")) } th { (t!("champ.contenance")) }
                     th { (t!("champ.biere")) } th { (t!("champ.lot")) }
@@ -1132,7 +1132,7 @@ pub async fn bon_de_livraison(
                             td class="mono" { (l.code_qr) }
                             td { (l.contenance_litres) " L" }
                             td { (l.biere.clone().unwrap_or_default()) }
-                            td { (l.lot.clone().unwrap_or_default()) }
+                            td class="mono" { (l.lot.clone().unwrap_or_default()) }
                         }
                     }
                 }
@@ -1142,14 +1142,15 @@ pub async fn bon_de_livraison(
                 } }
             }
             @if !doc.commentaire.is_empty() {
-                p style="margin-top:12px;font-size:10.5pt" { (doc.commentaire) }
+                p class="bon__commentaire" { (doc.commentaire) }
             }
             div class="bon__signatures" {
                 div class="bon__signature" { (t!("op.signature_livreur")) }
                 div class="bon__signature" { (t!("op.signature_client")) }
             }
-            p class="sans-impression" style="margin-top:20px" {
+            p class="sans-impression boutons bon__actions" {
                 button class="bouton bouton--vif" data-imprimer { (t!("app.imprimer")) }
+                a class="bouton" href=(format!("/documents/{}", doc.id)) { (t!("app.retour")) }
             }
         }
     };

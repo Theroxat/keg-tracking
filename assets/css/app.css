@@ -218,6 +218,7 @@ summary.bouton { min-height: var(--cible); }
 .champ > label, .champ__label { font-size: 14px; font-weight: 600; color: var(--encre-2); }
 .champ__aide { font-size: 13px; color: var(--encre-3); }
 .champ__erreur { font-size: 13px; color: var(--grave); font-weight: 600; }
+.champ__erreur::before { content: "\2715\00a0"; }
 input[type=color] { min-height: var(--cible); padding: 4px; border-radius: var(--r-2); }
 input:not([type]), input[type=text], input[type=email], input[type=password], input[type=number],
 input[type=date], input[type=search], input[type=tel], input[type=file],
@@ -238,6 +239,22 @@ select { appearance: none; padding-right: 36px;
 textarea { min-height: 96px; resize: vertical; }
 input[readonly] { color: var(--encre-2); cursor: default; }
 input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--grave); }
+/* Dans un groupe sur fond gris, un champ gris ne se distinguerait plus. */
+fieldset input:not([type=radio]):not([type=checkbox]), fieldset select, fieldset textarea { background-color: var(--surface); }
+.form-moyen { max-width: 640px; }
+.marge-haut { margin-top: 12px; }
+.tuile__titre { font-size: 15px; font-weight: 620; color: var(--encre); }
+.lien-retour { margin: 0 0 12px; }
+.lien-retour a { display: inline-flex; align-items: center; min-height: 44px; }
+/* Référentiels : une ligne par entrée, le libellé s'étire. */
+.ref-ligne, .ref-ajout { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ref-ligne { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--bordure); }
+.ref-ligne > input[type=text], .ref-ajout > input[type=text] { flex: 1 1 140px; width: auto; min-width: 0; }
+.ref-ligne > input[type=color], .ref-ajout > input[type=color] { width: 52px; flex: none; }
+.ref-ligne > input[type=number] { width: 72px; flex: none; }
+.ref-ligne .coche, .ref-ligne > .discret { white-space: nowrap; }
+.ref-ajout { margin-top: 12px; padding-top: 12px; }
+.adresse-ligne { border-bottom: 1px solid var(--bordure); padding-bottom: 12px; margin-bottom: 12px; }
 .grille { display: grid; gap: 0 16px;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); }
 .grille--2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
@@ -361,8 +378,11 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 .tableau .lien-ligne { color: inherit; text-decoration: none; font-weight: 600; font-family: var(--mono); }
 .tableau .lien-ligne:hover { color: var(--accent); text-decoration: underline; }
 
-.vide { padding: 40px 20px; text-align: center; color: var(--encre-3); }
+.vide { padding: 40px 20px; text-align: center; color: var(--encre-2); }
 .vide p { margin-bottom: 14px; }
+.vide .boutons { justify-content: center; }
+/* Hors d'une carte, le vide reprend le cadre de la liste qu'il remplace. */
+.contenu > .vide { border: 1px dashed var(--bordure-2); border-radius: var(--r-3); }
 
 /* Sur téléphone, une table de neuf colonnes ne se lit pas : on ne voit
    jamais le statut, le client et l'ancienneté en même temps. Les lignes
@@ -411,6 +431,16 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 .avis--alerte { background: var(--alerte-fond); color: var(--alerte); }
 .avis--grave { background: var(--grave-fond); color: var(--grave); }
 .avis b { font-weight: 650; }
+/* Le symbole porte le ton : le message ne repose pas sur la seule couleur. */
+.avis--ok::before, .avis--alerte::before, .avis--grave::before { flex: none; font-weight: 700; line-height: 1.5; }
+.avis--ok::before { content: "\2713"; }
+.avis--alerte::before { content: "!"; }
+.avis--grave::before { content: "\2715"; }
+.avis--sans-marge { margin: 0; }
+/* Erreur d'un échange htmx : sans ce message, le geste échouait en silence. */
+.toast { position: fixed; z-index: 95; inset: auto 16px calc(24px + env(safe-area-inset-bottom)) 16px; margin: 0 auto; max-width: 480px; box-shadow: var(--ombre-3); cursor: pointer; }
+@media (max-width: 860px) { .toast { bottom: calc(112px + env(safe-area-inset-bottom)); } }
+.bouton.htmx-request { opacity: .6; cursor: progress; }
 .bandeau-assistance {
   background: var(--grave); color: #fff; text-align: center; padding: 8px 14px;
   font-size: 13px; font-weight: 600; position: sticky; top: 0; z-index: 60;
@@ -641,7 +671,7 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 /* ------------------------------------------------------------ connexion */
 .portail { min-height: 100dvh; display: grid; place-items: center; padding: 24px;
   background: linear-gradient(160deg, var(--fond) 0%, var(--accent-fond) 100%); }
-.portail__carte { width: 100%; max-width: 400px; background: var(--surface); border: 0;
+.portail__carte { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--bordure);
   border-radius: 24px; padding: 32px 28px; box-shadow: var(--ombre-3); }
 .portail__marque { margin-bottom: 22px; }
 .portail__marque b { font-size: 22px; font-weight: 700; display: block; }
@@ -664,9 +694,13 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 .erreur-page { min-height: 100dvh; display: grid; place-content: center; justify-items: center; gap: 12px; text-align: center; padding: 24px; }
 .erreur-page__code { font-size: 54px; font-weight: 700; color: var(--encre-3); margin: 0; }
 .erreur-page__texte { font-size: 16px; max-width: 42ch; }
+.portail__note { margin: 14px 0 0; }
 
 /* ------------------------------------------------------------ impression */
-.planche { display: grid; grid-template-columns: repeat(3, 70mm); gap: 0; }
+.planche { display: grid; grid-template-columns: repeat(3, 70mm); gap: 0; background: #fff; color: #000; }
+/* À l'écran, la planche s'adapte ; à l'impression, elle garde ses trois colonnes. */
+@media screen { .planche { grid-template-columns: repeat(auto-fill, 70mm); justify-content: center; } }
+.planche__barre { padding: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .etiquette {
   width: 70mm; height: 37mm; padding: 3mm; display: grid;
   grid-template-columns: 28mm 1fr; align-items: center; gap: 3mm;
@@ -680,6 +714,20 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 .bon__tete { display: flex; justify-content: space-between; gap: 20px; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 14px; }
 .bon__signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px; }
 .bon__signature { border: 1px solid #000; height: 28mm; padding: 4px 6px; font-size: 10pt; }
+.bon h1 { margin: 0 0 4px; }
+.bon__type { margin: 0; font-size: 11pt; }
+.bon__ref { text-align: right; font-size: 11pt; }
+.bon__parties { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 14px; font-size: 11pt; }
+.bon__table { width: 100%; font-size: 10.5pt; }
+.bon__table .mono { white-space: nowrap; }
+.bon__commentaire { margin-top: 12px; font-size: 10.5pt; }
+.bon__actions { margin-top: 20px; }
+/* Sur téléphone, le papier occupe toute la largeur et le tableau y tient. */
+@media screen and (max-width: 720px) {
+  .bon { padding: 16px 12px; }
+  .bon__table th, .bon__table td { padding: 8px 4px; font-size: 13px; }
+  .bon__parties, .bon__signatures { gap: 12px; }
+}
 
 
 /* Écran tactile : cases plus grandes encore, sans changer la mise en page. */
@@ -728,5 +776,5 @@ select.fiche__resume { width: 100%; }
 
 /* ------------------------------------------------------------ langue */
 .selecteur-langue { margin-top: 16px; text-align: center; color: var(--encre-3); }
-.selecteur-langue a { color: inherit; }
+.selecteur-langue a { color: var(--encre-2); display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; }
 .selecteur-langue b { color: var(--encre); font-weight: 600; }

@@ -125,6 +125,7 @@ impl<'a> Champ<'a> {
     }
     pub fn rendre(self) -> Markup {
         let id = format!("champ-{}", self.nom);
+        let id_erreur = format!("{id}-erreur");
         html! {
             div class="champ" {
                 label for=(id) {
@@ -134,9 +135,10 @@ impl<'a> Champ<'a> {
                 input id=(id) type=(self.type_html) name=(self.nom) value=(self.valeur)
                       required[self.requis]
                       aria-invalid=[self.erreur.map(|_| "true")]
+                      aria-describedby=[self.erreur.map(|_| id_erreur.as_str())]
                       autocomplete="off";
                 @if let Some(a) = self.aide { span class="champ__aide" { (a) } }
-                @if let Some(e) = self.erreur { span class="champ__erreur" { (e) } }
+                @if let Some(e) = self.erreur { span id=(id_erreur) class="champ__erreur" { (e) } }
             }
         }
     }
@@ -260,7 +262,7 @@ pub fn confirmer_soumission(message: &str) -> String {
 /// Lien de retour en tête des sous-pages d'administration.
 pub fn retour_administration() -> Markup {
     html! {
-        p class="petit" style="margin:0 0 12px" {
+        p class="petit lien-retour" {
             a href="/administration" { "← " (t!("admin.titre")) }
         }
     }
