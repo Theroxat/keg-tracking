@@ -66,7 +66,7 @@ Rust (Axum, SQLx) on PostgreSQL 17, server-rendered with Maud and htmx, three sm
 
 ## Status
 
-Version 1.0.0 was released on 2026-10-17, and only the latest `main` is supported. The [changelog](CHANGELOG.md) lists every change.
+Version 1.1.0 was released on 2026-11-05, and only the latest `main` is supported. The [changelog](CHANGELOG.md) lists every change.
 
 ## Contributing
 
