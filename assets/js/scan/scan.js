@@ -126,17 +126,16 @@
     const vide = elJournal.querySelector('[data-vide]');
     if (vide) vide.remove();
     const li = document.createElement('li');
-    const pastille = document.createElement('span');
-    pastille.className = 'pastille';
-    pastille.style.background = etat === 'succes' ? 'var(--ok)'
-      : etat === 'echec' ? 'var(--grave)' : 'var(--alerte)';
+    const issue = document.createElement('span');
+    issue.className = 'journal-scan__issue';
+    issue.dataset.etat = etat === 'succes' || etat === 'echec' ? etat : 'avert';
     const c = document.createElement('span');
     c.className = 'code';
     c.textContent = code;
     const d = document.createElement('span');
     d.className = 'petit discret';
     d.textContent = texte || '';
-    li.append(pastille, c, d);
+    li.append(issue, c, d);
     elJournal.prepend(li);
     while (elJournal.children.length > 12) elJournal.lastElementChild.remove();
   }
@@ -449,6 +448,13 @@
   window.addEventListener('pagehide', arreterCamera);
 
   // ---------------------------------------------------------------- manuel
+  // Ouvrir la saisie, c'est vouloir taper : on évite un second toucher.
+  elSaisie && elSaisie.addEventListener('toggle', () => {
+    if (!elSaisie.open) return;
+    const champ = elManuel && elManuel.querySelector('input[name=code_qr]');
+    champ && champ.focus({ preventScroll: true });
+  });
+
   elManuel && elManuel.addEventListener('submit', (e) => {
     e.preventDefault();
     const champ = elManuel.querySelector('input[name=code_qr]');
