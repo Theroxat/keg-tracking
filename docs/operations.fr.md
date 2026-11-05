@@ -1,20 +1,19 @@
 # Exploitation
 
-## Commandes
+À la fin de cette page, vous savez mettre à jour, sauvegarder, restaurer, surveiller et dépanner un kegtrack en production.
 
-Toutes s'exécutent avec `docker compose run --rm app <commande>`.
+Toutes les commandes s'exécutent avec `docker compose run --rm app <commande>` ; la liste est dans [Configuration](configuration.fr.md#commandes).
 
-| Commande | Ce qu'elle fait |
-|---|---|
-| `serve` | démarre le serveur (c'est la commande par défaut du conteneur) |
-| `provisionner-brasserie` | crée une brasserie, son premier administrateur et ses emplacements de base |
-| `creer-editeur` | crée un compte du back-office éditeur |
-| `semer-demonstration` | injecte un parc de démonstration avec un an d'historique |
-| `reconstruire-projections` | rejoue le flux d'événements et recalcule l'état courant |
-| `exporter-locataire` | exporte l'intégralité des données d'une brasserie en JSON |
-| `supprimer-locataire` | supprime définitivement une brasserie |
+## Mettre à jour kegtrack
 
-## Sauvegardes
+```bash
+git pull
+docker compose up -d --build
+```
+
+Les migrations sont jouées automatiquement au démarrage, avant l'ouverture du port. Un verrou consultatif PostgreSQL évite que deux instances ne les jouent en même temps. Faites d'abord une [sauvegarde](#sauvegarder).
+
+## Sauvegarder
 
 Le service `sauvegarde` produit une archive `pg_dump --format=custom` au
 démarrage puis chaque nuit à 03h15, avec rotation : 7 quotidiennes,
@@ -33,7 +32,9 @@ docker compose exec sauvegarde ls -lh /sauvegardes/quotidien
 docker compose logs sauvegarde --tail 20
 ```
 
-### Restauration — la procédure, testée
+Les archives vivent dans le volume `sauvegardes`, sur la même machine. Copiez-les ailleurs, et gardez votre `.env` avec elles.
+
+## Restaurer
 
 Une sauvegarde jamais restaurée n'est pas une sauvegarde. Celle-ci est
 rejouée par l'intégration continue à chaque modification, et voici la
@@ -74,7 +75,7 @@ La dernière ligne n'est pas décorative : elle prouve que la base restaurée
 est cohérente, en rejouant tout le flux d'événements et en le comparant à
 l'état courant.
 
-## Cohérence des projections
+## Vérifier les projections
 
 L'état d'un fût affiché dans les listes est un **cache**. La vérité est la
 suite de ses événements, en ajout seul.
@@ -90,7 +91,7 @@ docker compose run --rm app reconstruire-projections --locataire phare
 À lancer après une restauration, après une correction de bug de projection,
 ou simplement par acquit de conscience. Le rejeu est idempotent.
 
-## Sortie et suppression des données
+## Exporter ou supprimer une brasserie
 
 ```bash
 docker compose run --rm app exporter-locataire --locataire phare --sortie phare.json
@@ -101,7 +102,7 @@ L'export contient toutes les tables du locataire au format JSON ouvert.
 La suppression est définitive et emporte tout par cascade ; elle est
 journalisée dans le journal éditeur.
 
-## Rotation du secret applicatif
+## Changer le secret applicatif
 
 `SECRET_APP` poivre Argon2id. **Le changer invalide tous les mots de passe
 et tous les codes PIN.** Si vous devez le faire :
@@ -114,7 +115,7 @@ et tous les codes PIN.** Si vous devez le faire :
 Il n'y a pas de migration en douceur : c'est le prix du poivre, et il est
 volontaire.
 
-## Journalisation et supervision
+## Surveiller
 
 Journalisation structurée sur la sortie standard, niveau réglé par
 `RUST_LOG` (par exemple `info,web=debug,sqlx=warn`).
@@ -124,45 +125,23 @@ Journalisation structurée sur la sortie standard, niveau réglé par
 | `GET /sante` | vivacité : le processus répond |
 | `GET /pret` | disponibilité : la base répond aussi (utilisé par le `healthcheck`) |
 
-Deux journaux d'audit en base :
+Les deux journaux d'audit sont décrits dans [Sécurité](security.fr.md#journaux-daudit).
 
-- `journal_audit` — par brasserie : connexions, changements de rôle,
-  archivages, imports, validations de documents, modifications de paramètres.
-  Consultable dans `Administration → Journal d'audit`.
-- `journal_audit_editeur` — hors brasserie : créations, suspensions, et
-  **chaque ouverture et fermeture d'assistance**.
+## Dépanner
 
-## Assistance (usurpation de support)
+| Symptôme | À vérifier |
+|---|---|
+| L'application ne démarre pas | `docker compose logs app` : elle liste d'un coup toutes les variables manquantes |
+| La caméra n'affiche rien | La page n'est pas servie en HTTPS : voir [HTTPS et caméra](https-camera.fr.md) |
+| Plus personne ne peut se connecter après un changement | `SECRET_APP` a changé : réinitialisez les mots de passe |
+| Les listes contredisent la chronologie | Lancez `reconstruire-projections --verifier` |
 
-Depuis `/editeur`, le bouton **Assistance** ouvre une session dans la
-brasserie choisie, sur son premier administrateur actif. Cette session :
+## Passer à l'échelle
 
-- dure une heure au maximum ;
-- porte une marque en base (`session.usurpee_par`) ;
-- affiche un **bandeau rouge permanent** dans toute l'application ;
-- est journalisée à l'ouverture et à la fermeture.
+!!! warning "Instance unique"
+    Le déploiement v1 est mono-instance. La limitation de débit par IP est en mémoire.
 
-C'est un pouvoir réel : ne l'utilisez que sur demande du client, et fermez
-la session dès que le diagnostic est fait.
-
-## Limitation de débit
-
-Deux niveaux, complémentaires :
-
-- **par adresse IP**, en mémoire : 12 tentatives de connexion par minute,
-  8 pour le code PIN et le back-office éditeur, 240 scans par minute et par
-  utilisateur. Remis à zéro au redémarrage, ce qui est acceptable pour ce
-  qu'il protège.
-- **par compte**, en base : au-delà de 5 échecs, verrouillage exponentiel
-  (1, 2, 4, 8… minutes, plafonné à 30). Celui-là **survit à un
-  redémarrage** — c'est lui qui protège réellement contre le bourrage.
-
-Cinq codes PIN erronés révoquent la session : on repasse obligatoirement
-par le mot de passe.
-
-## Mise à l'échelle
-
-Le déploiement v1 est mono-instance. Pour passer à plusieurs instances
+Pour passer à plusieurs instances
 d'application derrière le même proxy, deux points à traiter :
 
 - la limitation de débit par IP est en mémoire : la déporter en base ou

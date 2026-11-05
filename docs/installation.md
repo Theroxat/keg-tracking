@@ -1,15 +1,14 @@
-# Installation
+# Install kegtrack
 
-## Ce qu'il faut sur la machine
+By the end of this page kegtrack runs on your machine and you can sign in to your first brewery.
 
-Docker avec le greffon `compose`. Rien d'autre : ni Rust, ni Node, ni
-PostgreSQL. Tout se construit et tout tourne en conteneurs.
+## Requirements
 
-## 1. Les secrets
+Docker with the `compose` plugin. Nothing else: no Rust, no Node, no PostgreSQL. Everything builds and runs in containers.
 
-Créez un fichier `.env` à la racine. **Aucune valeur par défaut n'existe** :
-l'application refuse de démarrer si l'une de ces variables manque, et elle
-les liste toutes d'un coup plutôt qu'une par redémarrage.
+## Create the secrets
+
+Create a `.env` file at the root of the repository (`.env.exemple` is a template). **No default value exists.** The application refuses to start if one of these variables is missing, and it lists all of them at once instead of one per restart.
 
 ```bash
 gen() { head -c 32 /dev/urandom | base64 | tr -d '/+=' | head -c 32; }
@@ -28,29 +27,27 @@ EOF
 chmod 600 .env
 ```
 
-`SECRET_APP` poivre le hachage des mots de passe et des codes PIN : une base
-volée ne suffit pas à les attaquer hors ligne. **Le changer invalide tous
-les mots de passe existants** — voir `exploitation.md`.
+`SECRET_APP` peppers the hashing of passwords and PIN codes, so a stolen database is not enough to attack them offline. **Changing it invalidates every existing password.** See [Rotate the application secret](operations.md#rotate-the-application-secret).
 
-| Rôle PostgreSQL | À quoi il sert |
+| PostgreSQL role | Use |
 |---|---|
-| `webqr_owner` | possède les tables, joue les migrations, puis n'est plus utilisé |
-| `webqr_app` | toutes les requêtes métier — **soumis à la Row Level Security** |
-| `webqr_editeur` | back-office éditeur uniquement |
-| `webqr_auth` | résolution de session et mot de passe, droits strictement énumérés |
+| `webqr_owner` | owns the tables, runs the migrations, then is no longer used |
+| `webqr_app` | all business queries, **subject to Row Level Security** |
+| `webqr_editeur` | publisher back-office only |
+| `webqr_auth` | session and password lookup, strictly enumerated rights |
 
-## 2. Démarrage
+Every variable is listed in [Configuration](configuration.md).
+
+## Start the services
 
 ```bash
 docker compose up -d --build
-docker compose ps        # les quatre services doivent être « healthy »
+docker compose ps        # the four services must be "healthy"
 ```
 
-Au premier démarrage, PostgreSQL crée les quatre rôles, l'application joue
-ses migrations avant d'ouvrir son port, et la sauvegarde attend que le
-schéma existe avant sa première archive.
+On first start PostgreSQL creates the four roles, the application runs its migrations before it opens its port, and the backup service waits for the schema before its first archive.
 
-## 3. Première brasserie
+## Create the first brewery
 
 ```bash
 docker compose run --rm app provisionner-brasserie \
@@ -61,125 +58,46 @@ docker compose run --rm app provisionner-brasserie \
   --admin-nom Martin --admin-prenom Claire
 ```
 
-La commande affiche un mot de passe fort généré. **Il n'est plus affiché
-ensuite** : transmettez-le par un canal sûr. Pour l'imposer vous-même,
-ajoutez `--admin-mot-de-passe`. Il doit faire au moins 12 caractères et
-mélanger trois classes de caractères.
+The command prints a generated strong password. **It is never shown again**: pass it on through a safe channel. To set it yourself, add `--admin-mot-de-passe`. It must be at least 12 characters and mix three character classes.
 
-Le préfixe QR est **unique sur toute l'installation** : deux brasseries ne
-peuvent pas émettre le même code.
+The QR prefix is **unique across the whole installation**: two breweries cannot issue the same code.
 
-### Compte éditeur (facultatif)
+Then open the app on port `6666` (or your domain), sign in, and set your PIN in *My account*. See the [user guide](user-guide.md).
+
+### Add a publisher account (optional)
 
 ```bash
-docker compose run --rm app creer-editeur --email vous@editeur.fr
+docker compose run --rm app creer-editeur --email you@publisher.example
 ```
 
-Il donne accès à `/editeur` : créer une brasserie, la suspendre, consulter
-l'état du système. C'est un périmètre séparé, avec son propre cookie et sa
-propre table de comptes — aucun compte de brasserie ne peut y être promu.
+It gives access to `/editeur`: create a brewery, suspend it, look at the system state. It is a separate scope with its own cookie and its own accounts table. No brewery account can be promoted into it.
 
-## 4. Jeu de démonstration
+## Load demonstration data (optional)
 
 ```bash
 docker compose run --rm app semer-demonstration --locataire phare --futs 3000
 ```
 
-Un an d'historique crédible : cycles complets, fûts immobilisés chez des
-clients, lots dont la DLUO approche. Indispensable pour développer, pour
-tester la tenue en charge, et pour montrer le produit à un prospect.
+One year of credible history: complete cycles, kegs held by customers, lots whose best-before date is near. Useful for development, for load testing, and for showing the product.
 
----
+## Print labels
 
-## Le blocage caméra : à régler avant la démonstration
+*Administration → QR labels* generates a range, creates the matching kegs and produces a printable sheet for a 3 x 8 layout of 70 x 37 mm labels.
 
-`getUserMedia` **exige un contexte sécurisé**. Servir l'application sur
-`http://192.168.1.x:6666` bloque la caméra : le navigateur refuse, sans
-message clair, et le produit ne fonctionne plus. Ce n'est pas un détail de
-confort.
+!!! warning "Paper labels do not survive a caustic wash"
+    A paper label does not survive a wash at 80 °C. Plan for engraved plates or industrial polyester labels.
 
-Trois situations, trois réponses.
-
-### a. Tunnel Cloudflare — la configuration de référence
-
-C'est le montage retenu ici. Le tunnel publie `https://qr.exemple.fr` vers
-`http://<cette machine>:6666`, et c'est lui qui fournit le certificat.
-Caddy sert donc en clair derrière lui.
-
-```
-Navigateur ──https──> Cloudflare ──tunnel──> 192.168.x.x:6666 ──> Caddy ──> app
-```
-
-Rien à configurer côté application, sinon `DOMAINE_PUBLIC` et
-`DERRIERE_PROXY=true` (valeur par défaut) pour que l'adresse réelle du
-client soit lue dans `CF-Connecting-IP` — c'est elle qui alimente la
-limitation de débit.
-
-Côté Cloudflare, le service public doit pointer sur `http://<ip>:6666`.
-
-### b. Nom de domaine pointé directement sur la machine
-
-Modifiez `docker/Caddyfile` :
-
-```caddyfile
-{
-    servers { trusted_proxies static private_ranges }
-}
-
-{$DOMAINE_PUBLIC} {
-    encode zstd gzip
-    reverse_proxy app:8080
-}
-```
-
-et publiez les ports 80 et 443 au lieu de 6666. Caddy obtient et renouvelle
-le certificat tout seul. Conservez le volume `caddy_data` : il contient les
-certificats.
-
-### c. Test sur un vrai téléphone, en réseau local
-
-C'est le cas qui piège. `https://localhost` est un contexte sécurisé, mais
-`https://192.168.1.20` ne l'est pas sans certificat reconnu.
-
-1. **Recommandé** : un tunnel — `cloudflared tunnel --url http://localhost:6666`
-   ou `tailscale funnel 6666`. URL publique, certificat valide, aucun port
-   à ouvrir, et **cela fonctionne sur iOS** sans manipuler de profil.
-2. **Repli Android** : `mkcert` pour émettre un certificat local, puis
-   installer l'autorité racine sur le téléphone.
-
-Sans contexte sécurisé, l'écran de scan reste utilisable : la **douchette**
-et la **saisie manuelle** fonctionnent toujours, et l'application affiche
-un message explicite au lieu d'un viseur noir.
-
----
-
-## Étiquettes
-
-`Administration → Étiquettes QR` génère une plage, crée les fûts
-correspondants et produit une planche imprimable calée sur un format
-3 × 8 étiquettes de 70 × 37 mm.
-
-> Une étiquette papier ne survit pas à un lavage à la soude à 80 °C.
-> Prévoyez des plaques gravées ou des étiquettes polyester industrielles.
-
-## Mise à jour
+## Check that it works
 
 ```bash
-git pull
-docker compose up -d --build
-```
-
-Les migrations sont jouées automatiquement au démarrage, avant l'ouverture
-du port. Un verrou consultatif PostgreSQL évite que deux instances ne les
-jouent en même temps.
-
-## Vérifier que tout va bien
-
-```bash
-curl -fsS http://localhost:6666/sante      # le service répond
+curl -fsS http://localhost:6666/sante      # the service answers
 docker compose exec app webqr --version
 docker compose logs -f app
 ```
 
-`/pret` vérifie en plus que la base répond ; c'est la sonde utilisée par le
-`healthcheck` du conteneur.
+`/pret` also checks that the database answers. It is the probe used by the container healthcheck.
+
+!!! warning "The camera needs HTTPS"
+    Serving the app on `http://192.168.1.x:6666` makes the browser block the camera. Read [HTTPS and camera](https-camera.md) before you show the product.
+
+To update, see [Update kegtrack](operations.md#update-kegtrack).
