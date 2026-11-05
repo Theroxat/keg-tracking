@@ -470,12 +470,13 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 
 /* ------------------------------------------------------------ scan */
 .scan { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; }
-@media (max-width: 900px) { .scan { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .scan { grid-template-columns: minmax(0, 1fr); } }
 .viseur {
   position: relative; background: #000; border-radius: 24px; overflow: hidden;
   aspect-ratio: 4 / 3; display: grid; place-items: center;
 }
-.viseur video { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Hors flux : la taille propre de la vidéo ne doit jamais élargir le viseur. */
+.viseur video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .viseur__cadre {
   position: absolute; inset: 14%; border: 4px solid #fff;
   border-radius: 20px; box-shadow: 0 0 0 100vmax rgba(0,0,0,.35); pointer-events: none;
@@ -483,7 +484,10 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 .viseur__hors { position: absolute; inset: 0; display: grid; place-items: center; color: #fff;
   text-align: center; padding: 24px; font-size: 16px; }
 .viseur__outils { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 8px; }
-.viseur__outils .bouton { background: rgba(0,0,0,.6); color: #fff; }
+/* Toujours lisible, quelle que soit l'image de la caméra derrière. */
+.viseur__outils .bouton, .viseur__outils .bouton:hover { background: rgba(0,0,0,.78); color: #fff; }
+.viseur__outils .bouton[aria-pressed="true"] { background: #fff; color: #000; }
+.viseur__outils .bouton:focus-visible, .viseur__hors .bouton:focus-visible { outline-color: #fff; }
 
 /* Retour plein écran : l'opérateur ne regarde pas l'écran en continu.
    L'icône distingue les issues sans recours à la couleur. */
@@ -510,12 +514,21 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 }
 .compteur-capture b { font-size: 44px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .douchette-temoin { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ok); font-weight: 600; }
+.douchette-temoin .pastille { background: var(--ok); }
 #champ-douchette { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
 
 .journal-scan { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
 .journal-scan li { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--bordure); font-size: 14px; }
 .journal-scan li:last-child { border-bottom: 0; }
 .journal-scan .code { font-family: var(--mono); font-weight: 600; flex: 1; }
+/* L'issue se lit au symbole, pas seulement à la couleur. */
+.journal-scan__issue { flex: none; width: 22px; height: 22px; display: inline-grid; place-items: center; border-radius: 50%; font-size: 13px; font-weight: 700; line-height: 1; }
+.journal-scan__issue[data-etat="succes"] { background: var(--ok-fond); color: var(--ok); }
+.journal-scan__issue[data-etat="succes"]::before { content: "\2713"; }
+.journal-scan__issue[data-etat="echec"] { background: var(--grave-fond); color: var(--grave); }
+.journal-scan__issue[data-etat="echec"]::before { content: "\2715"; }
+.journal-scan__issue[data-etat="avert"] { background: var(--alerte-fond); color: var(--alerte); }
+.journal-scan__issue[data-etat="avert"]::before { content: "!"; }
 
 /* Parcours atelier
    Opérateur ganté, téléphone en main : cibles de 56 px et plus, un seul
@@ -544,6 +557,10 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 /* Écran de scan */
 .viseur__outils .bouton { min-height: 56px; padding: 0 18px; font-size: 16px; }
 .viseur__hors { gap: 16px; align-content: center; background: rgba(0,0,0,.6); }
+/* Caméra coupée : le cadre de visée n'a plus d'objet et barrerait le message. */
+.viseur:has(.viseur__hors:not(.rien)) .viseur__cadre { display: none; }
+/* Sur un viseur étroit, le message et le bouton doivent tenir en entier. */
+.viseur:has(.viseur__hors:not(.rien)) { aspect-ratio: auto; min-height: 280px; }
 .viseur__hors p { margin: 0; font-size: 18px; font-weight: 600; max-width: 32ch; }
 .viseur__hors .bouton { min-height: 56px; }
 .douchette-temoin { margin-top: 10px; }
@@ -559,7 +576,8 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 .saisie-secours > summary::after, .plus-options > summary::after { content: "+"; margin-left: auto; font-size: 24px; line-height: 1; }
 .saisie-secours[open] > summary::after, .plus-options[open] > summary::after { content: "\2013"; }
 .saisie-secours__form { display: flex; gap: 8px; margin-top: 10px; }
-.saisie-secours__form input { flex: 1; min-width: 0; min-height: 60px; font-size: 18px; }
+.saisie-secours__form input { flex: 1; min-width: 0; min-height: 60px; font-size: 18px; font-family: var(--mono); }
+.saisie-secours__form input::placeholder { font-family: var(--police); font-size: 16px; }
 @media (max-width: 860px) { .scan__journal { display: none; } }
 
 /* Retours plein écran : vert bref, rouge et ambre jusqu'au toucher. */
@@ -580,6 +598,17 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
     position: sticky; top: 0; z-index: 30; margin: 0 -16px 12px;
     border-radius: 0 0 var(--r-3) var(--r-3); padding: 10px 20px;
   }
+  /* Sur téléphone, le compteur et le bouton Terminer encadrent le viseur : on
+     réduit ce qui les sépare pour garder la liste et le viseur à l'écran. */
+  .etapes { margin-bottom: 12px; }
+  .etapes__item { padding: 8px 4px; gap: 4px; font-size: 13px; justify-content: center; min-width: 0; }
+  .etapes__item b { flex: none; }
+  /* Saisie de secours ouverte : le viseur se réduit pour que le champ ne passe
+     pas sous la barre Terminer. Le clavier ouvert, les barres du bas s'effacent :
+     elles recouvriraient le champ qu'on est en train de remplir. */
+  .scan:has(.saisie-secours[open]) .viseur:not(:has(.viseur__hors:not(.rien))) { aspect-ratio: 16 / 7; }
+  body:has(.saisie-secours__form input:focus) .barre-mobile,
+  body:has(.saisie-secours__form input:focus) .barre-action { display: none; }
 }
 .capture__liste { margin-top: 12px; }
 .barre-action {
@@ -590,18 +619,23 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
   .barre-action { bottom: calc(108px + env(safe-area-inset-bottom)); margin-inline: -8px; }
 }
 .barre-action .bouton { min-height: 64px; font-size: 19px; white-space: normal; text-align: center; }
-.barre-action span.bouton[aria-disabled="true"] { cursor: default; color: var(--encre-3); opacity: 1; }
+.barre-action span.bouton[aria-disabled="true"] { cursor: default; color: var(--encre-2); opacity: 1; }
+.barre-action { backdrop-filter: blur(6px); }
 /* Le contenu ne passe jamais sous la barre « Terminer » : hauteur de la barre
    (80 px) + marge, et sur mobile la barre de navigation basse (108 px). */
 .contenu:has(.barre-action) { padding-bottom: calc(92px + 12px + env(safe-area-inset-bottom)); }
 @media (max-width: 860px) {
   .contenu:has(.barre-action) { padding-bottom: calc(80px + 108px + 12px + env(safe-area-inset-bottom)); }
 }
-.bouton--retirer { min-height: 48px; padding: 0 20px; background: var(--grave-fond); color: var(--grave); }
+/* `.bouton` a une spécificité plus forte : sans le double sélecteur, le rouge
+   ne s'applique pas et le geste destructeur ressemble à tous les autres. */
+.bouton.bouton--retirer { min-height: 48px; padding: 0 20px; background: var(--grave-fond); color: var(--grave); }
+.bouton.bouton--retirer:hover { background: var(--grave-fond); box-shadow: inset 0 0 0 1.5px var(--grave); }
 @media (max-width: 720px) {
   .tableau--captures td.cel-secondaire, .tableau--captures td:first-child { display: none; }
   .tableau--captures .cel-titre { font-size: 18px; font-family: var(--mono); }
-  .tableau--captures .cel-action { justify-self: stretch; }
+  /* `.serre` vaut 1 % de large : le bouton s'écrasait en pastille illisible. */
+  .tableau--captures td.cel-action { justify-self: stretch; width: auto; white-space: normal; }
   .tableau--captures .cel-action .bouton { width: 100%; min-height: 48px; }
 }
 .plus-options[open] > summary { margin-bottom: 12px; }
@@ -612,6 +646,10 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
 /* Configuration de l'opération */
 .parcours { max-width: 760px; display: flex; flex-direction: column; gap: 16px; }
 .parcours__question { font-size: 20px; margin: 0; }
+.parcours__aide { margin-bottom: 12px; }
+.avis--resume { font-size: 17px; margin-bottom: 0; }
+.resume-reglages { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.tableau-cadre--nu { border: 0; border-radius: 0; background: none; box-shadow: none; }
 .prereglages { display: flex; flex-direction: column; gap: 12px; }
 .prereglages .bouton { min-height: 72px; font-size: 19px; white-space: normal; text-align: center; }
 .prereglage-choisi {
@@ -619,7 +657,7 @@ table.tableau { border-collapse: collapse; width: 100%; font-size: 15px; }
   border-radius: var(--r-3); background: var(--accent-fond); color: var(--accent);
 }
 .prereglage-choisi b { flex: 1; font-size: 19px; }
-.prereglage-choisi .bouton { min-height: 56px; }
+.prereglage-choisi .bouton { min-height: 56px; flex: none; }
 .parcours form > .bouton--atelier { margin-top: 4px; }
 .parcours select { min-height: 56px; font-size: 17px; }
 .choix-lignes { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
