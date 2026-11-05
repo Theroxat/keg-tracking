@@ -336,7 +336,8 @@ pub fn page(cadre: Cadre<'_>, corps: Markup) -> Markup {
         (DOCTYPE)
         html lang=(langue_courante().code()) {
             head { (tete(&cadre.titre)) }
-            body hx-headers=(format!(r#"{{"X-CSRF":"{}"}}"#, cadre.session.jeton_csrf)) {
+            body hx-headers=(format!(r#"{{"X-CSRF":"{}"}}"#, cadre.session.jeton_csrf))
+                 data-erreur-echange=(t!("app.erreur_serveur")) {
                 @if let Some(brasserie) = &cadre.assistance {
                     div class="bandeau-assistance" {
                         (t!("editeur.usurpation_active", brasserie = brasserie))
@@ -396,7 +397,8 @@ pub fn page(cadre: Cadre<'_>, corps: Markup) -> Markup {
                         }
                         main class="contenu" {
                             @for a in &cadre.avis {
-                                div class={ "avis avis--" (a.ton) } role="status" { (a.texte) }
+                                div class={ "avis avis--" (a.ton) }
+                                    role=(if a.ton == "grave" { "alert" } else { "status" }) { (a.texte) }
                             }
                             (corps)
                         }

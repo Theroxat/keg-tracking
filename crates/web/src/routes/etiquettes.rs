@@ -149,7 +149,7 @@ pub async fn planche(
     let a = r.a.unwrap_or(de + 23).max(de).min(de + 999);
 
     let corps = html! {
-        div class="sans-impression" style="padding:14px;display:flex;gap:10px;align-items:center" {
+        div class="sans-impression planche__barre" {
             button class="bouton bouton--vif" data-imprimer { (t!("app.imprimer")) }
             span class="petit discret" { (t!("etiq.planche_note")) }
         }

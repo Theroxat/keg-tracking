@@ -58,7 +58,7 @@ fn page_connexion(erreur: Option<&str>, email: &str) -> Markup {
                     button type="submit" class="bouton bouton--vif bouton--large bouton--atelier" {
                         (t!("connexion.bouton"))
                     }
-                    p class="petit discret" style="margin-top:14px;margin-bottom:0" {
+                    p class="petit discret portail__note" {
                         (t!("connexion.se_souvenir"))
                     }
                     (selecteur_langue("/connexion"))
@@ -337,7 +337,7 @@ pub async fn afficher_compte(
     let sessions = session::lister_actives(etat.depot.auth(), s.utilisateur_id).await?;
     let avait = ctx.avis.is_some();
     let corps = html! {
-        div class="cartes" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))" {
+        div class="colonnes" {
             section class="carte" {
                 div class="carte__tete" { h2 { (t!("compte.changer_mot_de_passe")) } }
                 div class="carte__corps" {
@@ -372,7 +372,7 @@ pub async fn afficher_compte(
                 }
             }
         }
-        section class="carte" style="margin-top:12px" {
+        section class="carte marge-haut" {
             div class="carte__tete" { h2 { (t!("compte.langue")) } }
             div class="carte__corps" {
                 form method="post" action="/compte/langue" class="boutons" {
@@ -387,7 +387,7 @@ pub async fn afficher_compte(
                 }
             }
         }
-        section class="carte" style="margin-top:12px" {
+        section class="carte marge-haut" {
             div class="carte__tete" { h2 { (t!("compte.sessions")) } }
             div class="carte__corps carte__corps--serre" {
                 div class="tableau-cadre" {
