@@ -1,8 +1,10 @@
 # Guide d'utilisation
 
-Keg Tracking suit des fûts consignés réutilisables par QR code : chaque fût porte une étiquette et chaque opération de terrain est un scan. Une brasserie en est l'exemple typique, mais le suivi n'a rien de propre à la bière.
+À la fin de cette page, vous savez scanner des fûts, lancer des opérations par lot, suivre un lot et administrer une brasserie.
 
-## Les trois rôles
+kegtrack suit des fûts consignés réutilisables par QR code : chaque fût porte une étiquette et chaque opération de terrain est un scan. Une brasserie en est l'exemple typique, mais le suivi n'a rien de propre à la bière.
+
+## Connaître les trois rôles
 
 | Rôle | Ce qu'il peut faire |
 |---|---|
@@ -29,7 +31,7 @@ Définissez votre PIN dans **Mon compte**. C'est ce qui rend l'application
 utilisable en atelier. Le PIN se tape sur un **pavé tactile** aux grandes
 touches, sans clavier système.
 
-## Le cycle de vie d'un fût
+## Suivre le cycle de vie d'un fût
 
 ```
 (mise en service) → Reçu → Sale → Propre → Rempli → Livré ─┐
@@ -46,6 +48,19 @@ touches, sans clavier système.
 | **Livré** | chez un client |
 | **Hors service** | sorti du parc, réparable |
 | **Perdu** | disparu, sans effacer son histoire |
+
+Transitions autorisées :
+
+| Depuis | Vers |
+|---|---|
+| Reçu | Sale, Propre |
+| Sale | Propre |
+| Propre | Rempli, Sale |
+| Rempli | Livré, Sale |
+| Livré | Reçu (retour brasserie), Sale |
+| Hors service | Sale, Propre (réparé) |
+| Perdu | Reçu (retrouvé), Sale |
+| tout statut | Hors service, Perdu |
 
 Les transitions incohérentes sont refusées avec un message clair : *« un
 fût Sale ne peut pas partir en livraison »*. Certaines exigent des
@@ -66,7 +81,7 @@ confirme. Il apparaît en rouge dans la chronologie du fût, pour toujours.
 C'est le but : l'exception laisse une trace au lieu de se fondre dans le
 flux normal.
 
-## Scanner
+## Scanner un fût
 
 L'écran **Scanner** accepte trois entrées, par ordre d'efficacité sur le
 terrain.
@@ -75,7 +90,7 @@ terrain.
    se comporte exactement comme un clavier. Elle fonctionne sans rien
    configurer : le champ de saisie est toujours prêt, même après un clic
    ailleurs. C'est de loin le mode le plus rapide avec des gants.
-2. **La caméra.** Elle démarre seule sur mobile, en caméra arrière. Le
+2. **La caméra** (elle exige HTTPS : voir [HTTPS et caméra](https-camera.fr.md)). Elle démarre seule sur mobile, en caméra arrière. Le
    bouton *Lampe* apparaît si l'appareil le permet, *Autre caméra* si
    l'appareil en a plusieurs. Si la caméra est bloquée ou n'a pas démarré,
    *Réessayer* la relance.
@@ -95,7 +110,7 @@ et vibration — parce que l'opérateur ne regarde pas l'écran en continu.
 Scanner ne crée jamais un fût : **ça le retrouve**. Le parc est
 pré-enregistré au moment de l'étiquetage.
 
-## Plusieurs fûts d'un coup
+## Lancer une opération sur plusieurs fûts
 
 C'est le cœur du gain de temps : appliquer la même chose à des dizaines de
 fûts scannés à la chaîne. Trois étapes, affichées en haut de l'écran :
@@ -138,13 +153,13 @@ refusée avec la raison, et rien n'est modifié.
 Pour une livraison, le **bon de livraison imprimable** se génère aussitôt,
 avec deux emplacements de signature.
 
-## Recherche globale
+## Chercher partout
 
 Le champ de recherche du bureau (barre latérale) trouve en une saisie un
 fût, un client ou un lot. Appuyez sur **/** n'importe où, hors d'un champ
 de saisie, pour y placer le curseur.
 
-## Le parc
+## Parcourir le parc
 
 Recherche plein texte (code QR, lot, client), filtres combinables, tri par
 colonne (y compris par emplacement), pagination. Les colonnes *Dans ce
@@ -152,7 +167,7 @@ statut depuis* et *Dernier mouvement* distinguent un fût qui dort d'un fût
 qui bouge. L'**export CSV ou Excel reflète exactement les filtres
 actifs** — pas la page affichée, la vue entière.
 
-## Fiche d'un fût
+## Lire la fiche d'un fût
 
 Elle est centrée sur **l'action suivante** : le grand bouton propose la
 suite logique du cycle (un fût Sale : le laver). Les autres transitions
@@ -162,7 +177,7 @@ boutons affichés sont les transitions réellement autorisées. Suivent son
 autres fûts détenus par le même client. *Réimprimer l'étiquette* produit
 une étiquette de remplacement pour ce fût.
 
-## Clients
+## Gérer les clients
 
 Un client se crée avec sa première adresse dans le même formulaire. Quand
 un client n'a qu'une seule adresse, elle est présélectionnée partout.
@@ -174,7 +189,7 @@ laisserait des fûts orphelins et casserait la traçabilité.
 La fiche client affiche les fûts qu'il détient avec l'ancienneté de chacun.
 Au-delà de 30 jours (seuil configurable), l'ancienneté passe en rouge.
 
-## Lots et rappel produit
+## Suivre les lots et rappeler un produit
 
 Un lot regroupe les fûts d'un même brassin : numéro, date de brassage,
 bière, cuve, DLUO. La liste se filtre par **bière** et par **DLUO
@@ -193,7 +208,7 @@ exportable et imprimable.
 Les lots dont la DLUO approche remontent automatiquement sur le tableau de
 bord.
 
-## Tableau de bord
+## Lire le tableau de bord
 
 Il n'est pas le même selon qui regarde.
 
@@ -205,7 +220,7 @@ Il n'est pas le même selon qui regarde.
   fûts d'un coup — et les deux chiffres qui comptent. Tout le reste
   disparaît.
 
-## Administration
+## Administrer une brasserie
 
 Chaque sous-page propose le retour **← Administration**. Les actions
 destructrices (archiver, désactiver, changer un rôle, etc.) demandent une
@@ -230,7 +245,7 @@ confirmation.
 - **Journal d'audit** — qui a fait quoi, quand. Filtrable par utilisateur
   et par action, paginé par 50 entrées.
 
-## Sur téléphone
+## Utiliser l'application sur téléphone
 
 L'interface change de forme sous 720 px, elle ne se contente pas de
 rétrécir :
@@ -257,9 +272,7 @@ Un outil vérifie qu'aucune page ne déborde horizontalement, sur iPhone 13,
 Pixel 5 et un écran de 320 px : `outils/audit-mobile.mjs`, rejoué par
 l'intégration continue.
 
-## Conseil matériel
+## Acheter les bonnes étiquettes
 
-Une étiquette QR papier ne survit pas à un lavage à la soude à 80 °C.
-Prévoyez des **plaques gravées** ou des **étiquettes polyester
-industrielles**. C'est le principal point de friction en exploitation
-réelle, et il se règle à l'achat, pas dans le logiciel.
+!!! warning "Une étiquette papier ne survit pas au lavage"
+    Une étiquette QR papier ne survit pas à un lavage à la soude à 80 °C. Prévoyez des **plaques gravées** ou des **étiquettes polyester industrielles**. C'est le principal point de friction en exploitation réelle, et il se règle à l'achat, pas dans le logiciel.
