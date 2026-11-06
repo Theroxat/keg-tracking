@@ -276,7 +276,7 @@ pub async fn utilisateurs(
                             }
                             td class="petit" data-libelle=(t!("champ.email")) { (u.email) }
                             td class="cel-marque" { (c::badge("neutre", traduire(u.role.cle_i18n()))) }
-                            td data-libelle=(t!("champ.pin")) { @if u.a_un_pin { (c::badge("ok", "✓")) } @else { span class="discret" { "—" } } }
+                            td data-libelle=(t!("champ.pin")) { @if u.a_un_pin { (c::badge("ok", t!("app.oui"))) } @else { span class="discret" { "—" } } }
                             td class="petit discret num" data-libelle=(t!("util.derniere_connexion")) {
                                 @match u.derniere_connexion_le {
                                     Some(d) => (c::date_heure(d, &tz)),
