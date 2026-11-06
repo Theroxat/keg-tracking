@@ -6,14 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Changed
+## [1.1.0] - 2026-11-05
 
-- Dark theme with an amber accent is now the default; a light theme stays available from the menu, and delivery notes and labels always print on white.
-- Small buttons and the search field are at least 44 px tall; input fields have a visible outline; focus is a 3 px amber ring.
+Dark interface, harmonised forms, a reworked phone scan flow and English documentation.
 
 ### Added
 
 - Phone menu giving access to search, lists, account, theme and sign-out, which were unreachable below 860 px.
+- Missing error and empty states, and harmonised forms across the application.
+- Security baseline: OpenSSF Scorecard, CodeQL, CODEOWNERS, gitleaks and pinned GitHub Actions.
+- Community files (code of conduct, contributing, security policy, issue templates) and sponsorship links following the selfhostr guidelines.
+
+### Changed
+
+- Dark theme with an amber accent is now the default; a light theme stays available from the menu, and delivery notes and labels always print on white.
+- Small buttons and the search field are at least 44 px tall; input fields have a visible outline; focus is a 3 px amber ring.
+- Lists and the keg page are easier to read on phone and desktop.
+- The application is called kegtrack in every language.
+- The product is presented as returnable-keg tracking, not beer only.
+- Documentation and README are in English, with French translations in `.fr.md` pages; GitHub Sponsors replaces GitHub Sponsors and GitHub Sponsors.
+- The repository moved to `selfhostr/kegtrack`.
+
+### Fixed
+
+- Phone scan flow.
+- Keg lists and keg page layout on phone.
+
+### Security
+
+- Dependencies updated to fix new RustSec advisories.
 
 ## [1.0.0] - 2026-10-17
 
