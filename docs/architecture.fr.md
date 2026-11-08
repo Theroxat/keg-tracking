@@ -35,7 +35,3 @@ Elles sont la raison d'être de l'architecture, et chacune a son propre test.
 1. **Isolation multi-locataire.** Row Level Security PostgreSQL avec quatre rôles. Voir [Sécurité](security.fr.md#isolation-entre-locataires).
 2. **Le flux d'événements est la source de vérité.** La table `evenement_fut` est en ajout seul. La table `fut` n'est qu'une projection, recalculée par la même fonction pure (`domaine::projection::appliquer`) en temps réel et lors d'un rejeu complet : les deux chemins ne peuvent pas diverger. Seul `persistance::evenement` écrit dans `fut`.
 3. **Contrôle d'accès sur chaque route.** Voir [Sécurité](security.fr.md#contrôle-daccès).
-
-## Décisions techniques
-
-Les raisons de ces choix ont été écrites avant le code, dans [PHASE-0-ARCHITECTURE.md](https://github.com/selfhostr/kegtrack/blob/main/docs/PHASE-0-ARCHITECTURE.md). Il précède le code : en cas de contradiction, le code l'emporte.
