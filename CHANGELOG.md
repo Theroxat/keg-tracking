@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Inter and JetBrains Mono are now embedded in the binary and served by the application. Before, "Inter" was used only when installed locally. Layout and sizes are unchanged.
+
 ### Removed
 
 - Internal Phase 0 design document (`docs/PHASE-0-ARCHITECTURE.md`) and its references.
