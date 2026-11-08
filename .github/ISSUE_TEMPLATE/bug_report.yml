@@ -29,7 +29,7 @@ body:
     id: observed
     attributes:
       label: Observed behavior
-      description: Include screenshots or error messages if relevant.
+      description: Include error messages if relevant.
     validations:
       required: true
   - type: dropdown
