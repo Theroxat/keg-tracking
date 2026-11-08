@@ -16,6 +16,14 @@ pub const THEME_JS: &str = include_str!("../../../assets/js/theme.js");
 pub const PIN_JS: &str = include_str!("../../../assets/js/pin.js");
 pub const ZXING_JS: &str = include_str!("../../../assets/vendor/zxing-reader.js");
 pub const ZXING_WASM: &[u8] = include_bytes!("../../../assets/vendor/zxing_reader.wasm");
+pub const POLICE_INTER: &[u8] =
+    include_bytes!("../../../assets/fonts/inter-latin-wght-normal.woff2");
+pub const POLICE_INTER_EXT: &[u8] =
+    include_bytes!("../../../assets/fonts/inter-latin-ext-wght-normal.woff2");
+pub const POLICE_MONO: &[u8] =
+    include_bytes!("../../../assets/fonts/jetbrains-mono-latin-wght-normal.woff2");
+pub const POLICE_MONO_EXT: &[u8] =
+    include_bytes!("../../../assets/fonts/jetbrains-mono-latin-ext-wght-normal.woff2");
 
 /// Empreinte courte du contenu, utilisée pour purger les caches sans
 /// jamais servir un fichier périmé.
@@ -64,4 +72,16 @@ pub async fn theme_js() -> Response {
 }
 pub async fn pin_js() -> Response {
     reponse("text/javascript; charset=utf-8", PIN_JS, true)
+}
+pub async fn police_inter() -> Response {
+    reponse("font/woff2", POLICE_INTER, true)
+}
+pub async fn police_inter_ext() -> Response {
+    reponse("font/woff2", POLICE_INTER_EXT, true)
+}
+pub async fn police_mono() -> Response {
+    reponse("font/woff2", POLICE_MONO, true)
+}
+pub async fn police_mono_ext() -> Response {
+    reponse("font/woff2", POLICE_MONO_EXT, true)
 }

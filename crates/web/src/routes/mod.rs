@@ -341,6 +341,22 @@ pub fn routeur(etat: Etat) -> Router {
         .route(
             "/statique/zxing_reader.wasm",
             get(crate::statique::zxing_wasm),
+        )
+        .route(
+            "/statique/fonts/inter-latin-wght-normal.woff2",
+            get(crate::statique::police_inter),
+        )
+        .route(
+            "/statique/fonts/inter-latin-ext-wght-normal.woff2",
+            get(crate::statique::police_inter_ext),
+        )
+        .route(
+            "/statique/fonts/jetbrains-mono-latin-wght-normal.woff2",
+            get(crate::statique::police_mono),
+        )
+        .route(
+            "/statique/fonts/jetbrains-mono-latin-ext-wght-normal.woff2",
+            get(crate::statique::police_mono_ext),
         );
 
     let technique = Router::new()
